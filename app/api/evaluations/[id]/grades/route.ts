@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/app/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,10 +14,14 @@ export async function GET(
       return new NextResponse('Non autorisé', { status: 401 })
     }
 
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
+
     // Vérifier que l'évaluation existe
     const evaluation = await prisma.evaluation.findUnique({
       where: {
-        id: params.id
+        id
       },
       include: {
         class: true
@@ -56,7 +60,7 @@ export async function GET(
 
       const grades = await prisma.grade.findMany({
         where: {
-          evaluationId: params.id,
+          evaluationId: id,
           studentId: student.id
         }
       })
@@ -82,7 +86,7 @@ export async function GET(
 
       const grades = await prisma.grade.findMany({
         where: {
-          evaluationId: params.id,
+          evaluationId: id,
           studentId: {
             in: children.map(c => c.id)
           }
@@ -103,7 +107,7 @@ export async function GET(
     // Pour les administrateurs et les enseignants, récupérer toutes les notes
     const grades = await prisma.grade.findMany({
       where: {
-        evaluationId: params.id
+        evaluationId: id
       },
       include: {
         student: {
@@ -124,7 +128,7 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -133,10 +137,14 @@ export async function POST(
       return new NextResponse('Non autorisé', { status: 401 })
     }
 
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
+
     // Vérifier que l'évaluation existe
     const evaluation = await prisma.evaluation.findUnique({
       where: {
-        id: params.id
+        id
       }
     })
 
@@ -207,7 +215,7 @@ export async function POST(
               },
               evaluation: {
                 connect: {
-                  id: params.id
+                  id
                 }
               }
             }

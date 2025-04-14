@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/app/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,9 +14,13 @@ export async function GET(
       return new NextResponse('Non autorisé', { status: 401 })
     }
 
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
+
     const evaluation = await prisma.evaluation.findUnique({
       where: {
-        id: params.id
+        id
       },
       include: {
         subject: {
@@ -88,7 +92,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -96,6 +100,10 @@ export async function PUT(
     if (!session || session.user.role !== 'TEACHER') {
       return new NextResponse('Non autorisé', { status: 401 })
     }
+
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     const data = await request.json()
     const { title, description, date, coefficient, subjectId, classId, maxScore } = data
@@ -107,7 +115,7 @@ export async function PUT(
     // Vérifier que l'évaluation existe
     const existingEvaluation = await prisma.evaluation.findUnique({
       where: {
-        id: params.id
+        id
       },
       include: {
         class: true
@@ -132,7 +140,7 @@ export async function PUT(
 
     const updatedEvaluation = await prisma.evaluation.update({
       where: {
-        id: params.id
+        id
       },
       data: {
         title,
@@ -162,7 +170,7 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -171,10 +179,14 @@ export async function DELETE(
       return new NextResponse('Non autorisé', { status: 401 })
     }
 
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
+
     // Vérifier que l'évaluation existe
     const existingEvaluation = await prisma.evaluation.findUnique({
       where: {
-        id: params.id
+        id
       },
       include: {
         class: true
@@ -200,14 +212,14 @@ export async function DELETE(
     // Supprimer d'abord les notes associées
     await prisma.grade.deleteMany({
       where: {
-        evaluationId: params.id
+        evaluationId: id
       }
     })
 
     // Puis supprimer l'évaluation
     await prisma.evaluation.delete({
       where: {
-        id: params.id
+        id
       }
     })
 

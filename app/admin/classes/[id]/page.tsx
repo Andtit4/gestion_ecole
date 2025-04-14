@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-// import ClassForm from '@/components/classes/ClassForm'
-// import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ClassForm from '@/app/components/classes/ClassForm'
 import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import { use } from 'react'
 
 interface Class {
   id: string
@@ -14,19 +13,19 @@ interface Class {
   level: string
   year: number
   teacherId: string
-  teacher: {
-    firstName: string
-    lastName: string
+  teacher?: {
+    firstName?: string | null
+    lastName?: string | null
   }
-  students: {
+  students?: {
     id: string
-    firstName: string
-    lastName: string
-    email: string
+    firstName?: string | null
+    lastName?: string | null
+    email?: string | null
   }[]
 }
 
-export default function ClassDetailsPage({ params }: { params: { id: string } }) {
+export default function ClassDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [classe, setClasse] = useState<Class | null>(null)
@@ -34,14 +33,20 @@ export default function ClassDetailsPage({ params }: { params: { id: string } })
   const [error, setError] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  
+  // Utiliser React.use pour résoudre la Promise de params
+  const resolvedParams = use(params)
+  const classId = resolvedParams.id || ''
 
   useEffect(() => {
-    fetchClassDetails()
-  }, [params.id])
+    if (classId) {
+      fetchClassDetails()
+    }
+  }, [classId])
 
   const fetchClassDetails = async () => {
     try {
-      const response = await fetch(`/api/classes/${params.id}`)
+      const response = await fetch(`/api/classes/${classId}`)
       if (!response.ok) {
         throw new Error('Erreur lors du chargement de la classe')
       }
@@ -56,7 +61,7 @@ export default function ClassDetailsPage({ params }: { params: { id: string } })
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/classes/${params.id}`, {
+      const response = await fetch(`/api/classes/${classId}`, {
         method: 'DELETE',
       })
       if (!response.ok) {
@@ -123,7 +128,7 @@ export default function ClassDetailsPage({ params }: { params: { id: string } })
                   <div className="sm:col-span-2">
                     <dt className="text-sm font-medium text-gray-500">Professeur principal</dt>
                     <dd className="mt-1 text-sm text-gray-900">
-                      {classe.teacher.firstName} {classe.teacher.lastName}
+                      {classe.teacher && classe.teacher.firstName ? classe.teacher.firstName : 'Prénom'} {classe.teacher && classe.teacher.lastName ? classe.teacher.lastName : 'Nom'}
                     </dd>
                   </div>
                 </dl>
@@ -132,17 +137,17 @@ export default function ClassDetailsPage({ params }: { params: { id: string } })
               <div className="px-4 py-5 sm:px-6">
                 <h3 className="text-lg font-medium text-gray-900">Liste des élèves</h3>
                 <div className="mt-4">
-                  {classe.students.length > 0 ? (
+                  {classe.students && classe.students.length > 0 ? (
                     <ul className="divide-y divide-gray-200">
                       {classe.students.map((student) => (
                         <li key={student.id} className="py-4">
                           <div className="flex items-center space-x-4">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-900 truncate">
-                                {student.firstName} {student.lastName}
+                                {student.firstName || 'Prénom'} {student.lastName || 'Nom'}
                               </p>
                               <p className="text-sm text-gray-500 truncate">
-                                {student.email}
+                                {student.email || 'Email non disponible'}
                               </p>
                             </div>
                           </div>
@@ -158,7 +163,7 @@ export default function ClassDetailsPage({ params }: { params: { id: string } })
           </>
         ) : (
           <ClassForm
-            classId={params.id}
+            classId={classId}
             onClose={() => {
               setIsEditing(false)
               fetchClassDetails()

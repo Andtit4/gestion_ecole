@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../../auth/[...nextauth]/route'
+import { authOptions } from '@/app/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/classes/[id]
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -17,7 +17,9 @@ export async function GET(
       )
     }
 
-    const id = params.id
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     const classe = await prisma.class.findUnique({
       where: { id },
@@ -59,7 +61,7 @@ export async function GET(
 // PUT /api/classes/[id]
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -70,7 +72,10 @@ export async function PUT(
       )
     }
 
-    const id = params.id
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
+    
     const body = await request.json()
     const { name, level, year, teacherId } = body
 
@@ -126,7 +131,7 @@ export async function PUT(
 // DELETE /api/classes/[id]
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -137,7 +142,9 @@ export async function DELETE(
       )
     }
 
-    const id = params.id
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Vérifier si la classe existe
     const existingClass = await prisma.class.findUnique({

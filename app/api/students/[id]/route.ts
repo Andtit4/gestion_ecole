@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 // GET /api/students/[id]
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -17,7 +17,9 @@ export async function GET(
       )
     }
 
-    const id = params.id
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
     
     const student = await prisma.student.findUnique({
       where: { id },
@@ -58,7 +60,7 @@ export async function GET(
 // PUT /api/students/[id]
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -69,7 +71,9 @@ export async function PUT(
       )
     }
 
-    const id = params.id
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
     const body = await request.json()
     
     // Validation des données
@@ -130,7 +134,7 @@ export async function PUT(
 // DELETE /api/students/[id]
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -141,7 +145,9 @@ export async function DELETE(
       )
     }
 
-    const id = params.id
+    // Attendre les paramètres avant d'accéder à leurs propriétés
+    const resolvedParams = await params
+    const id = resolvedParams.id
 
     // Vérifier si l'élève existe
     const existingStudent = await prisma.student.findUnique({

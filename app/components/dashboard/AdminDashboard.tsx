@@ -9,6 +9,7 @@ interface DashboardStats {
   totalTeachers: number
   totalClasses: number
   totalParents: number
+  totalTimeSlots?: number
 }
 
 export default function AdminDashboard() {
@@ -167,6 +168,34 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
+        
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                🕒
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">
+                    Créneaux horaires
+                  </dt>
+                  <dd className="text-lg font-semibold text-gray-900">
+                    {stats.totalTimeSlots || 0}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-5 py-3">
+            <Link
+              href="/admin/timetable/timeslots"
+              className="text-sm font-medium text-indigo-700 hover:text-indigo-900"
+            >
+              Gérer les créneaux horaires
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Actions rapides */}
@@ -198,6 +227,18 @@ export default function AdminDashboard() {
             >
               Ajouter un parent
             </Link>
+            <Link
+              href="/admin/timetable/timeslots"
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Gérer les créneaux horaires
+            </Link>
+            <Link
+              href="/admin/timetable/schedule"
+              className="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Gérer les emplois du temps
+            </Link>
           </div>
         </div>
       </div>
@@ -209,6 +250,25 @@ export default function AdminDashboard() {
           <div className="mt-6">
             <div className="flow-root">
               <ul role="list" className="-mb-8">
+                <li className="relative pb-8">
+                  <div className="relative flex space-x-3">
+                    <div>
+                      <span className="h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center ring-8 ring-white">
+                        📅
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                      <div>
+                        <p className="text-sm text-gray-500">
+                          Nouveau module : <span className="font-medium text-gray-900">Gestion des emplois du temps</span> maintenant disponible
+                        </p>
+                      </div>
+                      <div className="text-right text-sm whitespace-nowrap text-gray-500">
+                        <time dateTime="2024-06-12">Aujourd'hui</time>
+                      </div>
+                    </div>
+                  </div>
+                </li>
                 <li className="relative pb-8">
                   <div className="relative flex space-x-3">
                     <div>

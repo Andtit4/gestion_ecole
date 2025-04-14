@@ -24,17 +24,28 @@ export default function StudentForm({ studentId, classId, onClose }: StudentForm
     firstName: '',
     lastName: '',
     email: '',
-    dateOfBirth: '',
-    classId: classId || '',
-    password: '' // Uniquement pour la création
+    password: '',
+    role: 'STUDENT' as const,
+    classId: classId || ''
   })
 
   useEffect(() => {
-    fetchClasses()
-    if (studentId) {
-      fetchStudentData()
+    const initializeForm = async () => {
+      setIsLoading(true)
+      try {
+        await Promise.all([
+          fetchClasses(),
+          studentId ? fetchStudentData() : Promise.resolve()
+        ])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }, [studentId])
+
+    initializeForm()
+  }, [studentId, classId])
 
   const fetchClasses = async () => {
     try {
@@ -44,30 +55,36 @@ export default function StudentForm({ studentId, classId, onClose }: StudentForm
       }
       const data = await response.json()
       setClasses(data)
-      if (!classId && data.length > 0 && !studentId) {
+
+      // Si un classId n'est pas fourni mais qu'il y a des classes disponibles
+      if (!classId && !formData.classId && data.length > 0) {
         setFormData(prev => ({ ...prev, classId: data[0].id }))
       }
     } catch (err) {
+      console.error('Erreur lors du chargement des classes:', err)
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     }
   }
 
   const fetchStudentData = async () => {
+    if (!studentId) return
+
     try {
-      const response = await fetch(`/api/students/${studentId}`)
+      const response = await fetch(`/api/users/${studentId}`)
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des données de l\'élève')
       }
       const data = await response.json()
       setFormData({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        dateOfBirth: new Date(data.dateOfBirth).toISOString().split('T')[0],
-        classId: data.classId,
-        password: ''
+        firstName: data.firstName || '',
+        lastName: data.lastName || '',
+        email: data.email || '',
+        password: '', // Ne pas afficher le mot de passe
+        role: 'STUDENT',
+        classId: data.classId || ''
       })
     } catch (err) {
+      console.error('Erreur lors du chargement des données de l\'élève:', err)
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     }
   }
@@ -78,25 +95,32 @@ export default function StudentForm({ studentId, classId, onClose }: StudentForm
     setError('')
 
     try {
-      const url = studentId ? `/api/students/${studentId}` : '/api/students'
+      const url = studentId ? `/api/users/${studentId}` : '/api/users'
       const method = studentId ? 'PUT' : 'POST'
+
+      const payload = {
+        ...formData,
+        // Ne pas envoyer le mot de passe s'il est vide et que c'est une mise à jour
+        ...(studentId && formData.password === '' ? { password: undefined } : {})
+      }
 
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'enregistrement de l\'élève')
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.message || 'Erreur lors de l\'enregistrement de l\'élève')
       }
 
       if (onClose) {
         onClose()
       } else {
-        router.push(classId ? `/admin/classes/${classId}` : '/admin/students')
+        router.push('/admin/students')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
@@ -110,6 +134,10 @@ export default function StudentForm({ studentId, classId, onClose }: StudentForm
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  if (isLoading && !formData.firstName) {
+    return <div>Chargement en cours...</div>
+  }
+
   return (
     <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
       <h2 className="text-2xl font-semibold text-gray-900 mb-6">
@@ -117,7 +145,7 @@ export default function StudentForm({ studentId, classId, onClose }: StudentForm
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
               Prénom
@@ -165,36 +193,19 @@ export default function StudentForm({ studentId, classId, onClose }: StudentForm
         </div>
 
         <div>
-          <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700">
-            Date de naissance
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            {studentId ? 'Nouveau mot de passe (laisser vide pour ne pas changer)' : 'Mot de passe'}
           </label>
           <input
-            type="date"
-            id="dateOfBirth"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
             onChange={handleChange}
-            required
+            required={!studentId}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
         </div>
-
-        {!studentId && (
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Mot de passe initial
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-        )}
 
         <div>
           <label htmlFor="classId" className="block text-sm font-medium text-gray-700">
@@ -205,13 +216,12 @@ export default function StudentForm({ studentId, classId, onClose }: StudentForm
             name="classId"
             value={formData.classId}
             onChange={handleChange}
-            required
-            disabled={!!classId}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           >
-            {classes.map((classe) => (
-              <option key={classe.id} value={classe.id}>
-                {classe.name} ({classe.level})
+            <option value="">-- Sélectionner une classe --</option>
+            {classes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({c.level})
               </option>
             ))}
           </select>

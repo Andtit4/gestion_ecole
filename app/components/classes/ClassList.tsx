@@ -86,8 +86,8 @@ export default function ClassList() {
                       <span>Niveau : {classe.level}</span>
                       <span>Année : {classe.year}</span>
                       <span>
-                        Professeur principal : {classe.teacher.firstName}{' '}
-                        {classe.teacher.lastName}
+                        Professeur principal : {classe.teacher.firstName || ''}{' '}
+                        {classe.teacher.lastName || ''}
                       </span>
                       <span>{classe._count.students} élèves</span>
                     </div>

@@ -34,7 +34,10 @@ export default function StudentList({ classId }: StudentListProps) {
 
   const fetchStudents = async () => {
     try {
-      const url = classId ? `/api/classes/${classId}/students` : '/api/students'
+      let url = '/api/users?role=STUDENT'
+      if (classId) {
+        url += `&classId=${classId}`
+      }
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des élèves')
@@ -50,7 +53,7 @@ export default function StudentList({ classId }: StudentListProps) {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/students/${id}`, {
+      const response = await fetch(`/api/users/${id}`, {
         method: 'DELETE',
       })
       if (!response.ok) {

@@ -27,11 +27,49 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
   })
 
   useEffect(() => {
-    fetchTeachers()
-    if (classId) {
-      fetchClassData()
-    }
-  }, [classId])
+    const initializeForm = async () => {
+      setIsLoading(true);
+      try {
+        if (classId === 'new') {
+          // Utiliser notre nouvelle route dédiée pour la création
+          const response = await fetch('/api/classes/new');
+          if (response.ok) {
+            const data = await response.json();
+            // Vérifier que les données sont bien structurées
+            console.log('Data from /api/classes/new:', data);
+            if (Array.isArray(data.teachers) && data.teachers.length > 0) {
+              setTeachers(data.teachers);
+              setFormData({
+                ...formData,
+                year: data.currentYear || new Date().getFullYear(),
+                teacherId: data.teachers.length > 0 ? data.teachers[0].id : ''
+              });
+            } else {
+              console.error('La structure des teachers est incorrecte:', data.teachers);
+              setTeachers([]);
+              setError('Aucun enseignant disponible');
+            }
+          } else {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || 'Erreur lors de l\'initialisation du formulaire');
+          }
+        } else if (classId) {
+          // Charger les données d'une classe existante
+          await Promise.all([fetchTeachers(), fetchClassData()]);
+        } else {
+          // Juste charger les enseignants pour un nouveau formulaire sans contexte
+          await fetchTeachers();
+        }
+      } catch (err) {
+        console.error('Erreur dans initializeForm:', err);
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeForm();
+  }, [classId]);
 
   const fetchTeachers = async () => {
     try {
@@ -50,6 +88,8 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
   }
 
   const fetchClassData = async () => {
+    if (!classId || classId === 'new') return;
+    
     try {
       const response = await fetch(`/api/classes/${classId}`)
       if (!response.ok) {
@@ -73,8 +113,9 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
     setError('')
 
     try {
-      const url = classId ? `/api/classes/${classId}` : '/api/classes'
-      const method = classId ? 'PUT' : 'POST'
+      // Toujours utiliser /api/classes pour la création, même si l'ID est 'new'
+      const url = classId && classId !== 'new' ? `/api/classes/${classId}` : '/api/classes'
+      const method = classId && classId !== 'new' ? 'PUT' : 'POST'
 
       const response = await fetch(url, {
         method,
@@ -85,7 +126,8 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
       })
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'enregistrement de la classe')
+        const data = await response.json()
+        throw new Error(data.message || 'Erreur lors de l\'enregistrement de la classe')
       }
 
       if (onClose) {
@@ -105,10 +147,14 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  if (isLoading && !teachers.length) {
+    return <div className="flex justify-center p-4">Chargement en cours...</div>
+  }
+
   return (
     <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow">
       <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-        {classId ? 'Modifier la classe' : 'Ajouter une nouvelle classe'}
+        {classId && classId !== 'new' ? 'Modifier la classe' : 'Ajouter une nouvelle classe'}
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -171,11 +217,15 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           >
-            {teachers.map((teacher) => (
-              <option key={teacher.id} value={teacher.id}>
-                {teacher.firstName} {teacher.lastName}
-              </option>
-            ))}
+            {teachers.length === 0 ? (
+              <option value="">Aucun enseignant disponible</option>
+            ) : (
+              teachers.map((teacher) => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.firstName || ''} {teacher.lastName || ''}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
@@ -198,7 +248,7 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
             disabled={isLoading}
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
           >
-            {isLoading ? 'Enregistrement...' : classId ? 'Modifier' : 'Ajouter'}
+            {isLoading ? 'Enregistrement...' : classId && classId !== 'new' ? 'Modifier' : 'Ajouter'}
           </button>
         </div>
       </form>
