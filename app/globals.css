@@ -125,4 +125,35 @@ body {
     margin-left: 1rem;
     margin-right: 1rem;
   }
+  
+  /* Styles améliorés pour les DialogContent */
+  [data-radix-dialog-content] {
+    background-color: white !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Style amélioré pour l'overlay de fond */
+  [data-radix-dialog-overlay] {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  /* Styles pour les champs formulaire au sein des modals */
+  [data-radix-dialog-content] input,
+  [data-radix-dialog-content] select,
+  [data-radix-dialog-content] [data-radix-select-trigger] {
+    background-color: white !important;
+    border-color: #d1d5db !important;
+  }
+
+  /* État focus amélioré */
+  [data-radix-dialog-content] input:focus,
+  [data-radix-dialog-content] select:focus,
+  [data-radix-dialog-content] [data-radix-select-trigger]:focus {
+    border-color: #2563eb !important;
+    outline: 2px solid #dbeafe !important;
+    outline-offset: 1px !important;
+  }
 } 

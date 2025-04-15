@@ -45,7 +45,7 @@ export default function StudentsPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [filters, setFilters] = useState({
     search: '',
-    classId: '',
+    classId: 'all',
   })
   const [isLoading, setIsLoading] = useState(true)
 
@@ -58,7 +58,7 @@ export default function StudentsPage() {
     try {
       setIsLoading(true)
       const params = new URLSearchParams()
-      if (filters.classId) params.append('classId', filters.classId)
+      if (filters.classId !== 'all') params.append('classId', filters.classId)
       if (filters.search) params.append('search', filters.search)
 
       const response = await fetch(`/api/students?${params.toString()}`)
@@ -163,7 +163,7 @@ export default function StudentsPage() {
                 <SelectValue placeholder="Toutes les classes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les classes</SelectItem>
+                <SelectItem value="all">Toutes les classes</SelectItem>
                 {classes.map((class_) => (
                   <SelectItem key={class_.id} value={class_.id}>
                     {class_.name} ({class_.level})

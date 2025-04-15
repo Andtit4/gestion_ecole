@@ -48,7 +48,7 @@ export function StudentForm({
     lastName: student?.lastName || '',
     email: student?.email || '',
     password: '',
-    classId: student?.classId || '',
+    classId: student?.classId || 'none',
   })
 
   const [errors, setErrors] = useState({
@@ -89,29 +89,32 @@ export function StudentForm({
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          classId: formData.classId || null 
+          classId: formData.classId === 'none' ? null : formData.classId 
         } 
-      : formData
+      : {
+          ...formData,
+          classId: formData.classId === 'none' ? null : formData.classId
+        }
 
     onSubmit(dataToSubmit)
   }
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="sm:max-w-[500px] bg-white">
+        <DialogHeader className="pb-4 border-b">
+          <DialogTitle className="text-xl">
             {student ? 'Modifier l\'élève' : 'Ajouter un élève'}
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="lastName">Nom</Label>
+            <Label htmlFor="lastName" className="text-sm font-medium">Nom</Label>
             <Input
               id="lastName"
               value={formData.lastName}
               onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              className={errors.lastName ? 'border-red-500' : ''}
+              className={`h-10 px-3 py-2 bg-white ${errors.lastName ? 'border-red-500 focus-visible:ring-red-500' : 'border-gray-300'}`}
             />
             {errors.lastName && (
               <p className="text-sm text-red-500">Le nom est requis</p>
@@ -119,12 +122,12 @@ export function StudentForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="firstName">Prénom</Label>
+            <Label htmlFor="firstName" className="text-sm font-medium">Prénom</Label>
             <Input
               id="firstName"
               value={formData.firstName}
               onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-              className={errors.firstName ? 'border-red-500' : ''}
+              className={`h-10 px-3 py-2 bg-white ${errors.firstName ? 'border-red-500 focus-visible:ring-red-500' : 'border-gray-300'}`}
             />
             {errors.firstName && (
               <p className="text-sm text-red-500">Le prénom est requis</p>
@@ -132,13 +135,13 @@ export function StudentForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={errors.email ? 'border-red-500' : ''}
+              className={`h-10 px-3 py-2 bg-white ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : 'border-gray-300'}`}
             />
             {errors.email && (
               <p className="text-sm text-red-500">
@@ -148,7 +151,7 @@ export function StudentForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">
+            <Label htmlFor="password" className="text-sm font-medium">
               Mot de passe{student ? ' (laisser vide pour ne pas changer)' : ''}
             </Label>
             <Input
@@ -156,7 +159,7 @@ export function StudentForm({
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className={errors.password ? 'border-red-500' : ''}
+              className={`h-10 px-3 py-2 bg-white ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : 'border-gray-300'}`}
             />
             {errors.password && (
               <p className="text-sm text-red-500">Le mot de passe est requis</p>
@@ -164,16 +167,16 @@ export function StudentForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="classId">Classe</Label>
+            <Label htmlFor="classId" className="text-sm font-medium">Classe</Label>
             <Select
               value={formData.classId}
               onValueChange={(value) => setFormData({ ...formData, classId: value })}
             >
-              <SelectTrigger>
+              <SelectTrigger className="h-10 px-3 py-2 bg-white border-gray-300">
                 <SelectValue placeholder="Sélectionner une classe" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune classe</SelectItem>
+                <SelectItem value="none">Aucune classe</SelectItem>
                 {classes.map((class_) => (
                   <SelectItem key={class_.id} value={class_.id}>
                     {class_.name} ({class_.level})
@@ -183,12 +186,20 @@ export function StudentForm({
             </Select>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="bg-white"
+            >
               Annuler
             </Button>
-            <Button type="submit">
-              {student ? 'Modifier' : 'Ajouter'}
+            <Button 
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {student ? 'Enregistrer' : 'Ajouter'}
             </Button>
           </div>
         </form>
