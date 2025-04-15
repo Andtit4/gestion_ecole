@@ -9,7 +9,10 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
     }
 
     const { searchParams } = new URL(req.url)
@@ -22,23 +25,19 @@ export async function GET(req: NextRequest) {
 
     const classes = await prisma.class.findMany({
       where,
-      select: {
-        id: true,
-        name: true,
-        level: true,
-        year: true,
+      include: {
         teacher: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
-          }
+          },
         },
         students: {
           select: {
             id: true,
-          }
-        }
+          },
+        },
       },
       orderBy: [
         { level: 'asc' },
@@ -46,17 +45,19 @@ export async function GET(req: NextRequest) {
       ],
     })
 
-    // Ajouter le nombre d'élèves pour chaque classe
-    const classesWithStudentCount = classes.map(class_ => ({
-      id: class_.id,
-      name: class_.name,
-      level: class_.level,
-      year: class_.year,
-      teacher: class_.teacher,
-      studentCount: class_.students.length,
+    // Transformer le résultat pour ajouter le comptage des élèves
+    const transformedClasses = classes.map(c => ({
+      id: c.id,
+      name: c.name,
+      level: c.level,
+      year: c.year,
+      teacher: c.teacher,
+      studentCount: c.students.length,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
     }))
 
-    return NextResponse.json(classesWithStudentCount)
+    return NextResponse.json(transformedClasses)
   } catch (error) {
     console.error('Erreur GET /api/classes :', error)
     return NextResponse.json(
@@ -88,34 +89,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Vérifier si la classe existe déjà
-    const existingClass = await prisma.class.findFirst({
-      where: {
-        name,
-        level,
-        year,
-      },
-    })
-
-    if (existingClass) {
-      return NextResponse.json(
-        { error: 'Une classe avec ce nom, niveau et année existe déjà' },
-        { status: 400 }
-      )
-    }
-
-    // Vérifier si l'enseignant existe
+    // Vérifier si l'enseignant existe et est bien un enseignant
     const teacher = await prisma.user.findFirst({
-      where: { 
-        id: teacherId,
-        role: 'TEACHER'
-      },
+      where: { id: teacherId, role: 'TEACHER' },
     })
 
     if (!teacher) {
       return NextResponse.json(
-        { error: 'L\'enseignant spécifié n\'existe pas' },
-        { status: 400 }
+        { error: 'Enseignant non trouvé' },
+        { status: 404 }
       )
     }
 
@@ -133,12 +115,15 @@ export async function POST(req: NextRequest) {
             id: true,
             firstName: true,
             lastName: true,
-          }
+          },
         },
       },
     })
 
-    return NextResponse.json(newClass, { status: 201 })
+    return NextResponse.json({
+      ...newClass,
+      studentCount: 0, // Nouvelle classe, donc pas d'élèves
+    }, { status: 201 })
   } catch (error) {
     console.error('Erreur POST /api/classes :', error)
     return NextResponse.json(
@@ -170,30 +155,30 @@ export async function PUT(req: NextRequest) {
     }
 
     // Vérifier si la classe existe
-    const classToUpdate = await prisma.class.findUnique({
+    const existingClass = await prisma.class.findUnique({
       where: { id },
+      include: {
+        students: true,
+      },
     })
 
-    if (!classToUpdate) {
+    if (!existingClass) {
       return NextResponse.json(
         { error: 'Classe non trouvée' },
         { status: 404 }
       )
     }
 
-    // Si teacherId est fourni, vérifier si l'enseignant existe
+    // Vérifier que l'enseignant existe s'il est spécifié
     if (teacherId) {
       const teacher = await prisma.user.findFirst({
-        where: { 
-          id: teacherId,
-          role: 'TEACHER'
-        },
+        where: { id: teacherId, role: 'TEACHER' },
       })
 
       if (!teacher) {
         return NextResponse.json(
-          { error: 'L\'enseignant spécifié n\'existe pas' },
-          { status: 400 }
+          { error: 'Enseignant non trouvé' },
+          { status: 404 }
         )
       }
     }
@@ -202,10 +187,10 @@ export async function PUT(req: NextRequest) {
     const updatedClass = await prisma.class.update({
       where: { id },
       data: {
-        name: name ?? classToUpdate.name,
-        level: level ?? classToUpdate.level,
-        year: year ?? classToUpdate.year,
-        teacherId: teacherId ?? classToUpdate.teacherId,
+        name: name ?? existingClass.name,
+        level: level ?? existingClass.level,
+        year: year ?? existingClass.year,
+        teacherId: teacherId ?? existingClass.teacherId,
       },
       include: {
         teacher: {
@@ -213,12 +198,15 @@ export async function PUT(req: NextRequest) {
             id: true,
             firstName: true,
             lastName: true,
-          }
+          },
         },
       },
     })
 
-    return NextResponse.json(updatedClass)
+    return NextResponse.json({
+      ...updatedClass,
+      studentCount: existingClass.students.length,
+    })
   } catch (error) {
     console.error('Erreur PUT /api/classes :', error)
     return NextResponse.json(
@@ -250,14 +238,14 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Vérifier si la classe existe
-    const classToDelete = await prisma.class.findUnique({
+    const existingClass = await prisma.class.findUnique({
       where: { id },
       include: {
         students: true,
       },
     })
 
-    if (!classToDelete) {
+    if (!existingClass) {
       return NextResponse.json(
         { error: 'Classe non trouvée' },
         { status: 404 }
@@ -265,9 +253,9 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Vérifier si la classe a des élèves
-    if (classToDelete.students.length > 0) {
+    if (existingClass.students.length > 0) {
       return NextResponse.json(
-        { error: 'Impossible de supprimer une classe qui contient des élèves' },
+        { error: 'Impossible de supprimer une classe qui a des élèves. Veuillez d\'abord réassigner ou supprimer les élèves de cette classe.' },
         { status: 400 }
       )
     }

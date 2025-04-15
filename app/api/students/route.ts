@@ -1,84 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/lib/auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// GET /api/students - Récupérer tous les élèves avec filtres optionnels
+// GET /api/students - Récupérer tous les étudiants avec filtres optionnels
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
     }
 
+    // Récupérer les paramètres de requête
     const { searchParams } = new URL(req.url)
-    const classId = searchParams.get('classId')
     const search = searchParams.get('search')
+    const classId = searchParams.get('classId')
 
-    const where: Record<string, unknown> = {
-      role: 'STUDENT',
+    // Construire la requête avec les filtres
+    const where: any = {}
+
+    // Si un parent est connecté, on limite l'accès à ses enfants
+    if (session.user.role === 'PARENT') {
+      where.students = {
+        some: {
+          parentId: session.user.id
+        }
+      }
     }
 
+    // Filtre par classe
     if (classId) {
       where.classId = classId
     }
 
+    // Filtre par recherche (nom, prénom, email)
     if (search) {
       where.OR = [
-        { firstName: { contains: search } },
-        { lastName: { contains: search } },
-        { email: { contains: search } },
+        { user: { firstName: { contains: search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } }
       ]
     }
 
-    const students = await prisma.user.findMany({
+    // Récupérer les étudiants
+    const students = await prisma.student.findMany({
       where,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        classId: true,
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        },
         class: {
           select: {
             id: true,
             name: true,
-            level: true,
+            level: true
           }
-        },
-        createdAt: true,
-        updatedAt: true,
+        }
       },
       orderBy: [
-        { class: { name: 'asc' } },
-        { lastName: 'asc' },
-        { firstName: 'asc' },
-      ],
+        { user: { lastName: 'asc' } },
+        { user: { firstName: 'asc' } }
+      ]
     })
 
     return NextResponse.json(students)
   } catch (error) {
     console.error('Erreur GET /api/students :', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la récupération des élèves' },
+      { error: 'Erreur lors de la récupération des étudiants' },
       { status: 500 }
     )
   }
 }
 
-// POST /api/students - Créer un nouvel élève
+// POST /api/students - Créer un nouvel étudiant
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Non autorisé. Seuls les administrateurs peuvent créer des élèves.' },
+        { error: 'Non autorisé. Seuls les administrateurs peuvent créer des étudiants.' },
         { status: 401 }
       )
     }
 
     const body = await req.json()
-    const { firstName, lastName, email, password, classId } = body
+    const { firstName, lastName, email, password, classId, parentIds } = body
 
     // Validation des données
     if (!firstName || !lastName || !email || !password) {
@@ -90,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email }
     })
 
     if (existingUser) {
@@ -100,108 +115,123 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Vérifier si la classe existe
+    // Vérifier si la classe existe (si fournie)
     if (classId) {
       const classExists = await prisma.class.findUnique({
-        where: { id: classId },
+        where: { id: classId }
       })
 
       if (!classExists) {
         return NextResponse.json(
           { error: 'La classe spécifiée n\'existe pas' },
-          { status: 400 }
+          { status: 404 }
         )
       }
     }
 
-    // Créer l'élève
-    const student = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        password, // Dans une application réelle, vous devriez hacher le mot de passe
-        role: 'STUDENT',
-        classId,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        classId: true,
-        class: {
-          select: {
-            id: true,
-            name: true,
-          }
+    // Créer l'utilisateur et l'étudiant dans une transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Créer l'utilisateur
+      const user = await tx.user.create({
+        data: {
+          firstName,
+          lastName,
+          email,
+          password, // Dans une application réelle, vous devriez hacher le mot de passe
+          role: 'STUDENT'
+        }
+      })
+
+      // Créer l'étudiant
+      const student = await tx.student.create({
+        data: {
+          userId: user.id,
+          classId: classId || null
         },
-        createdAt: true,
-      },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          class: {
+            select: {
+              id: true,
+              name: true,
+              level: true
+            }
+          }
+        }
+      })
+
+      // Si des IDs de parents sont fournis, créer les relations
+      if (parentIds && parentIds.length > 0) {
+        for (const parentId of parentIds) {
+          await tx.parentStudent.create({
+            data: {
+              parentId,
+              studentId: student.id
+            }
+          })
+        }
+      }
+
+      return student
     })
 
-    return NextResponse.json(student, { status: 201 })
+    return NextResponse.json(result, { status: 201 })
   } catch (error) {
     console.error('Erreur POST /api/students :', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la création de l\'élève' },
+      { error: 'Erreur lors de la création de l\'étudiant' },
       { status: 500 }
     )
   }
 }
 
-// PUT /api/students - Mettre à jour un élève existant
+// PUT /api/students - Mettre à jour un étudiant existant
 export async function PUT(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Non autorisé. Seuls les administrateurs peuvent modifier des élèves.' },
+        { error: 'Non autorisé. Seuls les administrateurs peuvent modifier des étudiants.' },
         { status: 401 }
       )
     }
 
     const body = await req.json()
-    const { id, firstName, lastName, email, classId } = body
+    const { id, firstName, lastName, email, password, classId, parentIds } = body
 
     if (!id) {
       return NextResponse.json(
-        { error: 'ID de l\'élève requis' },
+        { error: 'ID de l\'étudiant requis' },
         { status: 400 }
       )
     }
 
-    // Vérifier si l'élève existe
-    const student = await prisma.user.findFirst({
-      where: { id, role: 'STUDENT' },
+    // Vérifier si l'étudiant existe
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        user: true
+      }
     })
 
     if (!student) {
       return NextResponse.json(
-        { error: 'Élève non trouvé' },
+        { error: 'Étudiant non trouvé' },
         { status: 404 }
       )
     }
 
-    // Vérifier si la classe existe
-    if (classId) {
-      const classExists = await prisma.class.findUnique({
-        where: { id: classId },
-      })
-
-      if (!classExists) {
-        return NextResponse.json(
-          { error: 'La classe spécifiée n\'existe pas' },
-          { status: 400 }
-        )
-      }
-    }
-
     // Vérifier si l'email existe déjà (sauf pour cet utilisateur)
-    if (email && email !== student.email) {
+    if (email && email !== student.user.email) {
       const existingUser = await prisma.user.findUnique({
-        where: { email },
+        where: { email }
       })
 
       if (existingUser) {
@@ -212,49 +242,100 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    // Mettre à jour l'élève
-    const updatedStudent = await prisma.user.update({
-      where: { id },
-      data: {
-        firstName: firstName ?? student.firstName,
-        lastName: lastName ?? student.lastName,
-        email: email ?? student.email,
-        classId: classId !== undefined ? classId : student.classId,
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        classId: true,
-        class: {
-          select: {
-            id: true,
-            name: true,
+    // Vérifier si la classe existe (si fournie)
+    if (classId) {
+      const classExists = await prisma.class.findUnique({
+        where: { id: classId }
+      })
+
+      if (!classExists) {
+        return NextResponse.json(
+          { error: 'La classe spécifiée n\'existe pas' },
+          { status: 404 }
+        )
+      }
+    }
+
+    // Mettre à jour l'utilisateur et l'étudiant dans une transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Mettre à jour l'utilisateur
+      const userUpdateData: any = {}
+      if (firstName) userUpdateData.firstName = firstName
+      if (lastName) userUpdateData.lastName = lastName
+      if (email) userUpdateData.email = email
+      if (password) userUpdateData.password = password // Dans une application réelle, vous devriez hacher le mot de passe
+
+      if (Object.keys(userUpdateData).length > 0) {
+        await tx.user.update({
+          where: { id: student.userId },
+          data: userUpdateData
+        })
+      }
+
+      // Mettre à jour l'étudiant
+      const studentUpdateData: any = {}
+      if (classId !== undefined) studentUpdateData.classId = classId || null
+
+      const updatedStudent = await tx.student.update({
+        where: { id },
+        data: studentUpdateData,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          class: {
+            select: {
+              id: true,
+              name: true,
+              level: true
+            }
           }
-        },
-        updatedAt: true,
-      },
+        }
+      })
+
+      // Si des IDs de parents sont fournis, mettre à jour les relations
+      if (parentIds) {
+        // Supprimer toutes les relations existantes
+        await tx.parentStudent.deleteMany({
+          where: { studentId: id }
+        })
+
+        // Créer les nouvelles relations
+        for (const parentId of parentIds) {
+          await tx.parentStudent.create({
+            data: {
+              parentId,
+              studentId: id
+            }
+          })
+        }
+      }
+
+      return updatedStudent
     })
 
-    return NextResponse.json(updatedStudent)
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Erreur PUT /api/students :', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la mise à jour de l\'élève' },
+      { error: 'Erreur lors de la mise à jour de l\'étudiant' },
       { status: 500 }
     )
   }
 }
 
-// DELETE /api/students - Supprimer un élève
+// DELETE /api/students - Supprimer un étudiant
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Non autorisé. Seuls les administrateurs peuvent supprimer des élèves.' },
+        { error: 'Non autorisé. Seuls les administrateurs peuvent supprimer des étudiants.' },
         { status: 401 }
       )
     }
@@ -264,36 +345,52 @@ export async function DELETE(req: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { error: 'ID de l\'élève requis' },
+        { error: 'ID de l\'étudiant requis' },
         { status: 400 }
       )
     }
 
-    // Vérifier si l'élève existe
-    const student = await prisma.user.findFirst({
-      where: { id, role: 'STUDENT' },
+    // Vérifier si l'étudiant existe
+    const student = await prisma.student.findUnique({
+      where: { id },
+      include: {
+        user: true
+      }
     })
 
     if (!student) {
       return NextResponse.json(
-        { error: 'Élève non trouvé' },
+        { error: 'Étudiant non trouvé' },
         { status: 404 }
       )
     }
 
-    // Supprimer l'élève
-    await prisma.user.delete({
-      where: { id },
+    // Supprimer l'étudiant et l'utilisateur dans une transaction
+    await prisma.$transaction(async (tx) => {
+      // Supprimer toutes les relations parent-étudiant
+      await tx.parentStudent.deleteMany({
+        where: { studentId: id }
+      })
+
+      // Supprimer l'étudiant
+      await tx.student.delete({
+        where: { id }
+      })
+
+      // Supprimer l'utilisateur
+      await tx.user.delete({
+        where: { id: student.userId }
+      })
     })
 
     return NextResponse.json(
-      { message: 'Élève supprimé avec succès' },
+      { message: 'Étudiant supprimé avec succès' },
       { status: 200 }
     )
   } catch (error) {
     console.error('Erreur DELETE /api/students :', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la suppression de l\'élève' },
+      { error: 'Erreur lors de la suppression de l\'étudiant' },
       { status: 500 }
     )
   }

@@ -1,13 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { useToast } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface CourseSessionFormProps {
   session?: {
@@ -16,29 +29,19 @@ interface CourseSessionFormProps {
     startTime: string
     endTime: string
     content: string
-    status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+    status: 'PLANNED' | 'ONGOING' | 'COMPLETED' | 'CANCELED'
     classId: string
     courseId: string
     teacherId: string
   }
   onClose: () => void
   onSubmit: (data: any) => void
-  classes: {
-    id: string
-    name: string
-  }[]
-  courses: {
-    id: string
-    name: string
-  }[]
-  teachers: {
-    id: string
-    firstName: string
-    lastName: string
-  }[]
+  classes: Array<{ id: string; name: string }>
+  courses: Array<{ id: string; name: string }>
+  teachers: Array<{ id: string; firstName: string; lastName: string }>
 }
 
-export function CourseSessionForm({
+export default function CourseSessionForm({
   session,
   onClose,
   onSubmit,
@@ -46,6 +49,8 @@ export function CourseSessionForm({
   courses,
   teachers,
 }: CourseSessionFormProps) {
+  const { data: sessionData } = useSession()
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     date: session?.date || '',
     startTime: session?.startTime || '',
@@ -57,40 +62,88 @@ export function CourseSessionForm({
     teacherId: session?.teacherId || '',
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.date || !formData.startTime || !formData.endTime || !formData.classId || !formData.courseId || !formData.teacherId) {
-      toast.error('Veuillez remplir tous les champs obligatoires')
+    // Validation des champs requis
+    if (!formData.date || !formData.startTime || !formData.endTime || 
+        !formData.classId || !formData.courseId || !formData.teacherId) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs obligatoires',
+        variant: 'destructive',
+      })
       return
     }
 
-    if (new Date(formData.startTime) >= new Date(formData.endTime)) {
-      toast.error('L\'heure de début doit être antérieure à l\'heure de fin')
+    // Validation des horaires
+    const startTime = new Date(`${formData.date}T${formData.startTime}`)
+    const endTime = new Date(`${formData.date}T${formData.endTime}`)
+    
+    if (endTime <= startTime) {
+      toast({
+        title: 'Erreur',
+        description: 'L\'heure de fin doit être postérieure à l\'heure de début',
+        variant: 'destructive',
+      })
       return
     }
 
-    onSubmit(formData)
+    try {
+      onSubmit(formData)
+      onClose()
+    } catch (error) {
+      toast({
+        title: 'Erreur',
+        description: 'Une erreur est survenue lors de la sauvegarde de la séance',
+        variant: 'destructive',
+      })
+    }
   }
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {session ? 'Modifier la session' : 'Ajouter une session'}
+            {session ? 'Modifier la séance' : 'Ajouter une séance'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input
+                id="date"
+                name="date"
+                type="date"
+                value={formData.date}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Statut</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PLANNED">Planifiée</SelectItem>
+                  <SelectItem value="ONGOING">En cours</SelectItem>
+                  <SelectItem value="COMPLETED">Terminée</SelectItem>
+                  <SelectItem value="CANCELED">Annulée</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -98,9 +151,10 @@ export function CourseSessionForm({
               <Label htmlFor="startTime">Heure de début</Label>
               <Input
                 id="startTime"
+                name="startTime"
                 type="time"
                 value={formData.startTime}
-                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -108,9 +162,10 @@ export function CourseSessionForm({
               <Label htmlFor="endTime">Heure de fin</Label>
               <Input
                 id="endTime"
+                name="endTime"
                 type="time"
                 value={formData.endTime}
-                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -120,29 +175,26 @@ export function CourseSessionForm({
             <Label htmlFor="classId">Classe</Label>
             <Select
               value={formData.classId}
-              onValueChange={(value) => setFormData({ ...formData, classId: value })}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, classId: value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une classe" />
               </SelectTrigger>
               <SelectContent>
-                {classes.map((class_) => (
-                  <SelectItem key={class_.id} value={class_.id}>
-                    {class_.name}
+                {classes.map((classe) => (
+                  <SelectItem key={classe.id} value={classe.id}>
+                    {classe.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {!formData.classId && (
-              <p className="text-sm text-red-500">La classe est requise</p>
-            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="courseId">Matière</Label>
             <Select
               value={formData.courseId}
-              onValueChange={(value) => setFormData({ ...formData, courseId: value })}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une matière" />
@@ -155,19 +207,16 @@ export function CourseSessionForm({
                 ))}
               </SelectContent>
             </Select>
-            {!formData.courseId && (
-              <p className="text-sm text-red-500">La matière est requise</p>
-            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="teacherId">Professeur</Label>
+            <Label htmlFor="teacherId">Enseignant</Label>
             <Select
               value={formData.teacherId}
-              onValueChange={(value) => setFormData({ ...formData, teacherId: value })}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, teacherId: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un professeur" />
+                <SelectValue placeholder="Sélectionner un enseignant" />
               </SelectTrigger>
               <SelectContent>
                 {teachers.map((teacher) => (
@@ -177,49 +226,27 @@ export function CourseSessionForm({
                 ))}
               </SelectContent>
             </Select>
-            {!formData.teacherId && (
-              <p className="text-sm text-red-500">Le professeur est requis</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="status">Statut</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED') =>
-                setFormData({ ...formData, status: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PLANNED">Planifié</SelectItem>
-                <SelectItem value="IN_PROGRESS">En cours</SelectItem>
-                <SelectItem value="COMPLETED">Terminé</SelectItem>
-                <SelectItem value="CANCELLED">Annulé</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="content">Contenu du cours</Label>
             <Textarea
               id="content"
+              name="content"
               value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              placeholder="Description du contenu du cours..."
+              onChange={handleChange}
+              rows={4}
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
             <Button type="submit">
               {session ? 'Modifier' : 'Ajouter'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

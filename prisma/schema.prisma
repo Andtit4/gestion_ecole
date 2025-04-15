@@ -1,174 +1,240 @@
-// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model classtocourse {
+  A String
+  B String
+
+  @@unique([A, B], map: "_ClassToCourse_AB_unique")
+  @@index([B], map: "_ClassToCourse_B_index")
+  @@map("_classtocourse")
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  role          Role      @default(STUDENT)
-  firstName     String
-  lastName      String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  class         Class?    @relation(fields: [classId], references: [id])
-  classId       String?
-  teacherClasses Class[]  @relation("ClassTeacher")
-  grades        Grade[]
-  attendances   Attendance[]
-  // Relations parent-enfant
-  parents       ParentChild[] @relation("ChildToParent")
-  children      ParentChild[] @relation("ParentToChild")
-  // Emploi du temps
-  schedules     Schedule[]
-}
-
-model Class {
-  id          String    @id @default(cuid())
-  name        String
-  level       String
-  year        Int
-  teacher     User      @relation("ClassTeacher", fields: [teacherId], references: [id])
-  teacherId   String
-  students    User[]
-  courses     Course[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  // Emploi du temps
-  schedules   Schedule[]
-  sessions    CourseSession[]
-}
-
-model Course {
-  id          String   @id @default(cuid())
-  name        String
-  coefficient Float
-  description String?
-  level       String   // Niveau concerné (ex: "6ème", "5ème", etc.)
-  teacherId   String
-  teacher     Teacher  @relation(fields: [teacherId], references: [id])
-  sessions    CourseSession[]
-  grades      Grade[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model CourseSession {
-  id          String   @id @default(cuid())
-  date        DateTime
-  startTime   DateTime
-  endTime     DateTime
-  content     String?
-  status      String   // "PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"
-  classId     String
-  class       Class    @relation(fields: [classId], references: [id])
-  courseId    String
-  course      Course   @relation(fields: [courseId], references: [id])
-  teacherId   String
-  teacher     Teacher  @relation(fields: [teacherId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-enum GradeType {
-  HOMEWORK
-  QUIZ
-  EXAM
-}
-
-model Grade {
-  id          String    @id @default(cuid())
-  value       Float
-  type        GradeType
-  date        DateTime
-  coefficient Float     @default(1)
-  comment     String?
-  student     Student   @relation(fields: [studentId], references: [id])
-  studentId   String
-  course      Course    @relation(fields: [courseId], references: [id])
-  courseId    String
-  teacher     Teacher   @relation(fields: [teacherId], references: [id])
-  teacherId   String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model attendance {
+  id        String            @id @default(cuid())
+  date      DateTime
+  status    attendance_status
+  studentId String
+  student   student           @relation(fields: [studentId], references: [id])
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  userId    String
+  user      user              @relation(fields: [userId], references: [id])
 
   @@index([studentId])
+  @@index([userId])
+}
+
+/// This model has been renamed to 'Renamedclass' during introspection, because the original name 'class' is reserved.
+model Renamedclass {
+  id        String       @id @default(cuid())
+  name      String
+  level     String
+  year      Int
+  teacherId String?
+  teacher   teacher?     @relation(fields: [teacherId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  students  student[]
+  schedule  schedule[]
+  sessions  coursesession[]
+  courses   course[]     @relation("ClassToCourse")
+
+  @@map("class")
+}
+
+model course {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  coefficient Float
+  level       String
+  teacherId   String
+  teacher     teacher        @relation(fields: [teacherId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  grades      grade[]
+  schedule    schedule[]
+  sessions    coursesession[]
+  classes     Renamedclass[] @relation("ClassToCourse")
+
+  @@index([teacherId])
+}
+
+model coursesession {
+  id        String               @id @default(cuid())
+  date      DateTime
+  startTime String
+  endTime   String
+  content   String?
+  status    coursesession_status @default(PLANNED)
+  classId   String
+  class     Renamedclass         @relation(fields: [classId], references: [id])
+  courseId  String
+  course    course               @relation(fields: [courseId], references: [id])
+  teacherId String
+  teacher   teacher              @relation(fields: [teacherId], references: [id])
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@index([classId])
   @@index([courseId])
   @@index([teacherId])
 }
 
-model Attendance {
-  id          String    @id @default(cuid())
+model grade {
+  id          String     @id @default(cuid())
+  value       Float
+  type        grade_type
   date        DateTime
-  status      AttendanceStatus
-  student     User      @relation(fields: [studentId], references: [id])
+  coefficient Float      @default(1)
+  comment     String?
   studentId   String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  student     student    @relation(fields: [studentId], references: [id])
+  courseId    String
+  course      course     @relation(fields: [courseId], references: [id])
+  teacherId   String
+  teacher     teacher    @relation(fields: [teacherId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([courseId])
+  @@index([studentId])
+  @@index([teacherId])
 }
 
-// Relation many-to-many entre parents et enfants
-model ParentChild {
+model parent {
+  id        String          @id @default(cuid())
+  userId    String          @unique
+  user      user            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students  parentstudent[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model parentstudent {
   id        String   @id @default(cuid())
-  parent    User     @relation("ParentToChild", fields: [parentId], references: [id], onDelete: Cascade)
   parentId  String
-  child     User     @relation("ChildToParent", fields: [childId], references: [id], onDelete: Cascade)
-  childId   String
+  parent    parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  studentId String
+  student   student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  @@unique([parentId, childId])
+  @@unique([parentId, studentId])
+  @@index([parentId])
+  @@index([studentId])
 }
 
-enum Role {
-  ADMIN
-  TEACHER
-  STUDENT
-  PARENT
+model period {
+  id          String       @id @default(cuid())
+  type        String
+  startDate   DateTime
+  endDate     DateTime
+  schoolYear  String
+  status      String
+  reportCards reportcard[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  LATE
-  EXCUSED
+model reportcard {
+  id           String   @id @default(cuid())
+  periodId     String
+  period       period   @relation(fields: [periodId], references: [id])
+  studentId    String
+  student      student  @relation(fields: [studentId], references: [id])
+  average      Float
+  appreciation String?
+  generatedAt  DateTime @default(now())
+  status       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([periodId])
+  @@index([studentId])
 }
 
-// Modèle pour les créneaux horaires de l'emploi du temps
-model TimeSlot {
-  id          String    @id @default(cuid())
-  dayOfWeek   DayOfWeek
-  startTime   DateTime
-  endTime     DateTime
-  schedules   Schedule[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-// Modèle pour l'emploi du temps
-model Schedule {
-  id          String    @id @default(cuid())
-  class       Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
-  classId     String
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId    String
-  teacher     User      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  teacherId   String
-  timeSlot    TimeSlot  @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
-  timeSlotId  String
-  room        String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model schedule {
+  id         String       @id @default(cuid())
+  classId    String
+  class      Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  courseId   String
+  course     course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId     String
+  user       user         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeSlotId String
+  timeslot   timeslot     @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  room       String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
   @@unique([classId, timeSlotId])
+  @@index([courseId])
+  @@index([userId])
+  @@index([timeSlotId])
 }
 
-enum DayOfWeek {
+model student {
+  id          String          @id @default(cuid())
+  userId      String          @unique
+  user        user            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classId     String?
+  class       Renamedclass?   @relation(fields: [classId], references: [id])
+  grades      grade[]
+  reportCards reportcard[]
+  attendances attendance[]
+  parents     parentstudent[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([classId])
+}
+
+model teacher {
+  id        String          @id @default(cuid())
+  userId    String          @unique
+  user      user            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classes   Renamedclass[]
+  courses   course[]
+  sessions  coursesession[]
+  grades    grade[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model timeslot {
+  id        String             @id @default(cuid())
+  dayOfWeek timeslot_dayOfWeek
+  startTime DateTime
+  endTime   DateTime
+  schedules schedule[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model user {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  password    String
+  role        user_role     @default(STUDENT)
+  firstName   String
+  lastName    String
+  student     student?
+  parent      parent?
+  teacher     teacher?
+  attendances attendance[]
+  schedules   schedule[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum timeslot_dayOfWeek {
   MONDAY
   TUESDAY
   WEDNESDAY
@@ -178,43 +244,29 @@ enum DayOfWeek {
   SUNDAY
 }
 
-model Period {
-  id          String   @id @default(cuid())
-  type        String   // "QUARTER" ou "SEMESTER"
-  startDate   DateTime
-  endDate     DateTime
-  schoolYear  String
-  status      String   // "IN_PROGRESS", "COMPLETED"
-  reportCards ReportCard[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum attendance_status {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
 }
 
-model ReportCard {
-  id          String   @id @default(cuid())
-  periodId    String
-  period      Period   @relation(fields: [periodId], references: [id])
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id])
-  average     Float
-  appreciation String?
-  generatedAt DateTime @default(now())
-  status      String   // "DRAFT", "FINALIZED"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum user_role {
+  ADMIN
+  TEACHER
+  STUDENT
+  PARENT
 }
 
-// Mise à jour du modèle Student pour inclure les relations
-model Student {
-  // ... existing code ...
-  grades      Grade[]
-  reportCards ReportCard[]
+enum coursesession_status {
+  PLANNED
+  ONGOING
+  COMPLETED
+  CANCELED
 }
 
-// Mise à jour du modèle Teacher pour inclure les relations
-model Teacher {
-  // ... existing code ...
-  courses     Course[]
-  sessions    CourseSession[]
-  grades      Grade[]
-} 
+enum grade_type {
+  HOMEWORK
+  QUIZ
+  EXAM
+}
