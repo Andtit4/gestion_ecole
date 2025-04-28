@@ -32,7 +32,22 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(courses)
+    // Formater les données pour inclure clairement les informations de l'enseignant
+    const formattedCourses = courses.map(course => ({
+      id: course.id,
+      name: course.name,
+      coefficient: course.coefficient,
+      level: course.level,
+      description: course.description,
+      teacherId: course.teacherId,
+      teacher: course.teacher ? {
+        id: course.teacher.id,
+        firstName: course.teacher.user.firstName,
+        lastName: course.teacher.user.lastName
+      } : null
+    }))
+
+    return NextResponse.json(formattedCourses)
   } catch (error) {
     console.error('Erreur lors de la récupération des cours:', error)
     return NextResponse.json({

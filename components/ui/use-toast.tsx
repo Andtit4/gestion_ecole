@@ -94,13 +94,14 @@ export const toast = (props: {
 }) => {
   const { title, description, variant = "default" } = props
 
-  // Map variant to Sonner toast type
-  const type = variant === "destructive" ? "error" : 
-               variant === "success" ? "success" : "default"
-
-  return sonnerToast[type](title, {
-    description,
-  })
+  // Utiliser directement les méthodes de sonnerToast
+  if (variant === "destructive") {
+    return sonnerToast.error(title, { description })
+  } else if (variant === "success") {
+    return sonnerToast.success(title, { description })
+  } else {
+    return sonnerToast(title, { description })
+  }
 }
 
 export function useToast() {

@@ -1,9 +1,17 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/lib/auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
 
-// GET /api/timetable/schedule/[id] - Récupérer un emploi du temps spécifique
+// Schéma de validation pour la mise à jour
+const updateScheduleSchema = z.object({
+  courseId: z.string().uuid().optional(),
+  teacherId: z.string().uuid().optional(),
+  room: z.string().min(1).optional(),
+})
+
+// GET /api/timetable/schedule/[id] - Récupérer un cours spécifique de l'emploi du temps
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -20,189 +28,187 @@ export async function GET(
     const schedule = await prisma.schedule.findUnique({
       where: { id },
       include: {
-        class: true,
-        course: true,
+        class: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        course: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         teacher: {
           select: {
             id: true,
             firstName: true,
-            lastName: true,
-            email: true,
+            lastName: true
           }
         },
-        timeSlot: true
+        timeslot: true
       }
     })
     
     if (!schedule) {
       return NextResponse.json(
-        { message: 'Emploi du temps non trouvé' },
+        { message: 'Cours non trouvé dans l\'emploi du temps' },
         { status: 404 }
       )
     }
     
-    // Formater les données pour l'affichage
-    const formattedSchedule = {
-      id: schedule.id,
-      classId: schedule.classId,
-      courseId: schedule.courseId,
-      teacherId: schedule.teacherId,
-      timeSlotId: schedule.timeSlotId,
-      room: schedule.room,
-      class: {
-        id: schedule.class.id,
-        name: schedule.class.name
-      },
-      course: {
-        id: schedule.course.id,
-        name: schedule.course.name
-      },
-      teacher: {
-        id: schedule.teacher.id,
-        name: `${schedule.teacher.firstName} ${schedule.teacher.lastName}`
-      },
-      timeSlot: schedule.timeSlot
-    }
-    
-    return NextResponse.json(formattedSchedule)
+    return NextResponse.json(schedule)
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'emploi du temps:', error)
+    console.error('Erreur lors de la récupération du cours:', error)
     return NextResponse.json(
-      { message: 'Erreur lors de la récupération de l\'emploi du temps' },
+      { message: 'Erreur serveur' },
       { status: 500 }
     )
   }
 }
 
-// PUT /api/timetable/schedule/[id] - Mettre à jour un emploi du temps
+// PUT /api/timetable/schedule/[id] - Mettre à jour un cours dans l'emploi du temps
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json(
+        { message: 'Non autorisé. Seuls les administrateurs peuvent modifier l\'emploi du temps.' },
+        { status: 401 }
+      )
     }
     
     const id = params.id
-    const { classId, courseId, teacherId, timeSlotId, room } = await request.json()
+    const body = await request.json()
     
-    // Validation des données
-    if (!classId || !courseId || !teacherId || !timeSlotId || !room) {
+    // Valider les données
+    const validationResult = updateScheduleSchema.safeParse(body)
+    if (!validationResult.success) {
       return NextResponse.json(
-        { message: 'Tous les champs sont requis' },
+        { message: 'Données invalides', errors: validationResult.error.format() },
         { status: 400 }
       )
     }
     
-    // Vérifier si l'emploi du temps existe
+    // Vérifier si le cours existe
     const existingSchedule = await prisma.schedule.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        timeslot: true
+      }
     })
     
     if (!existingSchedule) {
       return NextResponse.json(
-        { message: 'Emploi du temps non trouvé' },
+        { message: 'Cours non trouvé dans l\'emploi du temps' },
         { status: 404 }
       )
     }
     
-    // Si le créneau horaire a changé, vérifier les conflits
-    if (timeSlotId !== existingSchedule.timeSlotId) {
-      // Vérifier si ce créneau est déjà occupé pour cette classe
-      const existingScheduleForClass = await prisma.schedule.findFirst({
-        where: {
-          classId,
-          timeSlotId,
-          id: { not: id }
-        }
+    const { courseId, teacherId, room } = validationResult.data
+    
+    const updateData: any = {}
+    
+    if (room) updateData.room = room
+    
+    if (courseId) {
+      // Vérifier si le cours existe
+      const courseExists = await prisma.course.findUnique({
+        where: { id: courseId }
       })
       
-      if (existingScheduleForClass) {
+      if (!courseExists) {
         return NextResponse.json(
-          { message: 'Ce créneau horaire est déjà utilisé pour cette classe' },
-          { status: 400 }
+          { message: 'Cours non trouvé' },
+          { status: 404 }
         )
       }
       
-      // Vérifier si ce créneau est déjà occupé pour cet enseignant
-      const existingScheduleForTeacher = await prisma.schedule.findFirst({
-        where: {
-          teacherId,
-          timeSlotId,
-          id: { not: id }
-        }
-      })
-      
-      if (existingScheduleForTeacher) {
-        return NextResponse.json(
-          { message: 'Cet enseignant est déjà occupé pendant ce créneau horaire' },
-          { status: 400 }
-        )
-      }
+      updateData.courseId = courseId
     }
     
-    // Mettre à jour l'emploi du temps
+    if (teacherId) {
+      // Vérifier si l'enseignant existe
+      const teacher = await prisma.teacher.findUnique({
+        where: { id: teacherId },
+        include: { user: true }
+      })
+      
+      if (!teacher) {
+        return NextResponse.json(
+          { message: 'Enseignant non trouvé' },
+          { status: 404 }
+        )
+      }
+      
+      // Vérifier si l'enseignant est déjà occupé à ce créneau
+      if (teacherId !== existingSchedule.teacher.id) {
+        const existingForTeacher = await prisma.schedule.findFirst({
+          where: {
+            userId: teacher.user.id,
+            timeSlotId: existingSchedule.timeSlotId,
+            timeslot: {
+              dayOfWeek: existingSchedule.timeslot.dayOfWeek
+            },
+            id: { not: id }
+          }
+        })
+        
+        if (existingForTeacher) {
+          return NextResponse.json(
+            { message: 'Cet enseignant a déjà un cours à ce créneau horaire' },
+            { status: 409 }
+          )
+        }
+      }
+      
+      updateData.userId = teacher.user.id
+    }
+    
+    // Mettre à jour le cours
     const updatedSchedule = await prisma.schedule.update({
       where: { id },
-      data: {
-        classId,
-        courseId,
-        teacherId,
-        timeSlotId,
-        room
-      },
+      data: updateData,
       include: {
-        class: true,
-        course: true,
+        class: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        course: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         teacher: {
           select: {
             id: true,
             firstName: true,
-            lastName: true,
-            email: true,
+            lastName: true
           }
         },
-        timeSlot: true
+        timeslot: true
       }
     })
     
-    // Formater les données pour l'affichage
-    const formattedSchedule = {
-      id: updatedSchedule.id,
-      classId: updatedSchedule.classId,
-      courseId: updatedSchedule.courseId,
-      teacherId: updatedSchedule.teacherId,
-      timeSlotId: updatedSchedule.timeSlotId,
-      room: updatedSchedule.room,
-      class: {
-        id: updatedSchedule.class.id,
-        name: updatedSchedule.class.name
-      },
-      course: {
-        id: updatedSchedule.course.id,
-        name: updatedSchedule.course.name
-      },
-      teacher: {
-        id: updatedSchedule.teacher.id,
-        name: `${updatedSchedule.teacher.firstName} ${updatedSchedule.teacher.lastName}`
-      },
-      timeSlot: updatedSchedule.timeSlot
-    }
-    
-    return NextResponse.json(formattedSchedule)
+    return NextResponse.json(updatedSchedule)
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de l\'emploi du temps:', error)
+    console.error('Erreur lors de la mise à jour du cours:', error)
     return NextResponse.json(
-      { message: 'Erreur lors de la mise à jour de l\'emploi du temps' },
+      { message: 'Erreur serveur' },
       { status: 500 }
     )
   }
 }
 
-// DELETE /api/timetable/schedule/[id] - Supprimer un emploi du temps
+// DELETE /api/timetable/schedule/[id] - Supprimer un cours de l'emploi du temps
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -211,33 +217,38 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json(
+        { message: 'Non autorisé. Seuls les administrateurs peuvent modifier l\'emploi du temps.' },
+        { status: 401 }
+      )
     }
     
     const id = params.id
     
-    // Vérifier si l'emploi du temps existe
+    // Vérifier si le cours existe
     const existingSchedule = await prisma.schedule.findUnique({
       where: { id }
     })
     
     if (!existingSchedule) {
       return NextResponse.json(
-        { message: 'Emploi du temps non trouvé' },
+        { message: 'Cours non trouvé dans l\'emploi du temps' },
         { status: 404 }
       )
     }
     
-    // Supprimer l'emploi du temps
+    // Supprimer le cours
     await prisma.schedule.delete({
       where: { id }
     })
     
-    return NextResponse.json({ message: 'Emploi du temps supprimé avec succès' })
-  } catch (error) {
-    console.error('Erreur lors de la suppression de l\'emploi du temps:', error)
     return NextResponse.json(
-      { message: 'Erreur lors de la suppression de l\'emploi du temps' },
+      { message: 'Cours supprimé avec succès de l\'emploi du temps' }
+    )
+  } catch (error) {
+    console.error('Erreur lors de la suppression du cours:', error)
+    return NextResponse.json(
+      { message: 'Erreur serveur' },
       { status: 500 }
     )
   }

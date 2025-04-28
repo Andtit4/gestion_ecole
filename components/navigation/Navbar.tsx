@@ -16,7 +16,8 @@ export function Navbar() {
     { name: 'Classes', href: '/classes' },
     { name: 'Professeurs', href: '/teachers' },
     { name: 'Matières', href: '/courses' },
-    { name: 'Sessions', href: '/course-sessions' },
+    { name: 'Salles', href: '/classrooms' },
+    { name: 'Emploi du temps', href: '/timetable' },
     { name: 'Notes', href: '/grades' },
     { name: 'Bulletins', href: '/report-cards' },
   ]

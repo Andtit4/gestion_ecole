@@ -10,9 +10,9 @@ interface TeacherDashboardProps {
 
 export default function TeacherDashboard({ user }: TeacherDashboardProps) {
   const [myClasses] = useState([
-    { id: 1, name: '6ème A', students: 25, nextCourse: 'Mathématiques - 10:00' },
-    { id: 2, name: '5ème B', students: 28, nextCourse: 'Français - 14:00' },
-    { id: 3, name: '4ème C', students: 22, nextCourse: 'Histoire - 15:30' },
+    { id: 1, name: '6ème A', students: 25, nextDay: 'Lundi - 10:00' },
+    { id: 2, name: '5ème B', students: 28, nextDay: 'Mardi - 14:00' },
+    { id: 3, name: '4ème C', students: 22, nextDay: 'Jeudi - 15:30' },
   ])
 
   const quickActions = [
@@ -29,9 +29,9 @@ export default function TeacherDashboard({ user }: TeacherDashboardProps) {
       icon: '📝',
     },
     {
-      title: 'Planning des cours',
+      title: 'Emploi du temps',
       description: 'Voir mon emploi du temps',
-      href: '/teacher/schedule',
+      href: '/timetable',
       icon: '📅',
     },
     {
@@ -64,7 +64,7 @@ export default function TeacherDashboard({ user }: TeacherDashboardProps) {
                       {classe.students} élèves
                     </p>
                     <p className="mt-1 text-sm text-indigo-600">
-                      Prochain cours : {classe.nextCourse}
+                      Prochain cours : {classe.nextDay}
                     </p>
                   </div>
                 </div>

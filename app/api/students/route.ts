@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
 
     // Vérifier si la classe existe (si fournie)
     if (classId) {
-      const classExists = await prisma.class.findUnique({
+      const classExists = await prisma.renamedclass.findUnique({
         where: { id: classId }
       })
 
@@ -244,7 +244,7 @@ export async function PUT(req: NextRequest) {
 
     // Vérifier si la classe existe (si fournie)
     if (classId) {
-      const classExists = await prisma.class.findUnique({
+      const classExists = await prisma.renamedclass.findUnique({
         where: { id: classId }
       })
 

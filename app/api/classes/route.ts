@@ -17,13 +17,39 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const classes = await prisma.class.findMany({
+    const classes = await prisma.renamedclass.findMany({
       orderBy: {
         name: 'asc'
+      },
+      include: {
+        teacher: {
+          include: {
+            user: true
+          }
+        },
+        _count: {
+          select: {
+            students: true
+          }
+        }
       }
     })
     
-    return NextResponse.json(classes)
+    // Formater les données pour l'affichage
+    const formattedClasses = classes.map(cls => ({
+      id: cls.id,
+      name: cls.name,
+      level: cls.level,
+      year: cls.year,
+      teacher: {
+        id: cls.teacher?.id,
+        firstName: cls.teacher?.user.firstName,
+        lastName: cls.teacher?.user.lastName
+      },
+      studentCount: cls._count.students
+    }))
+    
+    return NextResponse.json(formattedClasses)
   } catch (error) {
     console.error('Erreur lors de la récupération des classes:', error)
     return NextResponse.json({
@@ -57,39 +83,92 @@ export async function POST(req: NextRequest) {
     }
 
     // Vérifier si l'enseignant existe et est bien un enseignant
-    const teacher = await prisma.user.findFirst({
-      where: { id: teacherId, role: 'TEACHER' },
+    const teacher = await prisma.teacher.findUnique({
+      where: { 
+        id: teacherId
+      },
+      include: {
+        user: true
+      }
     })
 
+    // Si non trouvé avec l'ID direct, essayer de trouver via userId
     if (!teacher) {
-      return NextResponse.json(
-        { error: 'Enseignant non trouvé' },
-        { status: 404 }
-      )
+      const teacherByUserId = await prisma.teacher.findFirst({
+        where: { 
+          userId: teacherId
+        },
+        include: {
+          user: true
+        }
+      })
+      
+      if (!teacherByUserId) {
+        return NextResponse.json(
+          { error: 'Enseignant non trouvé' },
+          { status: 404 }
+        )
+      }
+      
+      // Utiliser l'enseignant trouvé via userId
+      const newClass = await prisma.renamedclass.create({
+        data: {
+          name,
+          level,
+          year,
+          teacherId: teacherByUserId.id,
+        },
+        include: {
+          teacher: {
+            include: {
+              user: true
+            }
+          }
+        }
+      })
+
+      return NextResponse.json({
+        id: newClass.id,
+        name: newClass.name,
+        level: newClass.level,
+        year: newClass.year,
+        teacher: {
+          id: newClass.teacher?.id,
+          firstName: newClass.teacher?.user.firstName,
+          lastName: newClass.teacher?.user.lastName
+        },
+        studentCount: 0
+      }, { status: 201 })
     }
 
-    // Créer la classe
-    const newClass = await prisma.class.create({
+    // Si l'enseignant est trouvé directement, créer la classe
+    const newClass = await prisma.renamedclass.create({
       data: {
         name,
         level,
         year,
-        teacherId,
+        teacherId: teacher.id,
       },
       include: {
         teacher: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
+          include: {
+            user: true
+          }
+        }
+      }
     })
 
     return NextResponse.json({
-      ...newClass,
-      studentCount: 0, // Nouvelle classe, donc pas d'élèves
+      id: newClass.id,
+      name: newClass.name,
+      level: newClass.level,
+      year: newClass.year,
+      teacher: {
+        id: newClass.teacher?.id,
+        firstName: newClass.teacher?.user.firstName,
+        lastName: newClass.teacher?.user.lastName
+      },
+      studentCount: 0
     }, { status: 201 })
   } catch (error) {
     console.error('Erreur POST /api/classes :', error)
@@ -122,7 +201,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Vérifier si la classe existe
-    const existingClass = await prisma.class.findUnique({
+    const existingClass = await prisma.renamedclass.findUnique({
       where: { id },
       include: {
         students: true,
@@ -138,9 +217,23 @@ export async function PUT(req: NextRequest) {
 
     // Vérifier que l'enseignant existe s'il est spécifié
     if (teacherId) {
-      const teacher = await prisma.user.findFirst({
-        where: { id: teacherId, role: 'TEACHER' },
+      // D'abord essayer de trouver l'enseignant par son ID direct
+      let teacher = await prisma.teacher.findUnique({
+        where: { id: teacherId },
+        include: {
+          user: true
+        }
       })
+
+      // Si non trouvé, essayer par userId
+      if (!teacher) {
+        teacher = await prisma.teacher.findFirst({
+          where: { userId: teacherId },
+          include: {
+            user: true
+          }
+        })
+      }
 
       if (!teacher) {
         return NextResponse.json(
@@ -148,31 +241,70 @@ export async function PUT(req: NextRequest) {
           { status: 404 }
         )
       }
+
+      // Utiliser l'ID correct de l'enseignant pour la mise à jour
+      const updatedTeacherId = teacher.id
+      
+      // Mettre à jour la classe
+      const updatedClass = await prisma.renamedclass.update({
+        where: { id },
+        data: {
+          name,
+          level,
+          year,
+          teacherId: updatedTeacherId,
+        },
+        include: {
+          teacher: {
+            include: {
+              user: true
+            }
+          }
+        }
+      })
+
+      return NextResponse.json({
+        id: updatedClass.id,
+        name: updatedClass.name,
+        level: updatedClass.level,
+        year: updatedClass.year,
+        teacher: {
+          id: updatedClass.teacher?.id,
+          firstName: updatedClass.teacher?.user.firstName,
+          lastName: updatedClass.teacher?.user.lastName
+        },
+        studentCount: existingClass.students.length
+      })
     }
 
-    // Mettre à jour la classe
-    const updatedClass = await prisma.class.update({
+    // Mettre à jour la classe sans modifier l'enseignant
+    const updatedClass = await prisma.renamedclass.update({
       where: { id },
       data: {
-        name: name ?? existingClass.name,
-        level: level ?? existingClass.level,
-        year: year ?? existingClass.year,
-        teacherId: teacherId ?? existingClass.teacherId,
+        name,
+        level,
+        year
       },
       include: {
         teacher: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
+          include: {
+            user: true
+          }
+        }
+      }
     })
 
     return NextResponse.json({
-      ...updatedClass,
-      studentCount: existingClass.students.length,
+      id: updatedClass.id,
+      name: updatedClass.name,
+      level: updatedClass.level,
+      year: updatedClass.year,
+      teacher: {
+        id: updatedClass.teacher?.id,
+        firstName: updatedClass.teacher?.user.firstName,
+        lastName: updatedClass.teacher?.user.lastName
+      },
+      studentCount: existingClass.students.length
     })
   } catch (error) {
     console.error('Erreur PUT /api/classes :', error)
@@ -205,7 +337,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Vérifier si la classe existe
-    const existingClass = await prisma.class.findUnique({
+    const existingClass = await prisma.renamedclass.findUnique({
       where: { id },
       include: {
         students: true,
@@ -228,7 +360,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Supprimer la classe
-    await prisma.class.delete({
+    await prisma.renamedclass.delete({
       where: { id },
     })
 

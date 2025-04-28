@@ -7,24 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model classtocourse {
-  A String
-  B String
-
-  @@unique([A, B], map: "_ClassToCourse_AB_unique")
-  @@index([B], map: "_ClassToCourse_B_index")
-  @@map("_classtocourse")
-}
-
 model attendance {
   id        String            @id @default(cuid())
   date      DateTime
   status    attendance_status
   studentId String
-  student   student           @relation(fields: [studentId], references: [id])
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   userId    String
+  student   student           @relation(fields: [studentId], references: [id])
   user      user              @relation(fields: [userId], references: [id])
 
   @@index([studentId])
@@ -33,58 +24,36 @@ model attendance {
 
 /// This model has been renamed to 'Renamedclass' during introspection, because the original name 'class' is reserved.
 model Renamedclass {
-  id        String       @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String
   level     String
   year      Int
   teacherId String?
-  teacher   teacher?     @relation(fields: [teacherId], references: [id])
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  students  student[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  teacher   teacher?   @relation(fields: [teacherId], references: [id])
   schedule  schedule[]
-  sessions  coursesession[]
-  courses   course[]     @relation("ClassToCourse")
+  students  student[]
+  course    course[]   @relation("classtocourse")
 
+  @@index([teacherId], map: "class_teacherId_fkey")
   @@map("class")
 }
 
 model course {
-  id          String         @id @default(cuid())
-  name        String
-  description String?
-  coefficient Float
-  level       String
-  teacherId   String
-  teacher     teacher        @relation(fields: [teacherId], references: [id])
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  grades      grade[]
-  schedule    schedule[]
-  sessions    coursesession[]
-  classes     Renamedclass[] @relation("ClassToCourse")
+  id           String         @id @default(cuid())
+  name         String
+  description  String?
+  coefficient  Float
+  level        String
+  teacherId    String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  teacher      teacher        @relation(fields: [teacherId], references: [id])
+  grades       grade[]
+  schedule     schedule[]
+  Renamedclass Renamedclass[] @relation("classtocourse")
 
-  @@index([teacherId])
-}
-
-model coursesession {
-  id        String               @id @default(cuid())
-  date      DateTime
-  startTime String
-  endTime   String
-  content   String?
-  status    coursesession_status @default(PLANNED)
-  classId   String
-  class     Renamedclass         @relation(fields: [classId], references: [id])
-  courseId  String
-  course    course               @relation(fields: [courseId], references: [id])
-  teacherId String
-  teacher   teacher              @relation(fields: [teacherId], references: [id])
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
-
-  @@index([classId])
-  @@index([courseId])
   @@index([teacherId])
 }
 
@@ -96,13 +65,13 @@ model grade {
   coefficient Float      @default(1)
   comment     String?
   studentId   String
-  student     student    @relation(fields: [studentId], references: [id])
   courseId    String
-  course      course     @relation(fields: [courseId], references: [id])
   teacherId   String
-  teacher     teacher    @relation(fields: [teacherId], references: [id])
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  course      course     @relation(fields: [courseId], references: [id])
+  student     student    @relation(fields: [studentId], references: [id])
+  teacher     teacher    @relation(fields: [teacherId], references: [id])
 
   @@index([courseId])
   @@index([studentId])
@@ -112,23 +81,34 @@ model grade {
 model parent {
   id        String          @id @default(cuid())
   userId    String          @unique
-  user      user            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  students  parentstudent[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+  user      user            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students  parentstudent[]
 }
 
 model parentstudent {
   id        String   @id @default(cuid())
   parentId  String
-  parent    parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
   studentId String
-  student   student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  parent    parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student   student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([parentId, studentId])
   @@index([parentId])
   @@index([studentId])
+}
+
+model classroom {
+  id          String   @id @default(cuid())
+  name        String
+  capacity    Int?
+  floor       Int?
+  building    String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model period {
@@ -138,23 +118,23 @@ model period {
   endDate     DateTime
   schoolYear  String
   status      String
-  reportCards reportcard[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  reportCards reportcard[]
 }
 
 model reportcard {
   id           String   @id @default(cuid())
   periodId     String
-  period       period   @relation(fields: [periodId], references: [id])
   studentId    String
-  student      student  @relation(fields: [studentId], references: [id])
   average      Float
   appreciation String?
   generatedAt  DateTime @default(now())
   status       String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  period       period   @relation(fields: [periodId], references: [id])
+  student      student  @relation(fields: [studentId], references: [id])
 
   @@index([periodId])
   @@index([studentId])
@@ -163,49 +143,48 @@ model reportcard {
 model schedule {
   id         String       @id @default(cuid())
   classId    String
-  class      Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade)
   courseId   String
-  course     course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
   userId     String
-  user       user         @relation(fields: [userId], references: [id], onDelete: Cascade)
   timeSlotId String
-  timeslot   timeslot     @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
   room       String
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
+  class      Renamedclass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  course     course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  timeslot   timeslot     @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  user       user         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([classId, timeSlotId])
   @@index([courseId])
   @@index([userId])
   @@index([timeSlotId])
+  @@index([classId])
 }
 
 model student {
   id          String          @id @default(cuid())
   userId      String          @unique
-  user        user            @relation(fields: [userId], references: [id], onDelete: Cascade)
   classId     String?
-  class       Renamedclass?   @relation(fields: [classId], references: [id])
-  grades      grade[]
-  reportCards reportcard[]
-  attendances attendance[]
-  parents     parentstudent[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  attendances attendance[]
+  grades      grade[]
+  parents     parentstudent[]
+  reportCards reportcard[]
+  class       Renamedclass?   @relation(fields: [classId], references: [id])
+  user        user            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([classId])
 }
 
 model teacher {
-  id        String          @id @default(cuid())
-  userId    String          @unique
-  user      user            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   classes   Renamedclass[]
   courses   course[]
-  sessions  coursesession[]
   grades    grade[]
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  user      user           @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model timeslot {
@@ -213,25 +192,25 @@ model timeslot {
   dayOfWeek timeslot_dayOfWeek
   startTime DateTime
   endTime   DateTime
-  schedules schedule[]
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
+  schedules schedule[]
 }
 
 model user {
-  id          String        @id @default(cuid())
-  email       String        @unique
+  id          String       @id @default(cuid())
+  email       String       @unique
   password    String
-  role        user_role     @default(STUDENT)
+  role        user_role    @default(STUDENT)
   firstName   String
   lastName    String
-  student     student?
-  parent      parent?
-  teacher     teacher?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   attendances attendance[]
+  parent      parent?
   schedules   schedule[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  student     student?
+  teacher     teacher?
 }
 
 enum timeslot_dayOfWeek {
@@ -256,13 +235,6 @@ enum user_role {
   TEACHER
   STUDENT
   PARENT
-}
-
-enum coursesession_status {
-  PLANNED
-  ONGOING
-  COMPLETED
-  CANCELED
 }
 
 enum grade_type {

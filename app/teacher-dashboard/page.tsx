@@ -10,23 +10,6 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import Link from 'next/link';
 
-interface CourseSession {
-  id: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  content: string;
-  status: 'PLANNED' | 'ONGOING' | 'COMPLETED' | 'CANCELED';
-  class: {
-    id: string;
-    name: string;
-  };
-  course: {
-    id: string;
-    name: string;
-  };
-}
-
 interface Class {
   id: string;
   name: string;
@@ -40,11 +23,26 @@ interface Course {
   level: string;
 }
 
+interface ScheduleEntry {
+  id: string;
+  timeSlotId: string;
+  dayOfWeek: string;
+  room: string;
+  course: {
+    id: string;
+    name: string;
+  };
+  class: {
+    id: string;
+    name: string;
+  };
+}
+
 export default function TeacherDashboardPage() {
   const { data: session } = useSession();
-  const [upcomingSessions, setUpcomingSessions] = useState<CourseSession[]>([]);
   const [myClasses, setMyClasses] = useState<Class[]>([]);
   const [myCourses, setMyCourses] = useState<Course[]>([]);
+  const [mySchedule, setMySchedule] = useState<ScheduleEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState({ firstName: '', lastName: '' });
 
@@ -74,9 +72,9 @@ export default function TeacherDashboardPage() {
     try {
       setIsLoading(true);
       await Promise.all([
-        fetchUpcomingSessions(teacherId),
         fetchClasses(teacherId),
         fetchCourses(teacherId),
+        fetchSchedule(teacherId),
       ]);
     } catch (error) {
       toast.error('Impossible de charger les données du professeur');
@@ -85,15 +83,14 @@ export default function TeacherDashboardPage() {
     }
   };
 
-  const fetchUpcomingSessions = async (teacherId: string) => {
+  const fetchSchedule = async (teacherId: string) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`/api/course-sessions?teacherId=${teacherId}&startDate=${today}`);
-      if (!response.ok) throw new Error('Erreur lors de la récupération des séances');
+      const response = await fetch(`/api/timetable/schedule?teacherId=${teacherId}`);
+      if (!response.ok) throw new Error('Erreur lors de la récupération de l\'emploi du temps');
       const data = await response.json();
-      setUpcomingSessions(data.slice(0, 5)); // Prendre les 5 premières séances à venir
+      setMySchedule(data);
     } catch (error) {
-      console.error('Erreur lors de la récupération des séances:', error);
+      console.error('Erreur lors de la récupération de l\'emploi du temps:', error);
     }
   };
 
@@ -119,33 +116,14 @@ export default function TeacherDashboardPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PLANNED':
-        return 'bg-blue-100 text-blue-800';
-      case 'ONGOING':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
-      case 'CANCELED':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'PLANNED':
-        return 'Planifiée';
-      case 'ONGOING':
-        return 'En cours';
-      case 'COMPLETED':
-        return 'Terminée';
-      case 'CANCELED':
-        return 'Annulée';
-      default:
-        return status;
+  const getWeekDayName = (dayOfWeek: string) => {
+    switch (dayOfWeek) {
+      case 'MONDAY': return 'Lundi';
+      case 'TUESDAY': return 'Mardi';
+      case 'WEDNESDAY': return 'Mercredi';
+      case 'THURSDAY': return 'Jeudi';
+      case 'FRIDAY': return 'Vendredi';
+      default: return dayOfWeek;
     }
   };
 
@@ -190,58 +168,53 @@ export default function TeacherDashboardPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-lg">Prochaines séances</CardTitle>
+            <CardTitle className="text-lg">Heures de cours</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{upcomingSessions.length}</p>
+            <p className="text-3xl font-bold">{mySchedule.length}</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="sessions" className="w-full">
+      <Tabs defaultValue="schedule" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="sessions">Prochaines séances</TabsTrigger>
+          <TabsTrigger value="schedule">Mon emploi du temps</TabsTrigger>
           <TabsTrigger value="classes">Mes classes</TabsTrigger>
           <TabsTrigger value="courses">Mes matières</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="sessions">
+        <TabsContent value="schedule">
           <Card>
             <CardHeader>
-              <CardTitle>Prochaines séances de cours</CardTitle>
+              <CardTitle>Mon emploi du temps hebdomadaire</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <p>Chargement...</p>
-              ) : upcomingSessions.length === 0 ? (
-                <p>Aucune séance prévue prochainement.</p>
+              ) : mySchedule.length === 0 ? (
+                <p>Aucun cours programmé pour le moment.</p>
               ) : (
                 <div className="space-y-4">
-                  {upcomingSessions.map((session) => (
-                    <div key={session.id} className="p-4 border rounded-lg">
+                  {mySchedule.map((entry) => (
+                    <div key={entry.id} className="p-4 border rounded-lg">
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-semibold text-lg">
-                            {session.course.name} - {session.class.name}
+                            {entry.course.name} - {entry.class.name}
                           </h3>
                           <p className="text-sm text-gray-500">
-                            {format(new Date(session.date), 'EEEE d MMMM yyyy', { locale: fr })}
+                            {getWeekDayName(entry.dayOfWeek)}
                           </p>
                           <p className="text-sm">
-                            {session.startTime} - {session.endTime}
+                            Salle: {entry.room}
                           </p>
                         </div>
-                        <span 
-                          className={`px-2 py-1 rounded-full text-xs ${getStatusColor(session.status)}`}
-                        >
-                          {getStatusLabel(session.status)}
-                        </span>
                       </div>
                     </div>
                   ))}
                   <div className="flex justify-end mt-4">
                     <Button asChild>
-                      <Link href="/course-sessions">Voir toutes les séances</Link>
+                      <Link href="/timetable">Voir l'emploi du temps complet</Link>
                     </Button>
                   </div>
                 </div>

@@ -314,7 +314,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Vérifier si l'enseignant est associé à des classes
-    const classes = await prisma.class.findMany({
+    const classes = await prisma.renamedclass.findMany({
       where: { teacherId: id },
     })
 

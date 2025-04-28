@@ -13,7 +13,7 @@ export async function GET() {
     }
     
     // Récupérer tous les créneaux horaires, triés par jour et heure de début
-    const timeSlots = await prisma.timeSlot.findMany({
+    const timeSlots = await prisma.timeslot.findMany({
       orderBy: [
         { dayOfWeek: 'asc' },
         { startTime: 'asc' }
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     const isoEndTime = createISODateTime(endTime);
     
     // Créer le créneau horaire
-    const timeSlot = await prisma.timeSlot.create({
+    const timeSlot = await prisma.timeslot.create({
       data: {
         dayOfWeek,
         startTime: isoStartTime,
