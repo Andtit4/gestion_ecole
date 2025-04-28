@@ -1,159 +1,187 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-end-rgb));
+    color: rgb(var(--foreground-rgb));
+    background: rgb(var(--background-end-rgb));
 }
 
 @layer components {
-  .form-input {
-    margin-top: 0.25rem;
-    display: block;
-    width: 100%;
-    border-radius: 0.375rem;
-    border-color: #D1D5DB;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
-
-  .form-input:focus {
-    border-color: #6366F1;
-    ring-color: #6366F1;
-  }
-
-  .btn-primary {
-    padding: 0.5rem 1rem;
-    border-width: 1px;
-    border-color: transparent;
-    border-radius: 0.375rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    font-weight: 500;
-    color: white;
-    background-color: #4F46E5;
-  }
-
-  .btn-primary:hover {
-    background-color: #4338CA;
-  }
-
-  .btn-primary:focus {
-    outline: none;
-    ring-width: 2px;
-    ring-offset-width: 2px;
-    ring-color: #6366F1;
-  }
-
-  .btn-secondary {
-    padding: 0.5rem 1rem;
-    border-width: 1px;
-    border-color: #D1D5DB;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    color: #374151;
-  }
-
-  .btn-secondary:hover {
-    background-color: #F9FAFB;
-  }
-
-  .btn-secondary:focus {
-    outline: none;
-    ring-width: 2px;
-    ring-offset-width: 2px;
-    ring-color: #6366F1;
-  }
-
-  .card {
-    background-color: white;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-  }
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-
-  .table-container {
-    margin-top: 1rem;
-    overflow-x: auto;
-  }
-
-  .table-header {
-    padding: 0.75rem 1.5rem;
-    text-align: left;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #6B7280;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .table-cell {
-    padding: 0.75rem 1.5rem;
-    white-space: nowrap;
-    font-size: 0.875rem;
-    color: #6B7280;
-  }
-
-  .modal {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(107, 114, 128, 0.75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .modal-content {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    max-width: 42rem;
-    width: 100%;
-    margin-left: 1rem;
-    margin-right: 1rem;
-  }
-  
-  /* Styles améliorés pour les DialogContent */
-  [data-radix-dialog-content] {
-    background-color: white !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
-    border-radius: 0.5rem !important;
-    border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  }
-
-  /* Style amélioré pour l'overlay de fond */
-  [data-radix-dialog-overlay] {
-    background-color: rgba(0, 0, 0, 0.7) !important;
-    backdrop-filter: blur(4px) !important;
-  }
-
-  /* Styles pour les champs formulaire au sein des modals */
-  [data-radix-dialog-content] input,
-  [data-radix-dialog-content] select,
-  [data-radix-dialog-content] [data-radix-select-trigger] {
-    background-color: white !important;
-    border-color: #d1d5db !important;
-  }
-
-  /* État focus amélioré */
-  [data-radix-dialog-content] input:focus,
-  [data-radix-dialog-content] select:focus,
-  [data-radix-dialog-content] [data-radix-select-trigger]:focus {
-    border-color: #2563eb !important;
-    outline: 2px solid #dbeafe !important;
-    outline-offset: 1px !important;
-  }
-} 
+    .form-input {
+        margin-top: 0.25rem;
+        display: block;
+        width: 100%;
+        border-radius: 0.375rem;
+        border-color: #D1D5DB;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    .form-input:focus {
+        border-color: #6366F1;
+        ring-color: #6366F1;
+    }
+    .btn-primary {
+        padding: 0.5rem 1rem;
+        border-width: 1px;
+        border-color: transparent;
+        border-radius: 0.375rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        font-weight: 500;
+        color: white;
+        background-color: #4F46E5;
+    }
+    .btn-primary:hover {
+        background-color: #4338CA;
+    }
+    .btn-primary:focus {
+        outline: none;
+        ring-width: 2px;
+        ring-offset-width: 2px;
+        ring-color: #6366F1;
+    }
+    .btn-secondary {
+        padding: 0.5rem 1rem;
+        border-width: 1px;
+        border-color: #D1D5DB;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        color: #374151;
+    }
+    .btn-secondary:hover {
+        background-color: #F9FAFB;
+    }
+    .btn-secondary:focus {
+        outline: none;
+        ring-width: 2px;
+        ring-offset-width: 2px;
+        ring-color: #6366F1;
+    }
+    .card {
+        background-color: white;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .table-container {
+        margin-top: 1rem;
+        overflow-x: auto;
+    }
+    .table-header {
+        padding: 0.75rem 1.5rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #6B7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .table-cell {
+        padding: 0.75rem 1.5rem;
+        white-space: nowrap;
+        font-size: 0.875rem;
+        color: #6B7280;
+    }
+    .modal {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(107, 114, 128, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-width: 42rem;
+        width: 100%;
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+    /* Overlay pour le fond des modales */
+    div[data-radix-popper-content-wrapper] {
+        background: transparent !important;
+    }
+    /* Style pour l'overlay Radix UI */
+    [data-radix-dialog-overlay] {
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        backdrop-filter: blur(2px);
+    }
+    /* Style pour le contenu des modales Radix UI */
+    [data-radix-dialog-content] {
+        background-color: white !important;
+        color: #000 !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+        border-radius: 0.5rem !important;
+        border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    }
+    /* Styles pour les champs formulaire au sein des modales */
+    [data-radix-dialog-content] input,
+    [data-radix-dialog-content] select,
+    [data-radix-dialog-content] [data-radix-select-trigger] {
+        background-color: white !important;
+        border-color: #d1d5db !important;
+    }
+    /* État focus amélioré */
+    [data-radix-dialog-content] input:focus,
+    [data-radix-dialog-content] select:focus,
+    [data-radix-dialog-content] [data-radix-select-trigger]:focus {
+        border-color: #2563eb !important;
+        outline: 2px solid #dbeafe !important;
+        outline-offset: 1px !important;
+    }
+    /* Styles pour le select box Radix UI */
+    [data-radix-select-trigger] {
+        background-color: white !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+        padding: 0.5rem !important;
+        min-width: 200px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        color: #000000 !important;
+    }
+    [data-radix-select-trigger]>span {
+        color: #000000 !important;
+        background-color: white !important;
+    }
+    [data-radix-select-trigger][data-placeholder]>span {
+        color: #000000 !important;
+        background-color: white !important;
+    }
+    [data-radix-select-trigger]>div {
+        background-color: white !important;
+    }
+    [data-radix-select-content] {
+        background-color: white !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        z-index: 50 !important;
+    }
+    [data-radix-select-item] {
+        padding: 0.5rem 1rem !important;
+        cursor: pointer !important;
+        color: #000000 !important;
+        background-color: white !important;
+    }
+    [data-radix-select-item]:hover {
+        background-color: #f3f4f6 !important;
+    }
+    [data-radix-select-item][data-highlighted] {
+        background-color: #e5e7eb !important;
+    }
+}

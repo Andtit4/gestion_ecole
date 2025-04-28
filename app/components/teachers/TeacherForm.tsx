@@ -57,7 +57,7 @@ export default function TeacherForm({ teacherId, onClose }: TeacherFormProps) {
     setError('')
 
     try {
-      const url = teacherId ? `/api/users/${teacherId}` : '/api/users'
+      const url = teacherId ? `/api/teachers` : '/api/teachers'
       const method = teacherId ? 'PUT' : 'POST'
 
       const payload = {
@@ -76,7 +76,7 @@ export default function TeacherForm({ teacherId, onClose }: TeacherFormProps) {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
-        throw new Error(data.message || 'Erreur lors de l\'enregistrement de l\'enseignant')
+        throw new Error(data.error || 'Erreur lors de l\'enregistrement de l\'enseignant')
       }
 
       if (onClose) {

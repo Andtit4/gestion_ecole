@@ -7,9 +7,11 @@ import { z } from 'zod';
 
 // Schéma de validation pour la création/mise à jour de session de cours
 const courseSessionSchema = z.object({
-  date: z.string(),
-  startTime: z.string(),
-  endTime: z.string(),
+  date: z.string().refine(val => !isNaN(Date.parse(val)), {
+    message: 'Format de date invalide'
+  }),
+  startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Format d\'heure invalide (HH:MM)'),
+  endTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, 'Format d\'heure invalide (HH:MM)'),
   content: z.string().optional(),
   status: z.enum([
     CourseSessionStatus.PLANNED,
@@ -17,9 +19,9 @@ const courseSessionSchema = z.object({
     CourseSessionStatus.COMPLETED,
     CourseSessionStatus.CANCELED,
   ]),
-  classId: z.string().min(1, "Class ID is required"),
-  courseId: z.string().min(1, "Course ID is required"),
-  teacherId: z.string().min(1, "Teacher ID is required"),
+  classId: z.string().uuid('ID de classe invalide'),
+  courseId: z.string().uuid('ID de matière invalide'),
+  teacherId: z.string().uuid('ID d\'enseignant invalide'),
 });
 
 // GET /api/course-sessions - Récupérer les sessions de cours avec possibilité de filtres
@@ -28,87 +30,70 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { message: "Non autorisé" },
+        { error: 'Vous devez être connecté pour accéder à cette ressource' },
         { status: 401 }
       );
     }
 
-    // Récupération des paramètres de filtrage
-    const { searchParams } = new URL(request.url);
-    const classId = searchParams.get("classId");
-    const courseId = searchParams.get("courseId");
-    const teacherId = searchParams.get("teacherId");
-    const status = searchParams.get("status") as CourseSessionStatus | null;
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
+    const url = new URL(request.url);
+    const classId = url.searchParams.get('classId');
+    const courseId = url.searchParams.get('courseId');
+    const teacherId = url.searchParams.get('teacherId');
+    const status = url.searchParams.get('status');
+    const date = url.searchParams.get('date');
 
-    // Construction du filtre selon les paramètres fournis
-    const filter: any = {};
+    // Construire les conditions de filtre
+    const where: any = {};
 
-    if (classId) {
-      filter.classId = classId;
-    }
-
-    if (courseId) {
-      filter.courseId = courseId;
-    }
-
-    if (teacherId) {
-      filter.teacherId = teacherId;
-    }
-
-    if (status) {
-      filter.status = status;
-    }
-
-    // Si une plage de dates est spécifiée
-    if (startDate || endDate) {
-      filter.date = {};
-      if (startDate) {
-        filter.date.gte = new Date(startDate);
-      }
-      if (endDate) {
-        filter.date.lte = new Date(endDate);
-      }
-    }
+    if (classId) where.classId = classId;
+    if (courseId) where.courseId = courseId;
+    if (teacherId) where.teacherId = teacherId;
+    if (status) where.status = status;
+    if (date) where.date = new Date(date);
 
     // Si l'utilisateur est un enseignant, limiter aux cours qu'il enseigne
     if (session.user.role === "TEACHER" && session.user.teacherId) {
-      filter.teacherId = session.user.teacherId;
+      where.teacherId = session.user.teacherId;
     }
 
     // Récupérer les sessions de cours avec inclusion des relations
     const courseSessions = await prisma.courseSession.findMany({
-      where: filter,
+      where,
       include: {
-        class: true,
-        course: true,
-        teacher: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-              },
-            },
-          },
+        class: {
+          select: {
+            id: true,
+            name: true
+          }
         },
+        course: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        teacher: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        }
       },
       orderBy: [
-        { date: "asc" },
-        { startTime: "asc" },
-      ],
+        { date: 'desc' },
+        { startTime: 'asc' }
+      ]
     });
 
     return NextResponse.json(courseSessions);
   } catch (error) {
-    console.error("Error retrieving course sessions:", error);
-    return NextResponse.json(
-      { message: "Erreur lors de la récupération des sessions de cours" },
-      { status: 500 }
-    );
+    console.error('Erreur lors de la récupération des séances:', error);
+    return NextResponse.json({
+      error: 'Erreur de connexion à la base de données. Assurez-vous que le serveur MySQL est bien démarré.'
+    }, {
+      status: 503
+    });
   }
 }
 
@@ -118,7 +103,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json(
-        { message: "Non autorisé" },
+        { error: 'Vous devez être connecté pour créer une séance' },
         { status: 401 }
       );
     }
@@ -137,7 +122,7 @@ export async function POST(request: NextRequest) {
     const validationResult = courseSessionSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { message: "Données invalides", errors: validationResult.error.format() },
+        { error: 'Données invalides', details: validationResult.error.format() },
         { status: 400 }
       );
     }
@@ -158,7 +143,7 @@ export async function POST(request: NextRequest) {
     });
     if (!classExists) {
       return NextResponse.json(
-        { message: "Classe introuvable" },
+        { error: 'La classe spécifiée n\'existe pas' },
         { status: 404 }
       );
     }
@@ -169,7 +154,7 @@ export async function POST(request: NextRequest) {
     });
     if (!courseExists) {
       return NextResponse.json(
-        { message: "Matière introuvable" },
+        { error: 'La matière spécifiée n\'existe pas' },
         { status: 404 }
       );
     }
@@ -180,7 +165,7 @@ export async function POST(request: NextRequest) {
     });
     if (!teacherExists) {
       return NextResponse.json(
-        { message: "Enseignant introuvable" },
+        { error: 'L\'enseignant spécifié n\'existe pas' },
         { status: 404 }
       );
     }
@@ -227,9 +212,9 @@ export async function POST(request: NextRequest) {
         endTime,
         content,
         status,
-        class: { connect: { id: classId } },
-        course: { connect: { id: courseId } },
-        teacher: { connect: { id: teacherId } },
+        classId,
+        courseId,
+        teacherId,
       },
       include: {
         class: true,
@@ -251,11 +236,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(courseSession, { status: 201 });
   } catch (error) {
-    console.error("Error creating course session:", error);
-    return NextResponse.json(
-      { message: "Erreur lors de la création de la session de cours" },
-      { status: 500 }
-    );
+    console.error('Erreur lors de la création de la séance:', error);
+    return NextResponse.json({
+      error: 'Erreur de connexion à la base de données. Assurez-vous que le serveur MySQL est bien démarré.'
+    }, {
+      status: 503
+    });
   }
 }
 

@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/components/ui/use-toast'
 
 interface CourseFormProps {
   course?: {
@@ -36,18 +37,23 @@ export function CourseForm({ course, onClose, onSubmit, teachers }: CourseFormPr
     description: course?.description || '',
     teacherId: course?.teacherId || '',
   })
+  const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(formData)
   }
 
+  const handleChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value })
+  }
+
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px] bg-white">
         <DialogHeader>
           <DialogTitle>
-            {course ? 'Modifier une matière' : 'Ajouter une matière'}
+            {course ? 'Modifier la matière' : 'Ajouter une matière'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -56,7 +62,7 @@ export function CourseForm({ course, onClose, onSubmit, teachers }: CourseFormPr
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) => handleChange('name', e.target.value)}
               required
             />
           </div>
@@ -69,20 +75,20 @@ export function CourseForm({ course, onClose, onSubmit, teachers }: CourseFormPr
               min="1"
               value={formData.coefficient}
               onChange={(e) =>
-                setFormData({ ...formData, coefficient: parseFloat(e.target.value) })
+                handleChange('coefficient', e.target.value)
               }
               required
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="mb-4">
             <Label htmlFor="level">Niveau</Label>
             <Select
               value={formData.level}
-              onValueChange={(value) => setFormData({ ...formData, level: value })}
+              onValueChange={(value) => handleChange('level', value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner le niveau" />
+              <SelectTrigger id="level">
+                <SelectValue placeholder="Sélectionner un niveau" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="6ème">6ème</SelectItem>
@@ -101,18 +107,18 @@ export function CourseForm({ course, onClose, onSubmit, teachers }: CourseFormPr
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => handleChange('description', e.target.value)}
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="mb-4">
             <Label htmlFor="teacherId">Professeur</Label>
             <Select
               value={formData.teacherId}
-              onValueChange={(value) => setFormData({ ...formData, teacherId: value })}
+              onValueChange={(value) => handleChange('teacherId', value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner le professeur" />
+              <SelectTrigger id="teacherId">
+                <SelectValue placeholder="Sélectionner un professeur" />
               </SelectTrigger>
               <SelectContent>
                 {teachers.map((teacher) => (
@@ -124,14 +130,14 @@ export function CourseForm({ course, onClose, onSubmit, teachers }: CourseFormPr
             </Select>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter>
+            <Button variant="outline" type="button" onClick={onClose}>
               Annuler
             </Button>
             <Button type="submit">
-              {course ? 'Modifier' : 'Ajouter'}
+              {course ? 'Mettre à jour' : 'Ajouter'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

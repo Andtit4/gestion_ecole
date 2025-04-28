@@ -46,12 +46,29 @@ export default function TeacherDashboardPage() {
   const [myClasses, setMyClasses] = useState<Class[]>([]);
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState({ firstName: '', lastName: '' });
 
   useEffect(() => {
     if (session?.user?.id) {
+      fetchUserInfo(session.user.id);
       fetchTeacherData(session.user.id);
     }
   }, [session]);
+
+  const fetchUserInfo = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`);
+      if (response.ok) {
+        const userData = await response.json();
+        setUserName({
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || ''
+        });
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération des informations utilisateur:', error);
+    }
+  };
 
   const fetchTeacherData = async (teacherId: string) => {
     try {
@@ -150,7 +167,9 @@ export default function TeacherDashboardPage() {
 
   return (
     <div className="container mx-auto py-6">
-      <h1 className="text-2xl font-bold mb-6">Tableau de bord Professeur</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        Tableau de bord Professeur {userName.firstName} {userName.lastName}
+      </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>

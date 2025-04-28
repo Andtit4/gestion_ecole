@@ -1,70 +1,116 @@
-import Link from 'next/link'
+'use client'
 
-const Navbar = () => {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { signIn, signOut, useSession } from 'next-auth/react'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle } from 'lucide-react'
+
+export default function Navbar() {
+  const pathname = usePathname()
+  const { data: session, status } = useSession()
+  const { toast } = useToast()
+  const [dbError, setDbError] = useState(false)
+
+  // Vérifier l'état de la connexion à la base de données
+  useEffect(() => {
+    const checkDatabase = async () => {
+      try {
+        const response = await fetch('/api/health')
+        if (response.ok) {
+          setDbError(false)
+        } else {
+          setDbError(true)
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification de la base de données:', error)
+        setDbError(true)
+      }
+    }
+
+    // Vérifier immédiatement au chargement
+    checkDatabase()
+
+    // Puis vérifier toutes les 30 secondes
+    const interval = setInterval(checkDatabase, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const isActive = (path: string) => {
+    return pathname === path
+      ? 'text-primary font-medium border-b-2 border-primary'
+      : 'hover:text-primary hover:border-b-2 hover:border-primary transition-colors'
+  }
 
   return (
-    <div className="bg-gray-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 h-8 w-auto">
-              {/* Logo */}
+    <div className="w-full">
+      {dbError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erreur de connexion à la base de données</AlertTitle>
+          <AlertDescription>
+            Impossible de se connecter à MySQL. Assurez-vous que le serveur de base de données est démarré.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <nav className="bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex-shrink-0">
+              <Link href="/" className="text-xl font-bold">
+                Gestion École
+              </Link>
             </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <Link
-                  href="/students"
-                  className={`${
-                    pathname === '/students'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } rounded-md px-3 py-2 text-sm font-medium`}
-                >
-                  Élèves
-                </Link>
-                <Link
-                  href="/classes"
-                  className={`${
-                    pathname === '/classes'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } rounded-md px-3 py-2 text-sm font-medium`}
-                >
-                  Classes
-                </Link>
-                <Link
-                  href="/teachers"
-                  className={`${
-                    pathname === '/teachers'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } rounded-md px-3 py-2 text-sm font-medium`}
-                >
-                  Professeurs
-                </Link>
-                <Link
-                  href="/courses"
-                  className={`${
-                    pathname === '/courses'
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  } rounded-md px-3 py-2 text-sm font-medium`}
-                >
-                  Matières
-                </Link>
-              </div>
+            
+            <div className="flex space-x-8">
+              {session ? (
+                <>
+                  <Link href="/dashboard" className={isActive('/dashboard')}>
+                    Tableau de bord
+                  </Link>
+                  <Link href="/students" className={isActive('/students')}>
+                    Élèves
+                  </Link>
+                  <Link href="/teachers" className={isActive('/teachers')}>
+                    Enseignants
+                  </Link>
+                  <Link href="/classes" className={isActive('/classes')}>
+                    Classes
+                  </Link>
+                  <Link href="/courses" className={isActive('/courses')}>
+                    Matières
+                  </Link>
+                  <Link href="/course-sessions" className={isActive('/course-sessions')}>
+                    Séances
+                  </Link>
+                  <Link href="/grades" className={isActive('/grades')}>
+                    Notes
+                  </Link>
+                </>
+              ) : null}
             </div>
-          </div>
-          <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6">
-              {/* User dropdown */}
+            
+            <div>
+              {session ? (
+                <div className="flex items-center gap-4">
+                  <span>
+                    {session.user.firstName} {session.user.lastName}
+                  </span>
+                  <Button variant="outline" onClick={() => signOut()}>
+                    Déconnexion
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={() => signIn()}>Connexion</Button>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </nav>
     </div>
   )
-}
-
-export default Navbar 
+} 

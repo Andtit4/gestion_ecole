@@ -39,6 +39,7 @@ export default function CoursesPage() {
     level: '',
     teacherId: '',
   })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     fetchCourses()
@@ -47,27 +48,58 @@ export default function CoursesPage() {
 
   const fetchCourses = async () => {
     try {
+      setLoading(true)
+      let url = '/api/courses'
       const params = new URLSearchParams()
+      
       if (filters.level) params.append('level', filters.level)
       if (filters.teacherId) params.append('teacherId', filters.teacherId)
-
-      const response = await fetch(`/api/courses?${params.toString()}`)
-      if (!response.ok) throw new Error('Erreur lors de la récupération des matières')
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`
+      }
+      
+      const response = await fetch(url)
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Échec de la récupération des matières')
+      }
+      
       const data = await response.json()
       setCourses(data)
     } catch (error) {
-      toast.error('Erreur lors de la récupération des matières')
+      console.error('Erreur lors de la récupération des matières:', error)
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de charger les matières',
+        variant: 'destructive',
+      })
+      setCourses([])
+    } finally {
+      setLoading(false)
     }
   }
 
   const fetchTeachers = async () => {
     try {
       const response = await fetch('/api/teachers')
-      if (!response.ok) throw new Error('Erreur lors de la récupération des professeurs')
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Échec de la récupération des enseignants')
+      }
+      
       const data = await response.json()
       setTeachers(data)
     } catch (error) {
-      toast.error('Erreur lors de la récupération des professeurs')
+      console.error('Erreur lors de la récupération des enseignants:', error)
+      toast({
+        title: 'Erreur',
+        description: error.message || 'Impossible de charger les enseignants',
+        variant: 'destructive',
+      })
+      setTeachers([])
     }
   }
 
@@ -133,7 +165,7 @@ export default function CoursesPage() {
                 <SelectValue placeholder="Niveau" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les niveaux</SelectItem>
+                <SelectItem value="all">Tous les niveaux</SelectItem>
                 <SelectItem value="6ème">6ème</SelectItem>
                 <SelectItem value="5ème">5ème</SelectItem>
                 <SelectItem value="4ème">4ème</SelectItem>
@@ -152,7 +184,7 @@ export default function CoursesPage() {
                 <SelectValue placeholder="Professeur" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tous les professeurs</SelectItem>
+                <SelectItem value="all">Tous les professeurs</SelectItem>
                 {teachers.map((teacher) => (
                   <SelectItem key={teacher.id} value={teacher.id}>
                     {teacher.firstName} {teacher.lastName}

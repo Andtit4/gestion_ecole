@@ -25,11 +25,12 @@ export default function TeacherList() {
 
   const fetchTeachers = async () => {
     try {
-      const response = await fetch('/api/users?role=TEACHER')
+      const response = await fetch('/api/teachers')
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des enseignants')
       }
       const data = await response.json()
+      console.log('Données reçues:', data)
       
       // Récupérer le nombre de classes pour chaque enseignant
       const teachersWithClassesCount = await Promise.all(
@@ -38,11 +39,29 @@ export default function TeacherList() {
             const classesResponse = await fetch(`/api/teachers/${teacher.id}/classes`)
             if (classesResponse.ok) {
               const classes = await classesResponse.json()
-              return { ...teacher, classesCount: classes.length }
+              return { 
+                id: teacher.id,
+                firstName: teacher.user?.firstName || teacher.firstName,
+                lastName: teacher.user?.lastName || teacher.lastName,
+                email: teacher.user?.email || teacher.email,
+                classesCount: classes.length 
+              }
             }
-            return { ...teacher, classesCount: 0 }
+            return { 
+              id: teacher.id,
+              firstName: teacher.user?.firstName || teacher.firstName,
+              lastName: teacher.user?.lastName || teacher.lastName,
+              email: teacher.user?.email || teacher.email,
+              classesCount: 0 
+            }
           } catch (e) {
-            return { ...teacher, classesCount: 0 }
+            return { 
+              id: teacher.id,
+              firstName: teacher.user?.firstName || teacher.firstName,
+              lastName: teacher.user?.lastName || teacher.lastName,
+              email: teacher.user?.email || teacher.email,
+              classesCount: 0 
+            }
           }
         })
       )

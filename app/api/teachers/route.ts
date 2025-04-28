@@ -1,82 +1,116 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/lib/auth'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/teachers - Récupérer tous les enseignants
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    
     if (!session) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json({
+        error: 'Vous devez être connecté pour accéder à cette ressource'
+      }, {
+        status: 401
+      })
     }
 
-    const { searchParams } = new URL(req.url)
-    const search = searchParams.get('search')
-    const courseId = searchParams.get('courseId')
-
-    const where: Record<string, unknown> = {
-      role: 'TEACHER',
-    }
-
+    const url = new URL(request.url)
+    const search = url.searchParams.get('search')
+    
+    let where = {}
     if (search) {
-      where.OR = [
-        { firstName: { contains: search } },
-        { lastName: { contains: search } },
-        { email: { contains: search } },
-      ]
-    }
-
-    // Si on cherche par cours, il faut une jointure avec la table des cours
-    let teachers
-    if (courseId) {
-      teachers = await prisma.user.findMany({
-        where: {
-          role: 'TEACHER',
-          courses: {
-            some: {
-              id: courseId
+      where = {
+        OR: [
+          {
+            user: {
+              firstName: {
+                contains: search,
+                mode: 'insensitive'
+              }
+            }
+          },
+          {
+            user: {
+              lastName: {
+                contains: search,
+                mode: 'insensitive'
+              }
             }
           }
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        orderBy: [
-          { lastName: 'asc' },
-          { firstName: 'asc' },
-        ],
+        ]
+      }
+    }
+    
+    let teachers
+    
+    // Récupérer les enseignants avec leurs utilisateurs associés
+    if (session.user.role === 'ADMIN') {
+      teachers = await prisma.teacher.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true, 
+              lastName: true,
+              email: true,
+              createdAt: true
+            }
+          }
+        }
       })
+
+      // Transformer la réponse pour avoir un format plus simple
+      teachers = teachers.map(teacher => ({
+        id: teacher.id,
+        firstName: teacher.user.firstName,
+        lastName: teacher.user.lastName,
+        email: teacher.user.email,
+        createdAt: teacher.user.createdAt
+      }))
     } else {
       teachers = await prisma.user.findMany({
-        where,
+        where: {
+          ...where,
+          role: 'TEACHER'
+        },
         select: {
           id: true,
           firstName: true,
           lastName: true,
           email: true,
           createdAt: true,
-          updatedAt: true,
-        },
-        orderBy: [
-          { lastName: 'asc' },
-          { firstName: 'asc' },
-        ],
+          teacher: {
+            select: {
+              id: true
+            }
+          }
+        }
       })
+      
+      // Transformer la réponse pour avoir le même format
+      teachers = teachers
+        .filter(user => user.teacher)
+        .map(user => ({
+          id: user.teacher.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          createdAt: user.createdAt
+        }))
     }
-
+    
     return NextResponse.json(teachers)
+
   } catch (error) {
     console.error('Erreur GET /api/teachers :', error)
-    return NextResponse.json(
-      { error: 'Erreur lors de la récupération des enseignants' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      error: 'Erreur de connexion à la base de données. Assurez-vous que le serveur MySQL est bien démarré.'
+    }, {
+      status: 503
+    })
   }
 }
 
@@ -115,7 +149,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Créer l'enseignant
-    const teacher = await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         firstName,
         lastName,
@@ -131,6 +165,23 @@ export async function POST(req: NextRequest) {
         role: true,
         createdAt: true,
       },
+    })
+
+    // Créer l'entrée dans la table teacher
+    const teacher = await prisma.teacher.create({
+      data: {
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          }
+        }
+      }
     })
 
     return NextResponse.json(teacher, { status: 201 })
@@ -248,8 +299,11 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Vérifier si l'enseignant existe
-    const teacher = await prisma.user.findFirst({
-      where: { id, role: 'TEACHER' },
+    const teacher = await prisma.teacher.findUnique({
+      where: { id },
+      include: {
+        user: true
+      }
     })
 
     if (!teacher) {
@@ -283,10 +337,15 @@ export async function DELETE(req: NextRequest) {
       )
     }
 
-    // Supprimer l'enseignant
-    await prisma.user.delete({
-      where: { id },
-    })
+    // Supprimer l'enseignant et son utilisateur associé
+    await prisma.$transaction([
+      prisma.teacher.delete({
+        where: { id }
+      }),
+      prisma.user.delete({
+        where: { id: teacher.userId }
+      })
+    ])
 
     return NextResponse.json(
       { message: 'Enseignant supprimé avec succès' },

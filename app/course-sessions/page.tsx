@@ -36,6 +36,13 @@ import { CourseSessionStatus } from "@prisma/client";
 import { DateRange } from "react-day-picker";
 import { useToast } from '@/components/ui/use-toast';
 import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { formatTime, getStatusBadge } from '@/lib/utils'
 
 const statusColors = {
   PLANNED: "bg-blue-500",
@@ -51,13 +58,16 @@ const statusLabels = {
   CANCELED: "Annulé",
 };
 
-interface CourseSession {
+type CourseSession = {
   id: string;
   date: string;
   startTime: string;
   endTime: string;
-  content: string;
+  content?: string;
   status: 'PLANNED' | 'ONGOING' | 'COMPLETED' | 'CANCELED';
+  classId: string;
+  courseId: string;
+  teacherId: string;
   class: {
     id: string;
     name: string;
@@ -68,10 +78,12 @@ interface CourseSession {
   };
   teacher: {
     id: string;
-    firstName: string;
-    lastName: string;
+    user: {
+      firstName: string;
+      lastName: string;
+    }
   };
-}
+};
 
 interface Class {
   id: string;
@@ -89,6 +101,14 @@ interface Teacher {
   lastName: string;
 }
 
+type Filters = {
+  classId?: string;
+  courseId?: string;
+  teacherId?: string;
+  status?: string;
+  date?: Date | null;
+};
+
 export default function CourseSessionsPage() {
   const { data: session } = useSession();
   const { toast } = useToast();
@@ -98,87 +118,137 @@ export default function CourseSessionsPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedSession, setSelectedSession] = useState<CourseSession | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    classId: '',
-    courseId: '',
-    teacherId: '',
-    status: '',
-    startDate: '',
-    endDate: '',
-  });
+  const [filters, setFilters] = useState<Filters>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await Promise.all([
+          fetchSessions(),
+          fetchClasses(),
+          fetchCourses(),
+          fetchTeachers(),
+        ]);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+        toast({
+          title: 'Erreur',
+          description: 'Impossible de charger les données',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     fetchSessions();
-    fetchClasses();
-    fetchCourses();
-    fetchTeachers();
-  }, []);
+  }, [filters]);
 
   const fetchSessions = async () => {
     try {
-      const queryParams = new URLSearchParams();
-      if (filters.classId) queryParams.append('classId', filters.classId);
-      if (filters.courseId) queryParams.append('courseId', filters.courseId);
-      if (filters.teacherId) queryParams.append('teacherId', filters.teacherId);
-      if (filters.status) queryParams.append('status', filters.status);
-      if (filters.startDate) queryParams.append('startDate', filters.startDate);
-      if (filters.endDate) queryParams.append('endDate', filters.endDate);
-
-      const response = await fetch(`/api/course-sessions?${queryParams.toString()}`);
-      if (!response.ok) throw new Error('Erreur lors de la récupération des séances');
+      let url = '/api/course-sessions';
+      const params = new URLSearchParams();
+      
+      if (filters.classId) params.append('classId', filters.classId);
+      if (filters.courseId) params.append('courseId', filters.courseId);
+      if (filters.teacherId) params.append('teacherId', filters.teacherId);
+      if (filters.status) params.append('status', filters.status);
+      if (filters.date) params.append('date', format(filters.date, 'yyyy-MM-dd'));
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Échec de la récupération des sessions');
+      }
+      
       const data = await response.json();
       setSessions(data);
     } catch (error) {
+      console.error('Erreur lors de la récupération des sessions:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les séances de cours',
+        description: error.message || 'Impossible de charger les sessions de cours',
         variant: 'destructive',
       });
+      setSessions([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchClasses = async () => {
     try {
       const response = await fetch('/api/classes');
-      if (!response.ok) throw new Error('Erreur lors de la récupération des classes');
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Échec de la récupération des classes');
+      }
+      
       const data = await response.json();
       setClasses(data);
     } catch (error) {
+      console.error('Erreur lors de la récupération des classes:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les classes',
+        description: error.message || 'Impossible de charger les classes',
         variant: 'destructive',
       });
+      setClasses([]);
     }
   };
 
   const fetchCourses = async () => {
     try {
       const response = await fetch('/api/courses');
-      if (!response.ok) throw new Error('Erreur lors de la récupération des matières');
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Échec de la récupération des matières');
+      }
+      
       const data = await response.json();
       setCourses(data);
     } catch (error) {
+      console.error('Erreur lors de la récupération des matières:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les matières',
+        description: error.message || 'Impossible de charger les matières',
         variant: 'destructive',
       });
+      setCourses([]);
     }
   };
 
   const fetchTeachers = async () => {
     try {
       const response = await fetch('/api/teachers');
-      if (!response.ok) throw new Error('Erreur lors de la récupération des enseignants');
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Échec de la récupération des enseignants');
+      }
+      
       const data = await response.json();
       setTeachers(data);
     } catch (error) {
+      console.error('Erreur lors de la récupération des enseignants:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de charger les enseignants',
+        description: error.message || 'Impossible de charger les enseignants',
         variant: 'destructive',
       });
+      setTeachers([]);
     }
   };
 
@@ -196,8 +266,7 @@ export default function CourseSessionsPage() {
       courseId: '',
       teacherId: '',
       status: '',
-      startDate: '',
-      endDate: '',
+      date: null,
     });
     fetchSessions();
   };
@@ -269,6 +338,25 @@ export default function CourseSessionsPage() {
     }
   };
 
+  const formatSessionData = (sessions: CourseSession[]) => {
+    return sessions.map(session => {
+      const teacherName = session.teacher?.user ? 
+        `${session.teacher.user.firstName} ${session.teacher.user.lastName}` : 
+        "Enseignant inconnu";
+      
+      return {
+        id: session.id,
+        date: format(new Date(session.date), 'dd/MM/yyyy'),
+        time: `${session.startTime} - ${session.endTime}`,
+        class: session.class.name,
+        course: session.course.name,
+        teacher: teacherName,
+        status: session.status,
+        // ... other fields
+      };
+    });
+  };
+
   if (!session) {
     return (
       <div className="container mx-auto p-4">
@@ -289,17 +377,17 @@ export default function CourseSessionsPage() {
           <CardTitle>Filtres</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Classe</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
               <Select
-                value={filters.classId}
-                onValueChange={(value) => handleFilterChange('classId', value)}
+                value={filters.classId || ''}
+                onValueChange={(value) => handleFilterChange('classId', value || undefined)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Toutes les classes" />
+                <SelectTrigger id="filter-class">
+                  <SelectValue placeholder="Classe" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Toutes les classes</SelectItem>
                   {classes.map((classe) => (
                     <SelectItem key={classe.id} value={classe.id}>
                       {classe.name}
@@ -308,17 +396,17 @@ export default function CourseSessionsPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Matière</Label>
+            
+            <div>
               <Select
-                value={filters.courseId}
-                onValueChange={(value) => handleFilterChange('courseId', value)}
+                value={filters.courseId || ''}
+                onValueChange={(value) => handleFilterChange('courseId', value || undefined)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Toutes les matières" />
+                <SelectTrigger id="filter-course">
+                  <SelectValue placeholder="Matière" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Toutes les matières</SelectItem>
                   {courses.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.name}
@@ -327,17 +415,17 @@ export default function CourseSessionsPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Enseignant</Label>
+            
+            <div>
               <Select
-                value={filters.teacherId}
-                onValueChange={(value) => handleFilterChange('teacherId', value)}
+                value={filters.teacherId || ''}
+                onValueChange={(value) => handleFilterChange('teacherId', value || undefined)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous les enseignants" />
+                <SelectTrigger id="filter-teacher">
+                  <SelectValue placeholder="Professeur" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Tous les professeurs</SelectItem>
                   {teachers.map((teacher) => (
                     <SelectItem key={teacher.id} value={teacher.id}>
                       {teacher.firstName} {teacher.lastName}
@@ -346,17 +434,17 @@ export default function CourseSessionsPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Statut</Label>
+            
+            <div>
               <Select
-                value={filters.status}
-                onValueChange={(value) => handleFilterChange('status', value)}
+                value={filters.status || ''}
+                onValueChange={(value) => handleFilterChange('status', value || undefined)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous les statuts" />
+                <SelectTrigger id="filter-status">
+                  <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Tous les statuts</SelectItem>
                   <SelectItem value="PLANNED">Planifiée</SelectItem>
                   <SelectItem value="ONGOING">En cours</SelectItem>
                   <SelectItem value="COMPLETED">Terminée</SelectItem>
@@ -364,23 +452,38 @@ export default function CourseSessionsPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label>Date de début</Label>
-              <Input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Date de fin</Label>
-              <Input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              />
+            
+            <div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    {filters.date ? (
+                      format(filters.date, 'dd/MM/yyyy')
+                    ) : (
+                      <span>Sélectionner une date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={filters.date || undefined}
+                    onSelect={(date) => handleFilterChange('date', date)}
+                    locale={fr}
+                  />
+                  {filters.date && (
+                    <div className="p-2 border-t flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFilterChange('date', null)}
+                      >
+                        Effacer
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -399,7 +502,7 @@ export default function CourseSessionsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Heure</TableHead>
+                <TableHead>Horaires</TableHead>
                 <TableHead>Classe</TableHead>
                 <TableHead>Matière</TableHead>
                 <TableHead>Enseignant</TableHead>
@@ -408,60 +511,51 @@ export default function CourseSessionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sessions.map((session) => (
-                <TableRow key={session.id}>
-                  <TableCell>
-                    {format(new Date(session.date), 'PPP', { locale: fr })}
-                  </TableCell>
-                  <TableCell>
-                    {session.startTime} - {session.endTime}
-                  </TableCell>
-                  <TableCell>{session.class.name}</TableCell>
-                  <TableCell>{session.course.name}</TableCell>
-                  <TableCell>
-                    {session.teacher.firstName} {session.teacher.lastName}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        session.status === 'PLANNED'
-                          ? 'bg-blue-100 text-blue-800'
-                          : session.status === 'ONGOING'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : session.status === 'COMPLETED'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {session.status === 'PLANNED'
-                        ? 'Planifiée'
-                        : session.status === 'ONGOING'
-                        ? 'En cours'
-                        : session.status === 'COMPLETED'
-                        ? 'Terminée'
-                        : 'Annulée'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditSession(session)}
-                      >
-                        Modifier
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDeleteSession(session.id)}
-                      >
-                        Supprimer
-                      </Button>
-                    </div>
-                  </TableCell>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">Chargement...</TableCell>
                 </TableRow>
-              ))}
+              ) : sessions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">Aucune séance trouvée</TableCell>
+                </TableRow>
+              ) : (
+                sessions.map((session) => (
+                  <TableRow key={session.id}>
+                    <TableCell>{format(new Date(session.date), 'dd/MM/yyyy', { locale: fr })}</TableCell>
+                    <TableCell>{formatTime(session.startTime)} - {formatTime(session.endTime)}</TableCell>
+                    <TableCell>{session.class?.name || 'N/A'}</TableCell>
+                    <TableCell>{session.course?.name || 'N/A'}</TableCell>
+                    <TableCell>
+                      {session.teacher ? `${session.teacher.firstName} ${session.teacher.lastName}` : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {(() => {
+                        const { className, label } = getStatusBadge(session.status);
+                        return <span className={className}>{label}</span>;
+                      })()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditSession(session)}
+                        >
+                          Modifier
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteSession(session.id)}
+                        >
+                          Supprimer
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

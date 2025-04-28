@@ -118,7 +118,7 @@ export function ReportCardForm({ onClose, onSuccess, initialData }: ReportCardFo
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="bg-white">
         <DialogHeader>
           <DialogTitle>
             {initialData ? 'Modifier le relevé' : 'Nouveau relevé de notes'}

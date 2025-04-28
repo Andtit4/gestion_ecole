@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
 interface CourseSessionFormProps {
   session?: {
@@ -60,6 +62,15 @@ export default function CourseSessionForm({
     classId: session?.classId || '',
     courseId: session?.courseId || '',
     teacherId: session?.teacherId || '',
+  })
+  const [errors, setErrors] = useState({
+    date: '',
+    startTime: '',
+    endTime: '',
+    status: '',
+    classId: '',
+    courseId: '',
+    teacherId: '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -108,10 +119,10 @@ export default function CourseSessionForm({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[525px] bg-white">
         <DialogHeader>
           <DialogTitle>
-            {session ? 'Modifier la séance' : 'Ajouter une séance'}
+            {session ? 'Modifier la séance de cours' : 'Ajouter une séance de cours'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -126,14 +137,17 @@ export default function CourseSessionForm({
                 onChange={handleChange}
                 required
               />
+              {errors.date && (
+                <p className="text-red-500 text-sm mt-1">{errors.date}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Statut</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
+                onValueChange={(value) => handleChange('status', value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id="status">
                   <SelectValue placeholder="Sélectionner un statut" />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,6 +157,9 @@ export default function CourseSessionForm({
                   <SelectItem value="CANCELED">Annulée</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.status && (
+                <p className="text-red-500 text-sm mt-1">{errors.status}</p>
+              )}
             </div>
           </div>
 
@@ -157,6 +174,9 @@ export default function CourseSessionForm({
                 onChange={handleChange}
                 required
               />
+              {errors.startTime && (
+                <p className="text-red-500 text-sm mt-1">{errors.startTime}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="endTime">Heure de fin</Label>
@@ -168,55 +188,65 @@ export default function CourseSessionForm({
                 onChange={handleChange}
                 required
               />
+              {errors.endTime && (
+                <p className="text-red-500 text-sm mt-1">{errors.endTime}</p>
+              )}
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="classId">Classe</Label>
-            <Select
-              value={formData.classId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, classId: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une classe" />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map((classe) => (
-                  <SelectItem key={classe.id} value={classe.id}>
-                    {classe.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <Label htmlFor="classId">Classe</Label>
+              <Select
+                value={formData.classId}
+                onValueChange={(value) => handleChange('classId', value)}
+              >
+                <SelectTrigger id="classId">
+                  <SelectValue placeholder="Sélectionner une classe" />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((cls) => (
+                    <SelectItem key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.classId && (
+                <p className="text-red-500 text-sm mt-1">{errors.classId}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="courseId">Matière</Label>
+              <Select
+                value={formData.courseId}
+                onValueChange={(value) => handleChange('courseId', value)}
+              >
+                <SelectTrigger id="courseId">
+                  <SelectValue placeholder="Sélectionner une matière" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((course) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.courseId && (
+                <p className="text-red-500 text-sm mt-1">{errors.courseId}</p>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="courseId">Matière</Label>
-            <Select
-              value={formData.courseId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une matière" />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((course) => (
-                  <SelectItem key={course.id} value={course.id}>
-                    {course.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="teacherId">Enseignant</Label>
+          <div className="mb-4">
+            <Label htmlFor="teacherId">Professeur</Label>
             <Select
               value={formData.teacherId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, teacherId: value }))}
+              onValueChange={(value) => handleChange('teacherId', value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un enseignant" />
+              <SelectTrigger id="teacherId">
+                <SelectValue placeholder="Sélectionner un professeur" />
               </SelectTrigger>
               <SelectContent>
                 {teachers.map((teacher) => (
@@ -226,6 +256,9 @@ export default function CourseSessionForm({
                 ))}
               </SelectContent>
             </Select>
+            {errors.teacherId && (
+              <p className="text-red-500 text-sm mt-1">{errors.teacherId}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -240,11 +273,11 @@ export default function CourseSessionForm({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button variant="outline" type="button" onClick={onClose}>
               Annuler
             </Button>
             <Button type="submit">
-              {session ? 'Modifier' : 'Ajouter'}
+              {session ? 'Mettre à jour' : 'Ajouter'}
             </Button>
           </DialogFooter>
         </form>

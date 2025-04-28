@@ -145,8 +145,17 @@ export default function TeachersPage() {
       
       // Ne pas envoyer le mot de passe s'il est vide lors d'une modification
       const payload = formData.id && !formData.password 
-        ? { id: formData.id, firstName: formData.firstName, lastName: formData.lastName, email: formData.email }
-        : formData;
+        ? { 
+            id: formData.id, 
+            firstName: formData.firstName, 
+            lastName: formData.lastName, 
+            email: formData.email,
+            role: 'TEACHER'
+          }
+        : {
+            ...formData,
+            role: 'TEACHER'
+          };
 
       const response = await fetch(url, {
         method,
@@ -156,13 +165,16 @@ export default function TeachersPage() {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Erreur lors de l\'enregistrement du professeur');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de l\'enregistrement du professeur');
+      }
 
       toast.success(`Le professeur a été ${formData.id ? 'modifié' : 'ajouté'} avec succès`);
       fetchTeachers();
       setIsFormOpen(false);
     } catch (error) {
-      toast.error('Impossible d\'enregistrer le professeur');
+      toast.error(error instanceof Error ? error.message : 'Impossible d\'enregistrer le professeur');
     }
   };
 
@@ -336,7 +348,7 @@ export default function TeachersPage() {
       {/* Dialogue de confirmation de suppression */}
       {isDeleteDialogOpen && selectedTeacher && (
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-white">
             <DialogHeader>
               <DialogTitle>Confirmer la suppression</DialogTitle>
             </DialogHeader>

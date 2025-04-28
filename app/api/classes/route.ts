@@ -1,69 +1,36 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/lib/auth'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/classes - Récupérer toutes les classes
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    
     if (!session) {
-      return NextResponse.json(
-        { error: 'Non autorisé' },
-        { status: 401 }
-      )
-    }
-
-    const { searchParams } = new URL(req.url)
-    const level = searchParams.get('level')
-
-    const where: Record<string, unknown> = {}
-    if (level) {
-      where.level = level
+      return NextResponse.json({
+        error: 'Vous devez être connecté pour accéder à cette ressource'
+      }, {
+        status: 401
+      })
     }
 
     const classes = await prisma.class.findMany({
-      where,
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-        students: {
-          select: {
-            id: true,
-          },
-        },
-      },
-      orderBy: [
-        { level: 'asc' },
-        { name: 'asc' },
-      ],
+      orderBy: {
+        name: 'asc'
+      }
     })
-
-    // Transformer le résultat pour ajouter le comptage des élèves
-    const transformedClasses = classes.map(c => ({
-      id: c.id,
-      name: c.name,
-      level: c.level,
-      year: c.year,
-      teacher: c.teacher,
-      studentCount: c.students.length,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-    }))
-
-    return NextResponse.json(transformedClasses)
+    
+    return NextResponse.json(classes)
   } catch (error) {
-    console.error('Erreur GET /api/classes :', error)
-    return NextResponse.json(
-      { error: 'Erreur lors de la récupération des classes' },
-      { status: 500 }
-    )
+    console.error('Erreur lors de la récupération des classes:', error)
+    return NextResponse.json({
+      error: 'Erreur de connexion à la base de données. Assurez-vous que le serveur MySQL est bien démarré.'
+    }, {
+      status: 503
+    })
   }
 }
 
