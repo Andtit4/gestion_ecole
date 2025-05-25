@@ -197,6 +197,20 @@ model timeslot {
   schedules schedule[]
 }
 
+model SchoolDayConfig {
+  id                String             @id @default(cuid())
+  dayOfWeek         timeslot_dayOfWeek
+  dayStartTime      DateTime
+  dayEndTime        DateTime
+  breakStartTime    DateTime
+  breakEndTime      DateTime
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@unique([dayOfWeek])
+  @@map("schoolday_config")
+}
+
 model user {
   id          String       @id @default(cuid())
   email       String       @unique
@@ -229,7 +243,6 @@ enum attendance_status {
   LATE
   EXCUSED
 }
-
 enum user_role {
   ADMIN
   TEACHER
@@ -242,3 +255,4 @@ enum grade_type {
   QUIZ
   EXAM
 }
+

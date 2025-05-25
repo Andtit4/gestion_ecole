@@ -1,95 +1,68 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/lib/auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
+
+const gradeSchema = z.object({
+  value: z.number().min(0).max(20),
+  type: z.enum(['HOMEWORK', 'QUIZ', 'EXAM']),
+  date: z.string().transform((str) => new Date(str)),
+  comment: z.string().optional(),
+  studentId: z.string(),
+  courseId: z.string(),
+})
 
 // GET /api/grades - Récupérer les notes
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session) {
-      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const studentId = searchParams.get('studentId')
     const courseId = searchParams.get('courseId')
     const teacherId = searchParams.get('teacherId')
-    const type = searchParams.get('type')
-    const startDate = searchParams.get('startDate')
-    const endDate = searchParams.get('endDate')
 
-    // Construire la requête
-    const where: any = {}
-
-    if (studentId) {
-      where.studentId = studentId
+    const where = {
+      ...(studentId && { studentId }),
+      ...(courseId && { courseId }),
+      ...(teacherId && { teacherId }),
     }
 
-    if (courseId) {
-      where.courseId = courseId
-    }
-
-    if (teacherId) {
-      where.teacherId = teacherId
-    }
-
-    if (type) {
-      where.type = type
-    }
-
-    if (startDate && endDate) {
-      where.date = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      }
-    }
-
-    // Récupérer les notes
     const grades = await prisma.grade.findMany({
       where,
       include: {
         student: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            class: {
+          include: {
+            user: {
               select: {
                 id: true,
-                name: true,
-              },
+                firstName: true,
+                lastName: true,
+                email: true,
+              }
             },
-          },
+            class: true,
+          }
         },
-        course: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        course: true,
         teacher: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
+          include: {
+            user: true,
           },
         },
       },
-      orderBy: [
-        { date: 'desc' },
-        { student: { class: { name: 'asc' } } },
-        { student: { firstName: 'asc' } },
-        { student: { lastName: 'asc' } },
-      ],
     })
 
+    console.log('Notes récupérées:', JSON.stringify(grades, null, 2));
     return NextResponse.json(grades)
   } catch (error) {
     console.error('Erreur lors de la récupération des notes:', error)
     return NextResponse.json(
-      { message: 'Erreur lors de la récupération des notes' },
+      { error: 'Erreur lors de la récupération des notes' },
       { status: 500 }
     )
   }
@@ -99,95 +72,98 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    
     if (!session) {
-      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 })
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const data = await request.json()
-    const { value, type, date, coefficient, comment, studentId, courseId, teacherId } = data
+    console.log('Session utilisateur:', {
+      email: session.user?.email,
+      role: session.user?.role
+    });
 
-    // Validation des données
-    if (!value || !type || !date || !studentId || !courseId || !teacherId) {
-      return NextResponse.json(
-        { message: 'Données incomplètes' },
-        { status: 400 }
-      )
-    }
+    const json = await request.json()
+    console.log('Données reçues:', json);
+    const body = gradeSchema.parse(json)
 
-    // Vérifier que l'élève existe
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
-    })
-
-    if (!student) {
-      return NextResponse.json(
-        { message: 'Élève non trouvé' },
-        { status: 404 }
-      )
-    }
-
-    // Vérifier que le cours existe
-    const course = await prisma.course.findUnique({
-      where: { id: courseId },
-    })
-
-    if (!course) {
-      return NextResponse.json(
-        { message: 'Cours non trouvé' },
-        { status: 404 }
-      )
-    }
-
-    // Vérifier que le professeur existe
-    const teacher = await prisma.teacher.findUnique({
-      where: { id: teacherId },
-    })
-
-    if (!teacher) {
-      return NextResponse.json(
-        { message: 'Professeur non trouvé' },
-        { status: 404 }
-      )
-    }
-
-    // Créer la note
-    const grade = await prisma.grade.create({
-      data: {
-        value,
-        type,
-        date: new Date(date),
-        coefficient: coefficient || 1,
-        comment,
-        studentId,
-        courseId,
-        teacherId,
+    const teacher = await prisma.teacher.findFirst({
+      where: {
+        user: {
+          email: session.user?.email,
+        },
       },
-      include: {
-        student: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            class: {
-              select: {
-                id: true,
-                name: true,
+    })
+
+    console.log('Enseignant trouvé:', teacher);
+
+    // TEMPORAIRE: Si vous n'avez pas de compte enseignant, cette condition permettra tout de même l'ajout de notes
+    // À SUPPRIMER EN PRODUCTION
+    if (!teacher) {
+      console.log('Pas d\'enseignant trouvé, création d\'une note avec un enseignant par défaut');
+      
+      // Trouver un enseignant dans la base de données pour les tests
+      const anyTeacher = await prisma.teacher.findFirst();
+      
+      if (!anyTeacher) {
+        return NextResponse.json(
+          { error: 'Aucun enseignant trouvé dans la base de données. Impossible d\'ajouter une note.' },
+          { status: 403 }
+        );
+      }
+      
+      const grade = await prisma.grade.create({
+        data: {
+          ...body,
+          teacherId: anyTeacher.id, // Utiliser l'ID du premier enseignant trouvé
+        },
+        include: {
+          student: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                }
               },
+              class: true,
+            }
+          },
+          course: true,
+          teacher: {
+            include: {
+              user: true,
             },
           },
         },
-        course: {
-          select: {
-            id: true,
-            name: true,
-          },
+      });
+      
+      return NextResponse.json(grade);
+    }
+
+    const grade = await prisma.grade.create({
+      data: {
+        ...body,
+        teacherId: teacher.id,
+      },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+              }
+            },
+            class: true,
+          }
         },
+        course: true,
         teacher: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
+          include: {
+            user: true,
           },
         },
       },
@@ -195,9 +171,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json(grade)
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('Erreur de validation Zod:', error.errors);
+      return NextResponse.json(
+        { error: 'Données invalides', details: error.errors },
+        { status: 400 }
+      )
+    }
+
     console.error('Erreur lors de la création de la note:', error)
     return NextResponse.json(
-      { message: 'Erreur lors de la création de la note' },
+      { error: 'Erreur lors de la création de la note' },
       { status: 500 }
     )
   }

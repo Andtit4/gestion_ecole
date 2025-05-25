@@ -145,11 +145,11 @@ export default function ClassesPage() {
     }
   }
 
-  // Liste des niveaux disponibles
+  // List of available levels (primaire, collège and lycée)
   const levels = [
-    'CP', 'CE1', 'CE2', 'CM1', 'CM2',
-    '6ème', '5ème', '4ème', '3ème',
-    '2nde', '1ère', 'Terminale'
+    'CP', 'CE1', 'CE2', 'CM1', 'CM2',  // Primaire
+    '6ème', '5ème', '4ème', '3ème',    // Collège
+    '2nde', '1ère', 'Terminale'        // Lycée
   ]
 
   return (

@@ -23,6 +23,7 @@ CREATE TABLE `class` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
+    INDEX `class_teacherId_fkey`(`teacherId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -38,26 +39,6 @@ CREATE TABLE `course` (
     `updatedAt` DATETIME(3) NOT NULL,
 
     INDEX `course_teacherId_idx`(`teacherId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `coursesession` (
-    `id` VARCHAR(191) NOT NULL,
-    `date` DATETIME(3) NOT NULL,
-    `startTime` VARCHAR(191) NOT NULL,
-    `endTime` VARCHAR(191) NOT NULL,
-    `content` VARCHAR(191) NULL,
-    `status` ENUM('PLANNED', 'ONGOING', 'COMPLETED', 'CANCELED') NOT NULL DEFAULT 'PLANNED',
-    `classId` VARCHAR(191) NOT NULL,
-    `courseId` VARCHAR(191) NOT NULL,
-    `teacherId` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    INDEX `coursesession_classId_idx`(`classId`),
-    INDEX `coursesession_courseId_idx`(`courseId`),
-    INDEX `coursesession_teacherId_idx`(`teacherId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -106,6 +87,20 @@ CREATE TABLE `parentstudent` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `classroom` (
+    `id` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `capacity` INTEGER NULL,
+    `floor` INTEGER NULL,
+    `building` VARCHAR(191) NULL,
+    `description` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `period` (
     `id` VARCHAR(191) NOT NULL,
     `type` VARCHAR(191) NOT NULL,
@@ -150,7 +145,7 @@ CREATE TABLE `schedule` (
     INDEX `schedule_courseId_idx`(`courseId`),
     INDEX `schedule_userId_idx`(`userId`),
     INDEX `schedule_timeSlotId_idx`(`timeSlotId`),
-    UNIQUE INDEX `schedule_classId_timeSlotId_key`(`classId`, `timeSlotId`),
+    INDEX `schedule_classId_idx`(`classId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -191,6 +186,21 @@ CREATE TABLE `timeslot` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `schoolday_config` (
+    `id` VARCHAR(191) NOT NULL,
+    `dayOfWeek` ENUM('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY') NOT NULL,
+    `dayStartTime` DATETIME(3) NOT NULL,
+    `dayEndTime` DATETIME(3) NOT NULL,
+    `breakStartTime` DATETIME(3) NOT NULL,
+    `breakEndTime` DATETIME(3) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `schoolday_config_dayOfWeek_key`(`dayOfWeek`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `user` (
     `id` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
@@ -206,12 +216,12 @@ CREATE TABLE `user` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `_ClassToCourse` (
+CREATE TABLE `_classtocourse` (
     `A` VARCHAR(191) NOT NULL,
     `B` VARCHAR(191) NOT NULL,
 
-    UNIQUE INDEX `_ClassToCourse_AB_unique`(`A`, `B`),
-    INDEX `_ClassToCourse_B_index`(`B`)
+    UNIQUE INDEX `_classtocourse_AB_unique`(`A`, `B`),
+    INDEX `_classtocourse_B_index`(`B`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
@@ -227,19 +237,10 @@ ALTER TABLE `class` ADD CONSTRAINT `class_teacherId_fkey` FOREIGN KEY (`teacherI
 ALTER TABLE `course` ADD CONSTRAINT `course_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `teacher`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `coursesession` ADD CONSTRAINT `coursesession_classId_fkey` FOREIGN KEY (`classId`) REFERENCES `class`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `coursesession` ADD CONSTRAINT `coursesession_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `course`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `coursesession` ADD CONSTRAINT `coursesession_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `teacher`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `grade` ADD CONSTRAINT `grade_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `course`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `grade` ADD CONSTRAINT `grade_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `student`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `grade` ADD CONSTRAINT `grade_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `course`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `grade` ADD CONSTRAINT `grade_teacherId_fkey` FOREIGN KEY (`teacherId`) REFERENCES `teacher`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -266,22 +267,22 @@ ALTER TABLE `schedule` ADD CONSTRAINT `schedule_classId_fkey` FOREIGN KEY (`clas
 ALTER TABLE `schedule` ADD CONSTRAINT `schedule_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `course`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `schedule` ADD CONSTRAINT `schedule_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `schedule` ADD CONSTRAINT `schedule_timeSlotId_fkey` FOREIGN KEY (`timeSlotId`) REFERENCES `timeslot`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `student` ADD CONSTRAINT `student_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `schedule` ADD CONSTRAINT `schedule_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `student` ADD CONSTRAINT `student_classId_fkey` FOREIGN KEY (`classId`) REFERENCES `class`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `student` ADD CONSTRAINT `student_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `teacher` ADD CONSTRAINT `teacher_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `user`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `_ClassToCourse` ADD CONSTRAINT `_ClassToCourse_A_fkey` FOREIGN KEY (`A`) REFERENCES `class`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `_classtocourse` ADD CONSTRAINT `_classtocourse_A_fkey` FOREIGN KEY (`A`) REFERENCES `class`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `_ClassToCourse` ADD CONSTRAINT `_ClassToCourse_B_fkey` FOREIGN KEY (`B`) REFERENCES `course`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `_classtocourse` ADD CONSTRAINT `_classtocourse_B_fkey` FOREIGN KEY (`B`) REFERENCES `course`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -1,14 +1,18 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
+import * as bcrypt from 'bcrypt'
 
 export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: 'jwt',
+  },
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Mot de passe', type: 'password' }
+        password: { label: 'Mot de passe', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -16,18 +20,21 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: {
+            email: credentials.email,
+          },
         })
 
         if (!user) {
-          throw new Error('Aucun utilisateur trouvé avec cet email')
+          throw new Error('Utilisateur non trouvé')
         }
 
-        // Dans une application réelle, vous devriez vérifier le mot de passe de manière sécurisée
-        // en utilisant bcrypt ou une autre bibliothèque de hachage
-        const isValidPassword = user.password === credentials.password
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        )
 
-        if (!isValidPassword) {
+        if (!isPasswordValid) {
           throw new Error('Mot de passe incorrect')
         }
 
@@ -37,31 +44,24 @@ export const authOptions: NextAuthOptions = {
           name: `${user.firstName} ${user.lastName}`,
           role: user.role,
         }
-      }
-    })
+      },
+    }),
   ],
-  session: {
-    strategy: 'jwt',
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role
-        token.id = user.id
       }
       return token
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role as string
-        session.user.id = token.id as string
+      if (token && session.user) {
+        session.user.role = token.role
       }
       return session
-    }
+    },
   },
   pages: {
-    signIn: '/auth/signin',
-    error: '/auth/error',
+    signIn: '/auth/login',
   },
-  secret: process.env.NEXTAUTH_SECRET,
 } 

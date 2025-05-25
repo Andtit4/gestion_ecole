@@ -2,176 +2,88 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-:root {
-    --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 214, 219, 220;
-    --background-end-rgb: 255, 255, 255;
-}
-
-body {
-    color: rgb(var(--foreground-rgb));
-    background: rgb(var(--background-end-rgb));
+@layer base {
+     :root {
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 222.2 84% 4.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222.2 84% 4.9%;
+        --primary: 222.2 47.4% 11.2%;
+        --primary-foreground: 210 40% 98%;
+        --secondary: 210 40% 96.1%;
+        --secondary-foreground: 222.2 47.4% 11.2%;
+        --muted: 210 40% 96.1%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+        --accent: 210 40% 96.1%;
+        --accent-foreground: 222.2 47.4% 11.2%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 214.3 31.8% 91.4%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 222.2 84% 4.9%;
+        --radius: 0.5rem;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
 }
 
 @layer components {
-    .form-input {
-        margin-top: 0.25rem;
-        display: block;
-        width: 100%;
-        border-radius: 0.375rem;
-        border-color: #D1D5DB;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    .modal-base {
+        @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md mx-auto p-8 rounded-xl shadow-2xl bg-white text-gray-900 border border-gray-100;
     }
-    .form-input:focus {
-        border-color: #6366F1;
-        ring-color: #6366F1;
+    .modal-overlay {
+        @apply fixed inset-0 bg-black/70 backdrop-blur-sm;
+    }
+    .modal-title {
+        @apply text-xl font-semibold mb-6 text-gray-900;
+    }
+    .modal-description {
+        @apply text-sm text-gray-600 mb-6;
+    }
+    .form-input {
+        @apply w-full bg-white border border-gray-200 text-gray-900 placeholder-gray-500 rounded-lg py-2.5 px-4 shadow-sm focus: ring-2 focus: ring-indigo-500 focus: border-indigo-500 transition-all;
+    }
+    .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-2;
     }
     .btn-primary {
-        padding: 0.5rem 1rem;
-        border-width: 1px;
-        border-color: transparent;
-        border-radius: 0.375rem;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        font-weight: 500;
-        color: white;
-        background-color: #4F46E5;
-    }
-    .btn-primary:hover {
-        background-color: #4338CA;
-    }
-    .btn-primary:focus {
-        outline: none;
-        ring-width: 2px;
-        ring-offset-width: 2px;
-        ring-color: #6366F1;
+        @apply bg-indigo-600 hover: bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors shadow-sm;
     }
     .btn-secondary {
-        padding: 0.5rem 1rem;
-        border-width: 1px;
-        border-color: #D1D5DB;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        color: #374151;
+        @apply bg-white hover: bg-gray-50 text-gray-800 font-medium py-2.5 px-4 rounded-lg transition-colors shadow-sm border border-gray-300;
     }
-    .btn-secondary:hover {
-        background-color: #F9FAFB;
-    }
-    .btn-secondary:focus {
-        outline: none;
-        ring-width: 2px;
-        ring-offset-width: 2px;
-        ring-color: #6366F1;
+    .btn-danger {
+        @apply bg-red-600 hover: bg-red-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors shadow-sm;
     }
     .card {
-        background-color: white;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        border-radius: 0.5rem;
-        padding: 1.5rem;
+        @apply bg-white shadow-sm rounded-lg border border-gray-200 p-6;
     }
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
+}
+
+[data-radix-dialog-content] {
+    @apply modal-base;
+}
+
+[data-radix-dialog-overlay] {
+    @apply modal-overlay;
+}
+
+[data-radix-dialog-title] {
+    @apply modal-title;
+}
+
+[data-radix-dialog-description] {
+    @apply modal-description;
+}
+
+@layer base {
+    * {
+        @apply border-border;
     }
-    .table-container {
-        margin-top: 1rem;
-        overflow-x: auto;
-    }
-    .table-header {
-        padding: 0.75rem 1.5rem;
-        text-align: left;
-        font-size: 0.75rem;
-        font-weight: 500;
-        color: #6B7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .table-cell {
-        padding: 0.75rem 1.5rem;
-        white-space: nowrap;
-        font-size: 0.875rem;
-        color: #6B7280;
-    }
-    .modal {
-        position: fixed;
-        inset: 0;
-        background-color: rgba(107, 114, 128, 0.75);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal-content {
-        background-color: white;
-        padding: 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        max-width: 42rem;
-        width: 100%;
-        margin-left: 1rem;
-        margin-right: 1rem;
-    }
-    /* Overlay pour le fond des modales */
-    div[data-radix-popper-content-wrapper] {
-        background: transparent !important;
-    }
-    /* Style pour l'overlay Radix UI */
-    [data-radix-dialog-overlay] {
-        background-color: rgba(0, 0, 0, 0.6) !important;
-        backdrop-filter: blur(2px);
-    }
-    /* Style pour le contenu des modales Radix UI */
-    [data-radix-dialog-content] {
-        background-color: white !important;
-        color: #000 !important;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
-        border-radius: 0.5rem !important;
-        border: 1px solid rgba(0, 0, 0, 0.1) !important;
-    }
-    /* Styles pour les champs formulaire au sein des modales */
-    [data-radix-dialog-content] input,
-    [data-radix-dialog-content] select,
-    [data-radix-dialog-content] [data-radix-select-trigger] {
-        background-color: white !important;
-        border-color: #d1d5db !important;
-    }
-    /* État focus amélioré */
-    [data-radix-dialog-content] input:focus,
-    [data-radix-dialog-content] select:focus,
-    [data-radix-dialog-content] [data-radix-select-trigger]:focus {
-        border-color: #2563eb !important;
-        outline: 2px solid #dbeafe !important;
-        outline-offset: 1px !important;
-    }
-    /* Styles pour le select box Radix UI */
-    [data-radix-select-trigger] {
-        background-color: white !important;
-        border: 1px solid #e2e8f0;
-    }
-    [data-radix-select-trigger]>span {
-        color: #000000 !important;
-        background-color: white !important;
-    }
-    [data-radix-select-trigger][data-placeholder]>span {
-        color: #000000 !important;
-        background-color: white !important;
-    }
-    [data-radix-select-trigger]>div {
-        background-color: white !important;
-    }
-    [data-radix-select-content] {
-        background-color: white !important;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-    [data-radix-select-item] {
-        cursor: pointer;
-    }
-    [data-radix-select-item]:hover {
-        background-color: #f7fafc;
-    }
-    [data-radix-select-item][data-highlighted="true"] {
-        background-color: #e2e8f0;
-        color: black;
+    body {
+        @apply bg-background text-foreground;
     }
 }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -41,8 +42,8 @@ export default function Navbar() {
 
   const isActive = (path: string) => {
     return pathname === path
-      ? 'text-primary font-medium border-b-2 border-primary'
-      : 'hover:text-primary hover:border-b-2 hover:border-primary transition-colors'
+      ? 'text-primary-600 font-medium border-b-2 border-primary-600'
+      : 'text-gray-800 hover:text-primary-600 hover:border-b-2 hover:border-primary-600 transition-colors'
   }
 
   return (
@@ -57,11 +58,11 @@ export default function Navbar() {
         </Alert>
       )}
       
-      <nav className="bg-background border-b border-border">
+      <nav className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex-shrink-0">
-              <Link href="/" className="text-xl font-bold">
+              <Link href="/" className="text-xl font-bold text-gray-900">
                 Gestion École
               </Link>
             </div>
@@ -94,10 +95,11 @@ export default function Navbar() {
               ) : null}
             </div>
             
-            <div>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
               {session ? (
                 <div className="flex items-center gap-4">
-                  <span>
+                  <span className="text-gray-800">
                     {session.user.firstName} {session.user.lastName}
                   </span>
                   <Button variant="outline" onClick={() => signOut()}>
