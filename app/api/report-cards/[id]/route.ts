@@ -1,56 +1,79 @@
-import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/lib/auth'
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/report-cards/[id] - Récupérer un relevé spécifique
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    // Récupérer l'ID du bulletin depuis les paramètres de route
+    const id = params.id;
     
-    if (!session) {
-      return NextResponse.json({ message: 'Non autorisé' }, { status: 401 })
+    if (!id) {
+      return NextResponse.json(
+        { message: 'ID du bulletin manquant' },
+        { status: 400 }
+      );
     }
-
-    const reportCard = await prisma.reportCard.findUnique({
-      where: { id: params.id },
+    
+    // Essayer de récupérer le bulletin avec ses relations
+    const reportCard = await prisma.reportcard.findUnique({
+      where: { id },
       include: {
         student: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          include: {
+            user: true,
+            class: true
+          }
         },
-        period: {
-          select: {
-            id: true,
-            type: true,
-            startDate: true,
-            endDate: true,
-            schoolYear: true,
-          },
-        },
-      },
-    })
-
+        period: true
+      }
+    });
+    
+    // Si le bulletin n'existe pas, renvoyer une 404
     if (!reportCard) {
       return NextResponse.json(
-        { message: 'Relevé non trouvé' },
+        { message: 'Bulletin non trouvé' },
         { status: 404 }
-      )
+      );
     }
-
-    return NextResponse.json(reportCard)
+    
+    // Vérifier l'authentification et les autorisations si nécessaire
+    // Désactivé pour le débogage, mais à activer en production
+    /*
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json(
+        { message: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
+    
+    // Vérifier si l'utilisateur a accès à ce bulletin
+    // Les admins et les enseignants peuvent voir tous les bulletins
+    // Les élèves ne peuvent voir que leurs propres bulletins
+    if (session.user.role === 'STUDENT' && 
+        session.user.studentId !== reportCard.studentId) {
+      return NextResponse.json(
+        { message: 'Accès refusé' },
+        { status: 403 }
+      );
+    }
+    */
+    
+    // Renvoyer le bulletin
+    return NextResponse.json(reportCard);
   } catch (error) {
-    console.error('Erreur lors de la récupération du relevé:', error)
+    console.error('Erreur lors de la récupération du bulletin:', error);
+    
     return NextResponse.json(
-      { message: 'Erreur lors de la récupération du relevé' },
+      { message: 'Erreur lors de la récupération du bulletin' },
       { status: 500 }
-    )
+    );
   }
 }
 

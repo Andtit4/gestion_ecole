@@ -185,7 +185,10 @@ export function GradeList() {
                 {new Date(grade.date).toLocaleDateString()}
               </TableCell>
               <TableCell>
-                {grade.teacher.firstName} {grade.teacher.lastName}
+                {grade.teacher ? 
+                  `${grade.teacher.firstName} ${grade.teacher.lastName}` : 
+                  'Non assigné'
+                }
               </TableCell>
               <TableCell>{grade.comment}</TableCell>
             </TableRow>

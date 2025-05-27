@@ -34,7 +34,7 @@ export async function GET(
     if (session.user.role !== 'ADMIN' && session.user.role !== 'TEACHER') {
       // Si c'est un parent, vérifier qu'il est bien parent de cet étudiant
       if (session.user.role === 'PARENT') {
-        const isParentOfStudent = await prisma.parentStudent.findFirst({
+        const isParentOfStudent = await prisma.parentstudent.findFirst({
           where: {
             studentId,
             parentId: session.user.id
@@ -57,7 +57,7 @@ export async function GET(
     }
 
     // Récupérer les parents de l'étudiant
-    const parentStudents = await prisma.parentStudent.findMany({
+    const parentStudents = await prisma.parentstudent.findMany({
       where: { studentId },
       include: {
         parent: {

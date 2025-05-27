@@ -13,37 +13,35 @@ export async function GET() {
     }
 
     // Récupérer la liste des enseignants disponibles pour le formulaire
-    const teachers = await prisma.user.findMany({
-      where: {
-        role: 'TEACHER'
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true
+    const teachers = await prisma.teacher.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
       },
       orderBy: {
-        lastName: 'asc'
+        user: {
+          lastName: 'asc'
+        }
       }
     })
 
-    // Définition de l'interface pour le type d'enseignant
-    interface Teacher {
-      id: string;
-      firstName?: string | null;
-      lastName?: string | null;
-      email?: string;
-    }
-
-    // Assurer que chaque enseignant a un firstName et lastName
-    const processedTeachers = teachers.map((teacher: Teacher) => {
+    // Convertir les données pour avoir un format cohérent
+    const processedTeachers = teachers.map(teacher => {
       return {
-        ...teacher,
-        firstName: teacher.firstName || 'Prénom',
-        lastName: teacher.lastName || 'Nom'
+        id: teacher.id, // ID de l'enseignant (pas l'ID de l'utilisateur)
+        firstName: teacher.user.firstName || 'Prénom',
+        lastName: teacher.user.lastName || 'Nom',
+        email: teacher.user.email
       };
     });
+
+    console.log('Teachers for class form:', processedTeachers);
 
     // Renvoyer un objet avec les données dont a besoin le formulaire
     return NextResponse.json({

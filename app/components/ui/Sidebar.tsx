@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { UserGroupIcon, AcademicCapIcon, BookOpenIcon, UserIcon, ClockIcon, CalendarIcon, Cog6ToothIcon, HomeIcon } from '@heroicons/react/24/outline'
 import { useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
+import { DocumentTextIcon, BookmarkIcon, DocumentDuplicateIcon, PencilIcon } from '@heroicons/react/24/outline'
 
 const Sidebar = () => {
   const { data: session } = useSession();
@@ -132,6 +133,51 @@ const Sidebar = () => {
                 <span>Configuration</span>
               </Link>
             </li>
+            
+            <li className="mt-6">
+              <span className="px-4 text-xs uppercase font-semibold text-indigo-300 tracking-wider">
+                Scolarité
+              </span>
+            </li>
+            <li>
+              <Link 
+                href="/admin/academics/subjects" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/admin/academics/subjects') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <BookmarkIcon className="h-5 w-5" />
+                <span>Matières</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/admin/academics/curriculum" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/admin/academics/curriculum') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <DocumentTextIcon className="h-5 w-5" />
+                <span>Programmes</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/admin/academics/grading" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/admin/academics/grading') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <DocumentDuplicateIcon className="h-5 w-5" />
+                <span>Bulletins & Évaluations</span>
+              </Link>
+            </li>
           </>
         )}
 
@@ -168,6 +214,51 @@ const Sidebar = () => {
                 <span>Mes classes</span>
               </Link>
             </li>
+            
+            <li className="mt-6">
+              <span className="px-4 text-xs uppercase font-semibold text-indigo-300 tracking-wider">
+                Scolarité
+              </span>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/teacher/grades" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/teacher/grades') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <PencilIcon className="h-5 w-5" />
+                <span>Saisie des notes</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/teacher/attendance" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/teacher/attendance') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <UserGroupIcon className="h-5 w-5" />
+                <span>Présences</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/teacher/reports" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/teacher/reports') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <DocumentDuplicateIcon className="h-5 w-5" />
+                <span>Bulletins scolaires</span>
+              </Link>
+            </li>
           </>
         )}
 
@@ -189,6 +280,132 @@ const Sidebar = () => {
               >
                 <CalendarIcon className="h-5 w-5" />
                 <span>Mon emploi du temps</span>
+              </Link>
+            </li>
+            
+            <li className="mt-6">
+              <span className="px-4 text-xs uppercase font-semibold text-indigo-300 tracking-wider">
+                Scolarité
+              </span>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/student/grades" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/student/grades') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <PencilIcon className="h-5 w-5" />
+                <span>Mes notes</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/student/homework" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/student/homework') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <BookOpenIcon className="h-5 w-5" />
+                <span>Devoirs</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/student/report-cards" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/student/report-cards') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <DocumentDuplicateIcon className="h-5 w-5" />
+                <span>Bulletins scolaires</span>
+              </Link>
+            </li>
+          </>
+        )}
+        
+        {session?.user.role === 'PARENT' && (
+          <>
+            <li className="mt-6">
+              <span className="px-4 text-xs uppercase font-semibold text-indigo-300 tracking-wider">
+                Parent
+              </span>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/parent/children" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/parent/children') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <UserGroupIcon className="h-5 w-5" />
+                <span>Mes enfants</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/parent/messages" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/parent/messages') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <CalendarIcon className="h-5 w-5" />
+                <span>Messages</span>
+              </Link>
+            </li>
+            
+            <li className="mt-6">
+              <span className="px-4 text-xs uppercase font-semibold text-indigo-300 tracking-wider">
+                Scolarité
+              </span>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/parent/grades" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/parent/grades') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <PencilIcon className="h-5 w-5" />
+                <span>Notes</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/parent/attendance" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/parent/attendance') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <UserGroupIcon className="h-5 w-5" />
+                <span>Présences & Absences</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/dashboard/parent/report-cards" 
+                className={`px-4 py-3 rounded-lg flex items-center space-x-3 transition-colors ${
+                  pathname.startsWith('/dashboard/parent/report-cards') 
+                    ? 'bg-indigo-800 text-white shadow-sm' 
+                    : 'text-indigo-100 hover:bg-indigo-800 hover:text-white'
+                }`}
+              >
+                <DocumentDuplicateIcon className="h-5 w-5" />
+                <span>Bulletins scolaires</span>
               </Link>
             </li>
           </>

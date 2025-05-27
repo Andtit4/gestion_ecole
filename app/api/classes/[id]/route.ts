@@ -21,23 +21,22 @@ export async function GET(
     const resolvedParams = await params
     const id = resolvedParams.id
 
-    const classe = await prisma.class.findUnique({
+    console.log(`GET /api/classes/${id} - Début de la requête`);
+
+    const classe = await prisma.renamedclass.findUnique({
       where: { id },
       include: {
         teacher: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            }
+          }
         },
-        students: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
+        students: true
       },
     })
 
@@ -48,9 +47,95 @@ export async function GET(
       )
     }
 
+    console.log(`GET /api/classes/${id} - Classe trouvée:`, classe.id);
     return NextResponse.json(classe)
   } catch (error) {
-    console.error('Erreur lors de la récupération de la classe:', error)
+    console.error(`Erreur GET /api/classes/[id]:`, error)
+    return NextResponse.json(
+      { message: 'Erreur serveur' },
+      { status: 500 }
+    )
+  }
+}
+
+// Fonction de mise à jour commune pour PUT et PATCH
+async function updateClass(request: Request, id: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || session.user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { message: 'Non autorisé' },
+        { status: 401 }
+      )
+    }
+    
+    const body = await request.json()
+    console.log(`Mise à jour classe ${id} - Données reçues:`, body);
+    
+    const { name, level, year, teacherId } = body
+
+    // Validation des données
+    if (!name || !level || !year) {
+      return NextResponse.json(
+        { message: 'Nom, niveau et année sont requis' },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier si la classe existe
+    const existingClass = await prisma.renamedclass.findUnique({
+      where: { id },
+    })
+
+    if (!existingClass) {
+      return NextResponse.json(
+        { message: 'Classe non trouvée' },
+        { status: 404 }
+      )
+    }
+
+    // Vérifier si teacherId est valide s'il est fourni
+    if (teacherId) {
+      const teacherExists = await prisma.teacher.findUnique({
+        where: { id: teacherId }
+      });
+      
+      if (!teacherExists) {
+        console.error(`Enseignant avec ID ${teacherId} non trouvé`);
+        return NextResponse.json(
+          { message: "L'enseignant spécifié n'existe pas" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Mettre à jour la classe
+    const updatedClass = await prisma.renamedclass.update({
+      where: { id },
+      data: {
+        name,
+        level,
+        year: parseInt(year.toString()),
+        teacherId: teacherId || null,
+      },
+      include: {
+        teacher: {
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+              },
+            }
+          }
+        },
+      },
+    })
+
+    console.log(`Classe ${id} mise à jour avec succès:`, updatedClass.id);
+    return NextResponse.json(updatedClass)
+  } catch (error) {
+    console.error(`Erreur mise à jour classe ${id}:`, error)
     return NextResponse.json(
       { message: 'Erreur serveur' },
       { status: 500 }
@@ -63,69 +148,21 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { message: 'Non autorisé' },
-        { status: 401 }
-      )
-    }
+  const resolvedParams = await params
+  const id = resolvedParams.id
+  console.log(`PUT /api/classes/${id} - Début de la requête`);
+  return updateClass(request, id)
+}
 
-    // Attendre les paramètres avant d'accéder à leurs propriétés
-    const resolvedParams = await params
-    const id = resolvedParams.id
-    
-    const body = await request.json()
-    const { name, level, year, teacherId } = body
-
-    // Validation des données
-    if (!name || !level || !year || !teacherId) {
-      return NextResponse.json(
-        { message: 'Données manquantes' },
-        { status: 400 }
-      )
-    }
-
-    // Vérifier si la classe existe
-    const existingClass = await prisma.class.findUnique({
-      where: { id },
-    })
-
-    if (!existingClass) {
-      return NextResponse.json(
-        { message: 'Classe non trouvée' },
-        { status: 404 }
-      )
-    }
-
-    // Mettre à jour la classe
-    const updatedClass = await prisma.class.update({
-      where: { id },
-      data: {
-        name,
-        level,
-        year,
-        teacherId,
-      },
-      include: {
-        teacher: {
-          select: {
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    })
-
-    return NextResponse.json(updatedClass)
-  } catch (error) {
-    console.error('Erreur lors de la mise à jour de la classe:', error)
-    return NextResponse.json(
-      { message: 'Erreur serveur' },
-      { status: 500 }
-    )
-  }
+// PATCH /api/classes/[id] - Alternative à PUT
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const resolvedParams = await params
+  const id = resolvedParams.id
+  console.log(`PATCH /api/classes/${id} - Début de la requête`);
+  return updateClass(request, id)
 }
 
 // DELETE /api/classes/[id]
@@ -147,7 +184,7 @@ export async function DELETE(
     const id = resolvedParams.id
 
     // Vérifier si la classe existe
-    const existingClass = await prisma.class.findUnique({
+    const existingClass = await prisma.renamedclass.findUnique({
       where: { id },
     })
 
@@ -159,7 +196,7 @@ export async function DELETE(
     }
 
     // Supprimer la classe
-    await prisma.class.delete({
+    await prisma.renamedclass.delete({
       where: { id },
     })
 

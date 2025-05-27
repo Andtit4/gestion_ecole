@@ -9,11 +9,17 @@ interface Class {
   name: string
   level: string
   year: number
-  teacherId: string
+  teacherId: string | null
   teacher: {
-    firstName: string
-    lastName: string
-  }
+    id: string
+    firstName: string | null
+    lastName: string | null
+    user?: {
+      firstName: string | null
+      lastName: string | null
+    }
+  } | null
+  studentCount?: number
   _count: {
     students: number
   }
@@ -86,10 +92,14 @@ export default function ClassList() {
                       <span>Niveau : {classe.level}</span>
                       <span>Année : {classe.year}</span>
                       <span>
-                        Professeur principal : {classe.teacher.firstName || ''}{' '}
-                        {classe.teacher.lastName || ''}
+                        Professeur principal : {
+                          classe.teacher ? (
+                            `${classe.teacher.firstName || ''} ${classe.teacher.lastName || ''}`.trim() || 
+                            (classe.teacher.user ? `${classe.teacher.user.firstName || ''} ${classe.teacher.user.lastName || ''}`.trim() : 'Non renseigné')
+                          ) : 'Non assigné'
+                        }
                       </span>
-                      <span>{classe._count.students} élèves</span>
+                      <span>{classe._count?.students || 0} élèves</span>
                     </div>
                   </div>
                 </div>

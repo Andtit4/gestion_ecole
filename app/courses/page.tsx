@@ -205,9 +205,8 @@ export default function CoursesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nom</TableHead>
-                <TableHead>Coefficient</TableHead>
                 <TableHead>Niveau</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead>Coefficient</TableHead>
                 <TableHead>Professeur</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -215,12 +214,13 @@ export default function CoursesPage() {
             <TableBody>
               {courses.map((course) => (
                 <TableRow key={course.id}>
-                  <TableCell>{course.name}</TableCell>
-                  <TableCell>{course.coefficient}</TableCell>
+                  <TableCell className="font-medium">{course.name}</TableCell>
                   <TableCell>{course.level}</TableCell>
-                  <TableCell>{course.description}</TableCell>
+                  <TableCell className="text-center">{course.coefficient}</TableCell>
                   <TableCell>
-                    {course.teacher.firstName} {course.teacher.lastName}
+                    {course.teacher ? 
+                      `${course.teacher.firstName} ${course.teacher.lastName}` :
+                      'Non assigné'}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">

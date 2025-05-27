@@ -18,7 +18,7 @@ module.exports = {
         },
         extend: {
             fontFamily: {
-                urbanist: ['var(--font-urbanist)'],
+                sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
             },
             backgroundImage: {
                 'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

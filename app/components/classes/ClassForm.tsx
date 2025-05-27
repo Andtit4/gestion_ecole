@@ -7,6 +7,7 @@ interface Teacher {
   id: string
   firstName: string
   lastName: string
+  email?: string
 }
 
 interface ClassFormProps {
@@ -78,11 +79,21 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
         throw new Error('Erreur lors du chargement des enseignants')
       }
       const data = await response.json()
-      setTeachers(data)
-      if (data.length > 0 && !classId) {
-        setFormData(prev => ({ ...prev, teacherId: data[0].id }))
+      
+      // S'assurer que nous avons le bon format pour chaque enseignant
+      const formattedTeachers = data.map((teacher: any) => ({
+        id: teacher.id, // Utilise l'ID du teacher, pas l'ID de l'utilisateur
+        firstName: teacher.firstName || '',
+        lastName: teacher.lastName || '',
+        email: teacher.email
+      }))
+      
+      setTeachers(formattedTeachers)
+      if (formattedTeachers.length > 0 && !classId) {
+        setFormData(prev => ({ ...prev, teacherId: formattedTeachers[0].id }))
       }
     } catch (err) {
+      console.error('Erreur fetchTeachers:', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     }
   }
@@ -115,7 +126,9 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
     try {
       // Toujours utiliser /api/classes pour la création, même si l'ID est 'new'
       const url = classId && classId !== 'new' ? `/api/classes/${classId}` : '/api/classes'
-      const method = classId && classId !== 'new' ? 'PUT' : 'POST'
+      const method = classId && classId !== 'new' ? 'PATCH' : 'POST'
+
+      console.log(`Envoi des données vers ${url} avec méthode ${method}:`, formData);
 
       const response = await fetch(url, {
         method,
@@ -125,9 +138,21 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
         body: JSON.stringify(formData),
       })
 
+      console.log(`Réponse du serveur: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'Erreur lors de l\'enregistrement de la classe')
+        // Essayer de parser la réponse, mais gérer le cas où elle n'est pas en JSON valide
+        let errorMessage = 'Erreur lors de l\'enregistrement de la classe';
+        
+        try {
+          const data = await response.json();
+          errorMessage = data.message || data.error || errorMessage;
+        } catch (parseError) {
+          console.error('Erreur lors du parsing de la réponse:', parseError);
+          errorMessage = `Erreur ${response.status}: ${response.statusText || 'Réponse invalide du serveur'}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       if (onClose) {
@@ -136,6 +161,7 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
         router.push('/admin/classes')
       }
     } catch (err) {
+      console.error('Erreur lors de la soumission du formulaire:', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     } finally {
       setIsLoading(false)
@@ -212,20 +238,16 @@ export default function ClassForm({ classId, onClose }: ClassFormProps) {
           <select
             id="teacherId"
             name="teacherId"
-            value={formData.teacherId}
+            value={formData.teacherId || ''}
             onChange={handleChange}
-            required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           >
-            {teachers.length === 0 ? (
-              <option value="">Aucun enseignant disponible</option>
-            ) : (
-              teachers.map((teacher) => (
-                <option key={teacher.id} value={teacher.id}>
-                  {teacher.firstName || ''} {teacher.lastName || ''}
-                </option>
-              ))
-            )}
+            <option value="">Sélectionner un professeur</option>
+            {teachers.map((teacher) => (
+              <option key={teacher.id} value={teacher.id}>
+                {teacher.firstName || ''} {teacher.lastName || ''}
+              </option>
+            ))}
           </select>
         </div>
 

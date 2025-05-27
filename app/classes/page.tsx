@@ -229,7 +229,11 @@ export default function ClassesPage() {
                     <TableCell className="font-medium">{class_.name}</TableCell>
                     <TableCell>{class_.level}</TableCell>
                     <TableCell>{class_.year}</TableCell>
-                    <TableCell>{class_.teacher.firstName} {class_.teacher.lastName}</TableCell>
+                    <TableCell>
+                      {class_.teacher ? 
+                        `${class_.teacher.firstName} ${class_.teacher.lastName}` : 
+                        'Non assigné'}
+                    </TableCell>
                     <TableCell>{class_.studentCount}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">

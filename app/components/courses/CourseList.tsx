@@ -72,7 +72,10 @@ export function CourseList() {
               <TableCell>{course.level}</TableCell>
               <TableCell>{course.coefficient}</TableCell>
               <TableCell>
-                {course.teacher.firstName} {course.teacher.lastName}
+                {course.teacher ? 
+                  `${course.teacher.firstName} ${course.teacher.lastName}` : 
+                  'Non assigné'
+                }
               </TableCell>
               <TableCell>{course.description}</TableCell>
             </TableRow>

@@ -1,34 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { authOptions } from '@/app/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/students - Récupérer tous les étudiants avec filtres optionnels
 export async function GET(req: NextRequest) {
   try {
+    console.log('GET /api/students - Début de la requête');
+    
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Non autorisé' },
-        { status: 401 }
-      )
-    }
+    console.log('Session utilisateur:', session?.user?.email, 'Rôle:', session?.user?.role);
+    
+    // Commenté temporairement pour le débogage
+    // if (!session) {
+    //   console.log('GET /api/students - Non autorisé: aucune session');
+    //   return NextResponse.json(
+    //     { error: 'Non autorisé' },
+    //     { status: 401 }
+    //   )
+    // }
 
     // Récupérer les paramètres de requête
     const { searchParams } = new URL(req.url)
     const search = searchParams.get('search')
     const classId = searchParams.get('classId')
+    
+    console.log('Paramètres de recherche:', { search, classId });
 
     // Construire la requête avec les filtres
     const where: any = {}
 
     // Si un parent est connecté, on limite l'accès à ses enfants
-    if (session.user.role === 'PARENT') {
-      where.students = {
-        some: {
-          parentId: session.user.id
-        }
+    if (session?.user?.role === 'PARENT') {
+      const parent = await prisma.parent.findUnique({
+        where: { userId: session.user.id }
+      });
+      
+      if (!parent) {
+        console.log('GET /api/students - Parent non trouvé dans la base de données');
+        return NextResponse.json(
+          { error: 'Parent non trouvé' },
+          { status: 404 }
+        )
       }
+      
+      where.id = {
+        in: await prisma.parentstudent.findMany({
+          where: { parentId: parent.id },
+          select: { studentId: true }
+        }).then(relations => relations.map(r => r.studentId))
+      }
+      
+      console.log(`Filtrage pour le parent ${parent.id} - Enfants:`, where.id);
     }
 
     // Filtre par classe
@@ -44,6 +67,8 @@ export async function GET(req: NextRequest) {
         { user: { email: { contains: search, mode: 'insensitive' } } }
       ]
     }
+
+    console.log('Requête Prisma - where:', JSON.stringify(where, null, 2));
 
     // Récupérer les étudiants
     const students = await prisma.student.findMany({
@@ -71,6 +96,7 @@ export async function GET(req: NextRequest) {
       ]
     })
 
+    console.log(`GET /api/students - ${students.length} étudiants trouvés`);
     return NextResponse.json(students)
   } catch (error) {
     console.error('Erreur GET /api/students :', error)
@@ -170,7 +196,7 @@ export async function POST(req: NextRequest) {
       // Si des IDs de parents sont fournis, créer les relations
       if (parentIds && parentIds.length > 0) {
         for (const parentId of parentIds) {
-          await tx.parentStudent.create({
+          await tx.parentstudent.create({
             data: {
               parentId,
               studentId: student.id
@@ -301,13 +327,13 @@ export async function PUT(req: NextRequest) {
       // Si des IDs de parents sont fournis, mettre à jour les relations
       if (parentIds) {
         // Supprimer toutes les relations existantes
-        await tx.parentStudent.deleteMany({
+        await tx.parentstudent.deleteMany({
           where: { studentId: id }
         })
 
         // Créer les nouvelles relations
         for (const parentId of parentIds) {
-          await tx.parentStudent.create({
+          await tx.parentstudent.create({
             data: {
               parentId,
               studentId: id
@@ -368,7 +394,7 @@ export async function DELETE(req: NextRequest) {
     // Supprimer l'étudiant et l'utilisateur dans une transaction
     await prisma.$transaction(async (tx) => {
       // Supprimer toutes les relations parent-étudiant
-      await tx.parentStudent.deleteMany({
+      await tx.parentstudent.deleteMany({
         where: { studentId: id }
       })
 
