@@ -35,6 +35,7 @@ model Renamedclass {
   schedule  schedule[]
   students  student[]
   course    course[]   @relation("classtocourse")
+  feeGroups FeeGroup[] // Relation avec les groupes de frais
 
   @@index([teacherId], map: "class_teacherId_fkey")
   @@map("class")
@@ -53,6 +54,7 @@ model course {
   grades       grade[]
   schedule     schedule[]
   Renamedclass Renamedclass[] @relation("classtocourse")
+  programmes   Programme[]
 
   @@index([teacherId])
 }
@@ -85,6 +87,7 @@ model parent {
   updatedAt DateTime        @updatedAt
   user      user            @relation(fields: [userId], references: [id], onDelete: Cascade)
   students  parentstudent[]
+  payments  Payment[]       // Relation avec les paiements
 }
 
 model parentstudent {
@@ -124,17 +127,18 @@ model period {
 }
 
 model reportcard {
-  id           String   @id @default(cuid())
-  periodId     String
-  studentId    String
-  average      Float
-  appreciation String?
-  generatedAt  DateTime @default(now())
-  status       String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  period       period   @relation(fields: [periodId], references: [id])
-  student      student  @relation(fields: [studentId], references: [id])
+  id              String        @id @default(cuid())
+  periodId        String
+  studentId       String
+  average         Float
+  appreciation    String?
+  generatedAt     DateTime      @default(now())
+  status          String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  period          period        @relation(fields: [periodId], references: [id])
+  student         student       @relation(fields: [studentId], references: [id])
+  financialStatus FinanceStatus @default(PENDING) // Statut financier du bulletin
 
   @@index([periodId])
   @@index([studentId])
@@ -161,17 +165,19 @@ model schedule {
 }
 
 model student {
-  id          String          @id @default(cuid())
-  userId      String          @unique
-  classId     String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  attendances attendance[]
-  grades      grade[]
-  parents     parentstudent[]
-  reportCards reportcard[]
-  class       Renamedclass?   @relation(fields: [classId], references: [id])
-  user        user            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String          @id @default(cuid())
+  userId        String          @unique
+  classId       String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  attendances   attendance[]
+  grades        grade[]
+  parents       parentstudent[]
+  reportCards   reportcard[]
+  class         Renamedclass?   @relation(fields: [classId], references: [id])
+  user          user            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices      Invoice[]       // Relation avec les factures
+  feeAssignments FeeAssignment[] // Relation avec les assignations de frais
 
   @@index([classId])
 }
@@ -211,6 +217,26 @@ model SchoolDayConfig {
   @@map("schoolday_config")
 }
 
+model Programme {
+  id              String           @id @default(cuid())
+  title           String
+  description     String?
+  level           String
+  year            Int
+  courseId        String
+  content         String?          @db.Text
+  objectives      String?          @db.Text
+  status          programme_status @default(DRAFT)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  userId          String
+  course          course           @relation(fields: [courseId], references: [id])
+  user            user             @relation(fields: [userId], references: [id])
+
+  @@index([courseId])
+  @@index([userId])
+}
+
 model user {
   id          String       @id @default(cuid())
   email       String       @unique
@@ -225,6 +251,138 @@ model user {
   schedules   schedule[]
   student     student?
   teacher     teacher?
+  programmes  Programme[]
+}
+
+// Nouveaux modèles pour la gestion des frais de scolarité
+
+model FeeType {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  isRecurrent Boolean       @default(false)
+  frequency   FeeFrequency? // Mensuel, Trimestriel, Annuel, etc.
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  feeItems    FeeItem[]
+}
+
+model FeeGroup {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  classId     String?
+  level       String?
+  year        Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  class       Renamedclass? @relation(fields: [classId], references: [id])
+  feeItems    FeeItem[]
+
+  @@index([classId])
+}
+
+model FeeItem {
+  id          String   @id @default(cuid())
+  name        String
+  amount      Float
+  dueDate     DateTime?
+  description String?
+  mandatory   Boolean  @default(true)
+  feeTypeId   String
+  feeGroupId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  feeType     FeeType  @relation(fields: [feeTypeId], references: [id])
+  feeGroup    FeeGroup @relation(fields: [feeGroupId], references: [id])
+  assignments FeeAssignment[]
+
+  @@index([feeTypeId])
+  @@index([feeGroupId])
+}
+
+model FeeAssignment {
+  id         String   @id @default(cuid())
+  studentId  String
+  feeItemId  String
+  status     PaymentStatus @default(PENDING)
+  dueDate    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  student    student  @relation(fields: [studentId], references: [id])
+  feeItem    FeeItem  @relation(fields: [feeItemId], references: [id])
+  invoices   InvoiceFeeAssignment[]
+
+  @@index([studentId])
+  @@index([feeItemId])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String        @unique
+  totalAmount     Float
+  paidAmount      Float         @default(0)
+  status          PaymentStatus @default(PENDING)
+  dueDate         DateTime
+  studentId       String
+  issuedDate      DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  student         student       @relation(fields: [studentId], references: [id])
+  payments        Payment[]
+  feeAssignments  InvoiceFeeAssignment[]
+
+  @@index([studentId])
+}
+
+model InvoiceFeeAssignment {
+  id              String        @id @default(cuid())
+  invoiceId       String
+  feeAssignmentId String
+  amount          Float
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  invoice         Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  feeAssignment   FeeAssignment @relation(fields: [feeAssignmentId], references: [id])
+
+  @@unique([invoiceId, feeAssignmentId])
+  @@index([invoiceId])
+  @@index([feeAssignmentId])
+}
+
+model Payment {
+  id              String         @id @default(cuid())
+  amount          Float
+  method          PaymentMethod
+  reference       String?        // Numéro de chèque, référence de transaction, etc.
+  status          PaymentStatus  @default(PENDING)
+  processingFee   Float          @default(0)
+  invoiceId       String
+  parentId        String
+  paymentDate     DateTime       @default(now())
+  notes           String?
+  receiptNumber   String?        @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  invoice         Invoice        @relation(fields: [invoiceId], references: [id])
+  parent          parent         @relation(fields: [parentId], references: [id])
+
+  @@index([invoiceId])
+  @@index([parentId])
+}
+
+model PaymentConfig {
+  id                     String   @id @default(cuid())
+  latePaymentFeePercent  Float    @default(0)
+  latePaymentGracePeriod Int      @default(0) // Jours
+  receiptPrefix          String   @default("RECU-")
+  invoicePrefix          String   @default("FACT-")
+  allowPartialPayments   Boolean  @default(true)
+  allowOnlinePayments    Boolean  @default(true)
+  paymentMethods         String   @default("CASH,CHEQUE,BANK_TRANSFER,ONLINE") // Liste des méthodes séparées par des virgules
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
 enum timeslot_dayOfWeek {
@@ -243,6 +401,7 @@ enum attendance_status {
   LATE
   EXCUSED
 }
+
 enum user_role {
   ADMIN
   TEACHER
@@ -254,5 +413,44 @@ enum grade_type {
   HOMEWORK
   QUIZ
   EXAM
+}
+
+enum programme_status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PaymentMethod {
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+  ONLINE
+  MOBILE_MONEY
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  LATE
+  CANCELLED
+  REFUNDED
+}
+
+enum FeeFrequency {
+  ONCE
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+}
+
+enum FinanceStatus {
+  PENDING
+  PAID
+  LATE
+  EXEMPTED
 }
 
