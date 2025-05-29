@@ -62,9 +62,9 @@ export async function GET(req: NextRequest) {
     // Filtre par recherche (nom, prénom, email)
     if (search) {
       where.OR = [
-        { user: { firstName: { contains: search, mode: 'insensitive' } } },
-        { user: { lastName: { contains: search, mode: 'insensitive' } } },
-        { user: { email: { contains: search, mode: 'insensitive' } } }
+        { user: { firstName: { contains: search } } },
+        { user: { lastName: { contains: search } } },
+        { user: { email: { contains: search } } }
       ]
     }
 

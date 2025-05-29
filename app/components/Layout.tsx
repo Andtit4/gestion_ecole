@@ -25,6 +25,7 @@ import {
   ClipboardIcon,
   GraduationCap as GraduationCapIcon,
 } from 'lucide-react'
+import AuthLayout from './AuthLayout'
 
 const menuItems = [
   { title: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard, role: ['ADMIN', 'TEACHER', 'PARENT', 'STUDENT'] },
@@ -63,6 +64,14 @@ export default function Layout({ children }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  
+  // Détecter si nous sommes sur la page d'accueil (login)
+  const isLoginPage = pathname === '/';
+
+  // Si nous sommes sur la page de login, utiliser le layout d'authentification
+  if (isLoginPage) {
+    return <AuthLayout>{children}</AuthLayout>;
+  }
 
   // Gestion du responsive
   useEffect(() => {
@@ -227,7 +236,7 @@ export default function Layout({ children }: LayoutProps) {
                   </p>
                 </div>
                 <button 
-                  onClick={() => signOut({ callbackUrl: '/auth/login' })}
+                  onClick={() => signOut({ callbackUrl: '/' })}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <LogOut className="h-5 w-5" />
@@ -235,7 +244,7 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             ) : (
               <div className="text-center">
-                <Link href="/auth/login" className="text-sm text-blue-600 hover:text-blue-700">
+                <Link href="/" className="text-sm text-blue-600 hover:text-blue-700">
                   Se connecter
                 </Link>
               </div>

@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -109,6 +110,15 @@ export default function LoginForm() {
             </span>
           ) : 'Se connecter'}
         </button>
+      </div>
+      
+      <div className="mt-4 text-center text-sm">
+        <p className="text-gray-600">
+          Vous n'avez pas de compte?{' '}
+          <Link href="/auth/register" className="text-blue-600 hover:text-blue-800">
+            Créer un compte
+          </Link>
+        </p>
       </div>
 
       {debugInfo && process.env.NODE_ENV === 'development' && (

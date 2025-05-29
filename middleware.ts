@@ -16,7 +16,8 @@ export default async function middleware(request: NextRequestWithAuth) {
     if (token) {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+    // On laisse la page d'accueil s'afficher normalement car elle contient le formulaire de login
+    return NextResponse.next()
   }
 
   // Pages d'authentification
@@ -30,7 +31,7 @@ export default async function middleware(request: NextRequestWithAuth) {
 
   // Pages protégées
   if (!token) {
-    const loginUrl = new URL('/auth/login', request.url)
+    const loginUrl = new URL('/', request.url)
     loginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname)
     return NextResponse.redirect(loginUrl)
   }
