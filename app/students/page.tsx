@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { StudentForm } from '@/components/students/StudentForm'
+import StudentForm from '@/components/students/StudentForm'
 
 interface Student {
   id: string

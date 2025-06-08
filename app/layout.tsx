@@ -4,6 +4,7 @@ import { ThemeProvider } from './theme-provider'
 import { NextAuthProvider } from './components/providers/NextAuthProvider'
 import Layout from './components/Layout'
 import { Toaster } from './components/ui/toaster'
+import { Toaster as SonnerToaster } from 'sonner'
 
 export const metadata: Metadata = {
   title: 'Gestion École',
@@ -29,6 +30,7 @@ export default function RootLayout({
             </Layout>
           </NextAuthProvider>
           <Toaster />
+          <SonnerToaster position="top-right" richColors />
         </ThemeProvider>
       </body>
     </html>

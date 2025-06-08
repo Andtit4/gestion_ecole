@@ -16,9 +16,33 @@ import {
   CreditCard,
   BookOpen,
   BarChart3,
-  User
+  User,
+  Settings,
+  Bell,
+  Search,
+  Moon,
+  Sun,
+  ChevronDown,
+  Building2,
+  ClipboardList,
+  DollarSign,
+  UserCheck,
+  FileBarChart
 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import AuthLayout from './AuthLayout'
+import { Button, IconButton } from '../../components/ui/button'
+import { Input } from '../../components/ui/input'
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu'
+import { Badge } from '../../components/ui/badge'
 
 // Types pour les éléments de menu
 interface MenuItem {
@@ -26,10 +50,11 @@ interface MenuItem {
   href: string
   icon: React.ComponentType<{ className?: string }>
   role: string[]
+  badge?: string
   subItems?: MenuItem[]
 }
 
-// Configuration du menu
+// Configuration du menu mise à jour
 const menuItems: MenuItem[] = [
   {
     title: 'Tableau de bord',
@@ -38,58 +63,95 @@ const menuItems: MenuItem[] = [
     role: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT']
   },
   {
-    title: 'Élèves',
-    href: '/students',
-    icon: Users,
-    role: ['ADMIN', 'TEACHER']
+    title: 'Gestion des utilisateurs',
+    href: '/admin',
+    icon: UserCheck,
+    role: ['ADMIN'],
+    subItems: [
+      {
+        title: 'Élèves',
+        href: '/students',
+        icon: Users,
+        role: ['ADMIN', 'TEACHER']
+      },
+      {
+        title: 'Professeurs',
+        href: '/teachers',
+        icon: GraduationCap,
+        role: ['ADMIN']
+      },
+      {
+        title: 'Parents',
+        href: '/parents',
+        icon: User,
+        role: ['ADMIN']
+      }
+    ]
   },
   {
-    title: 'Professeurs',
-    href: '/teachers',
-    icon: GraduationCap,
-    role: ['ADMIN']
-  },
-  {
-    title: 'Classes',
-    href: '/classes',
-    icon: Users,
-    role: ['ADMIN', 'TEACHER']
-  },
-  {
-    title: 'Cours',
-    href: '/courses',
+    title: 'Académique',
+    href: '/academic',
     icon: BookOpen,
-    role: ['ADMIN', 'TEACHER']
+    role: ['ADMIN', 'TEACHER', 'STUDENT'],
+    subItems: [
+      {
+        title: 'Classes',
+        href: '/classes',
+        icon: Building2,
+        role: ['ADMIN', 'TEACHER']
+      },
+      {
+        title: 'Cours',
+        href: '/courses',
+        icon: BookOpen,
+        role: ['ADMIN', 'TEACHER']
+      },
+      {
+        title: 'Emploi du temps',
+        href: '/timetable',
+        icon: Calendar,
+        role: ['ADMIN', 'TEACHER', 'STUDENT']
+      },
+      {
+        title: 'Salles de classe',
+        href: '/classrooms',
+        icon: Building2,
+        role: ['ADMIN']
+      }
+    ]
   },
   {
-    title: 'Emploi du temps',
-    href: '/timetable',
-    icon: Calendar,
-    role: ['ADMIN', 'TEACHER', 'STUDENT']
-  },
-  {
-    title: 'Notes',
-    href: '/grades',
+    title: 'Évaluations',
+    href: '/evaluations',
     icon: BarChart3,
-    role: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT']
-  },
-  {
-    title: 'Bulletins',
-    href: '/report-cards',
-    icon: FileText,
-    role: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT']
+    role: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT'],
+    subItems: [
+      {
+        title: 'Notes',
+        href: '/grades',
+        icon: BarChart3,
+        role: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT']
+      },
+      {
+        title: 'Bulletins',
+        href: '/report-cards',
+        icon: FileText,
+        role: ['ADMIN', 'TEACHER', 'STUDENT', 'PARENT']
+      }
+    ]
   },
   {
     title: 'Scolarité',
     href: '/scolarite',
-    icon: FileText,
+    icon: ClipboardList,
     role: ['ADMIN', 'TEACHER']
   },
   {
     title: 'Finances',
     href: '/finances',
-    icon: CreditCard,
-    role: ['ADMIN']
+    icon: DollarSign,
+    role: ['ADMIN'],
+    badge: 'Pro'
   }
 ]
 
@@ -100,14 +162,16 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { data: session, status } = useSession()
   const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Gestion du responsive
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) {
+      if (window.innerWidth < 1024) {
         setIsMobile(true)
         setIsSidebarOpen(false)
       } else {
@@ -150,199 +214,266 @@ export default function Layout({ children }: LayoutProps) {
     );
   };
 
+  const getRoleColor = (role: string) => {
+    switch(role) {
+      case 'ADMIN': return 'bg-gradient-to-r from-purple-600 to-indigo-700'
+      case 'TEACHER': return 'bg-gradient-to-r from-blue-600 to-blue-800'
+      case 'STUDENT': return 'bg-gradient-to-r from-green-600 to-green-800'
+      case 'PARENT': return 'bg-gradient-to-r from-amber-500 to-orange-600'
+      default: return 'bg-gradient-to-r from-gray-600 to-gray-800'
+    }
+  }
+
+  const getRoleBadgeColor = (role: string) => {
+    switch(role) {
+      case 'ADMIN': return 'badge-admin'
+      case 'TEACHER': return 'badge-teacher'
+      case 'STUDENT': return 'badge-student'
+      case 'PARENT': return 'badge-parent'
+      default: return 'badge-secondary'
+    }
+  }
+
+  const getUserInitials = (user: any) => {
+    if (!user) return 'U'
+    const firstName = user.firstName || user.name || ''
+    const lastName = user.lastName || ''
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'
+  }
+
   return (
-    <div className='flex h-screen bg-gray-50'>
+    <div className='app-container flex h-screen'>
       {/* Sidebar */}
-      <div
+      <aside
         className={`${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } fixed inset-y-0 left-0 z-50 w-64 transform border-r border-gray-200 bg-white transition-transform duration-300 md:static md:translate-x-0`}
+        } sidebar z-50 flex flex-col transform transition-transform duration-300 lg:static lg:translate-x-0`}
       >
-        <div className='flex h-full flex-col'>
-          {/* Logo */}
-          <div className='flex h-16 items-center justify-between px-4 border-b border-gray-100'>
-            <Link href='/' className='flex items-center'>
-              <span className='text-xl font-bold text-blue-600'>EcoleGestion</span>
-            </Link>
-            {isMobile && (
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                className='md:hidden text-gray-500 hover:text-gray-700'
-              >
-                <X className='h-5 w-5' />
-              </button>
-            )}
-          </div>
+        {/* Logo et titre */}
+        <div className='flex h-16 items-center justify-between px-6 border-b border-gray-100'>
+          <Link href='/dashboard' className='flex items-center space-x-3'>
+            <div className='w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center'>
+              <GraduationCap className='h-5 w-5 text-white' />
+            </div>
+            <span className='text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent'>
+              EcoleGestion
+            </span>
+          </Link>
+          {isMobile && (
+            <IconButton
+              variant="ghost"
+              size="icon-sm"
+              icon={<X className='h-5 w-5' />}
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+        </div>
 
-          {/* Navigation */}
-          <nav className='flex-1 overflow-y-auto p-2'>
-            {status === 'loading' ? (
-              <div className='py-4 text-center text-sm text-gray-500'>Chargement du menu...</div>
-            ) : (
-              <ul className='space-y-1'>
-                {filteredMenuItems.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                  const hasSubItems = item.subItems && item.subItems.length > 0;
-                  const isExpanded = expandedItems.includes(item.href);
-                  
-                  return (
-                    <li key={item.href} className={hasSubItems ? 'mb-1' : ''}>
-                      {hasSubItems ? (
-                        <>
-                          <div
-                            className={`flex items-center justify-between rounded-md px-3 py-2 cursor-pointer transition-colors ${
-                              isActive
-                                ? 'bg-blue-50 text-blue-600 font-medium'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                            }`}
-                            onClick={() => toggleSubMenu(item.href)}
-                          >
-                            <div className='flex items-center'>
-                              <item.icon className={`mr-3 h-5 w-5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
-                              <span>{item.title}</span>
-                            </div>
-                            <svg
-                              className={`h-5 w-5 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`}
-                              fill='none'
-                              viewBox='0 0 24 24'
-                              stroke='currentColor'
-                            >
-                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
-                            </svg>
-                          </div>
-                          
-                          {isExpanded && (
-                            <ul className='mt-1 ml-6 space-y-1 border-l border-gray-200 pl-2'>
-                              {item.subItems.filter(subItem => 
-                                !session?.user?.role || subItem.role.includes(session.user.role)
-                              ).map((subItem) => {
-                                const isSubActive = pathname === subItem.href;
-                                return (
-                                  <li key={subItem.href}>
-                                    <Link href={subItem.href}>
-                                      <div
-                                        className={`flex items-center rounded-md px-3 py-2 transition-colors ${
-                                          isSubActive
-                                            ? 'bg-blue-50 text-blue-600 font-medium'
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                        }`}
-                                      >
-                                        <subItem.icon className={`mr-3 h-4 w-4 ${isSubActive ? 'text-blue-600' : 'text-gray-500'}`} />
-                                        <span className='text-sm'>{subItem.title}</span>
-                                      </div>
-                                    </Link>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          )}
-                        </>
-                      ) : (
-                        <Link href={item.href}>
-                          <div
-                            className={`flex items-center rounded-md px-3 py-2 transition-colors ${
-                              isActive
-                                ? 'bg-blue-50 text-blue-600 font-medium'
-                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                            }`}
-                          >
-                            <item.icon className={`mr-3 h-5 w-5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
-                            <span>{item.title}</span>
-                          </div>
-                        </Link>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </nav>
-
-          {/* Profil utilisateur */}
-          <div className='border-t border-gray-200 p-4 bg-gray-50'>
-            {status === 'authenticated' ? (
-              <div className='flex items-center gap-3'>
-                <div className='flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold'>
-                  {session?.user?.firstName?.[0]}{session?.user?.lastName?.[0]}
-                </div>
-                <div className='flex-1 truncate'>
-                  <p className='truncate text-sm font-medium text-gray-900'>
-                    {session?.user?.firstName} {session?.user?.lastName}
-                  </p>
-                  <p className='truncate text-xs text-gray-500'>
-                    {session?.user?.email}
-                  </p>
-                </div>
-                <button 
-                  onClick={() => signOut({ callbackUrl: '/' })}
-                  className='text-gray-500 hover:text-gray-700'
-                >
-                  <LogOut className='h-5 w-5' />
-                </button>
-              </div>
-            ) : (
-              <div className='text-center'>
-                <Link href='/' className='text-sm text-blue-600 hover:text-blue-700'>
-                  Se connecter
-                </Link>
-              </div>
-            )}
+        {/* Barre de recherche */}
+        <div className='px-6 py-4 border-b border-gray-100'>
+          <div className='relative'>
+            <Search className='h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+            <Input
+              placeholder="Rechercher..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className='pl-10 h-9 bg-gray-50 border-gray-200 focus:bg-white'
+            />
           </div>
         </div>
-      </div>
 
-      {/* Contenu principal */}
-      <div className='flex flex-1 flex-col overflow-hidden'>
-        {/* Header */}
-        <header className='flex h-16 items-center border-b border-gray-200 bg-white px-4'>
-          {isMobile && (
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className='mr-2 md:hidden text-gray-500 hover:text-gray-700'
-            >
-              <Menu className='h-5 w-5' />
-            </button>
+        {/* Navigation */}
+        <nav className='flex-1 overflow-y-auto p-4 space-y-2'>
+          {status === 'loading' ? (
+            <div className='py-4 text-center text-sm text-muted-foreground'>
+              <div className='spinner w-5 h-5 mx-auto mb-2'></div>
+              Chargement du menu...
+            </div>
+          ) : (
+            filteredMenuItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+              const isExpanded = expandedItems.includes(item.href);
+              
+              return (
+                <div key={item.href} className='space-y-1'>
+                  {hasSubItems ? (
+                    <button
+                      className={`w-full flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                      onClick={() => toggleSubMenu(item.href)}
+                    >
+                      <div className='flex items-center space-x-3'>
+                        <item.icon className='h-5 w-5 flex-shrink-0' />
+                        <span className='truncate'>{item.title}</span>
+                        {item.badge && (
+                          <Badge variant="secondary" className='text-xs px-1.5 py-0.5'>
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`} />
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={`nav-link ${
+                        isActive ? 'nav-link-active' : 'nav-link-inactive'
+                      }`}
+                      onClick={() => isMobile && setIsSidebarOpen(false)}
+                    >
+                      <item.icon className='h-5 w-5 mr-3 flex-shrink-0' />
+                      <span className='truncate'>{item.title}</span>
+                      {item.badge && (
+                        <Badge variant="secondary" className='ml-auto text-xs px-1.5 py-0.5'>
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Link>
+                  )}
+                  
+                  {hasSubItems && isExpanded && (
+                    <div className='ml-6 space-y-1 animate-slide-in-from-top'>
+                      {item.subItems!.filter(subItem => 
+                        !session?.user?.role || subItem.role.includes(session.user.role)
+                      ).map((subItem) => {
+                        const subIsActive = pathname === subItem.href || pathname.startsWith(subItem.href + '/');
+                        
+                        return (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            className={`flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
+                              subIsActive
+                                ? 'bg-primary/10 text-primary font-medium'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                            }`}
+                            onClick={() => isMobile && setIsSidebarOpen(false)}
+                          >
+                            <subItem.icon className='h-4 w-4 flex-shrink-0' />
+                            <span className='truncate'>{subItem.title}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </nav>
+
+        {/* Informations utilisateur */}
+        <div className='border-t border-gray-100 p-4'>
+          {session?.user && (
+            <div className='flex items-center space-x-3 mb-3'>
+              <Avatar className='h-8 w-8'>
+                <AvatarImage src={session.user.image || ''} />
+                <AvatarFallback className='text-xs font-semibold'>
+                  {getUserInitials(session.user)}
+                </AvatarFallback>
+              </Avatar>
+              <div className='flex-1 min-w-0'>
+                <p className='text-sm font-medium text-gray-900 truncate'>
+                  {session.user.name || session.user.firstName + ' ' + session.user.lastName}
+                </p>
+                <Badge className={`text-xs ${getRoleBadgeColor(session.user.role)}`}>
+                  {session.user.role === 'ADMIN' && 'Administrateur'}
+                  {session.user.role === 'TEACHER' && 'Enseignant'}
+                  {session.user.role === 'STUDENT' && 'Élève'}
+                  {session.user.role === 'PARENT' && 'Parent'}
+                </Badge>
+              </div>
+            </div>
           )}
           
-          <div className='flex flex-1 items-center justify-between'>
-            <h1 className='text-lg font-semibold text-gray-900'>
-              {/* Titre dynamique basé sur la route */}
-              {pathname === '/dashboard' && 'Tableau de bord'}
-              {pathname === '/students' && 'Gestion des élèves'}
-              {pathname === '/teachers' && 'Gestion des professeurs'}
-              {pathname === '/classes' && 'Gestion des classes'}
-              {pathname === '/courses' && 'Gestion des cours'}
-              {pathname === '/timetable' && 'Emploi du temps'}
-              {pathname === '/grades' && 'Notes et évaluations'}
-              {pathname === '/report-cards' && 'Bulletins scolaires'}
-              {pathname === '/scolarite' && 'Scolarité'}
-              {pathname === '/finances' && 'Gestion financière'}
-            </h1>
+          <div className='flex items-center justify-between'>
+            <IconButton
+              variant="ghost"
+              size="icon-sm"
+              icon={theme === 'dark' ? <Sun className='h-4 w-4' /> : <Moon className='h-4 w-4' />}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            />
             
-            <div className='flex items-center gap-4'>
-              {status === 'authenticated' && (
-                <div className='flex items-center gap-2 text-sm text-gray-600'>
-                  <User className='h-4 w-4' />
-                  <span>{session?.user?.role}</span>
-                </div>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <IconButton
+                  variant="ghost"
+                  size="icon-sm"
+                  icon={<Settings className='h-4 w-4' />}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className='w-48'>
+                <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className='mr-2 h-4 w-4' />
+                  Profil
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className='mr-2 h-4 w-4' />
+                  Paramètres
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className='text-destructive focus:text-destructive'
+                  onClick={() => signOut()}
+                >
+                  <LogOut className='mr-2 h-4 w-4' />
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </aside>
+
+      {/* Overlay pour mobile */}
+      {isMobile && isSidebarOpen && (
+        <div 
+          className='fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden'
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Contenu principal */}
+      <main className='main-content flex flex-col flex-1'>
+        {/* Header mobile */}
+        <header className='flex items-center justify-between p-4 bg-white border-b border-gray-200 lg:hidden'>
+          <IconButton
+            variant="ghost"
+            size="icon"
+            icon={<Menu className='h-6 w-6' />}
+            onClick={() => setIsSidebarOpen(true)}
+          />
+          
+          <div className='flex items-center space-x-3'>
+            <IconButton
+              variant="ghost"
+              size="icon-sm"
+              icon={<Bell className='h-5 w-5' />}
+            />
+            {session?.user && (
+              <Avatar className='h-8 w-8'>
+                <AvatarImage src={session.user.image || ''} />
+                <AvatarFallback className='text-xs font-semibold'>
+                  {getUserInitials(session.user)}
+                </AvatarFallback>
+              </Avatar>
+            )}
           </div>
         </header>
 
         {/* Contenu de la page */}
-        <main className='flex-1 overflow-y-auto p-6'>
+        <div className='flex-1 overflow-y-auto'>
           {children}
-        </main>
-      </div>
-
-      {/* Overlay pour mobile */}
-      {isMobile && isSidebarOpen && (
-        <div
-          className='fixed inset-0 z-40 bg-black bg-opacity-25 md:hidden'
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+        </div>
+      </main>
     </div>
   )
 } 

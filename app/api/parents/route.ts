@@ -2,6 +2,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
 
 // GET /api/parents - Récupérer tous les parents
 export async function GET(req: NextRequest) {
@@ -146,7 +147,7 @@ export async function POST(req: NextRequest) {
           firstName,
           lastName,
           email,
-          password, // Dans une application réelle, vous devriez hacher le mot de passe
+          password: await bcrypt.hash(password, 12),
           role: 'PARENT'
         }
       })
@@ -259,7 +260,7 @@ export async function PUT(req: NextRequest) {
       if (firstName) userUpdateData.firstName = firstName
       if (lastName) userUpdateData.lastName = lastName
       if (email) userUpdateData.email = email
-      if (password) userUpdateData.password = password // Dans une application réelle, vous devriez hacher le mot de passe
+      if (password) userUpdateData.password = await bcrypt.hash(password, 12)
 
       if (Object.keys(userUpdateData).length > 0) {
         await tx.user.update({

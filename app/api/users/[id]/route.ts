@@ -116,7 +116,7 @@ export async function PUT(
 
     // Mettre à jour le mot de passe uniquement s'il est fourni
     if (password) {
-      updateData.password = await bcrypt.hash(password, 10)
+      updateData.password = await bcrypt.hash(password, 12)
     }
 
     // Mettre à jour l'utilisateur
