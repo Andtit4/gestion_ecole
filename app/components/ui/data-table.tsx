@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table'
@@ -76,3 +76,5 @@ export function DataTable<T>({
     </div>
   )
 } 
+
+

@@ -1,11 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import SchoolDayConfigList from '@/app/components/timetable/SchoolDayConfigList'
 import { Button } from '@/components/ui/button'
+import SchoolDayConfigForm from '@/components/timetable/SchoolDayConfigForm'
+import SchoolDayConfigList from '@/components/timetable/SchoolDayConfigList'
 import { toast } from 'react-hot-toast'
 
 export default function SchoolDayConfigPage() {
@@ -29,14 +29,14 @@ export default function SchoolDayConfigPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Erreur lors de la génération des créneaux horaires')
+        throw new Error(errorData.message || 'Erreur lors de la g�n�ration des cr�neaux horaires')
       }
 
       const data = await response.json()
-      toast.success(`${data.count} créneaux horaires générés avec succès`)
+      toast.success(`${data.count} cr�neaux horaires g�n�r�s avec succ�s`)
     } catch (error) {
       console.error('Erreur:', error)
-      toast.error(error instanceof Error ? error.message : 'Erreur lors de la génération des créneaux horaires')
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de la g�n�ration des cr�neaux horaires')
     } finally {
       setIsGenerating(false)
     }
@@ -62,9 +62,9 @@ export default function SchoolDayConfigPage() {
     <div className="container mx-auto py-6">
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Gestion des horaires de journée</h1>
+          <h1 className="text-2xl font-bold">Gestion des horaires de journ�e</h1>
           <p className="text-gray-600">
-            Configurez les heures de début et de fin de journée ainsi que les pauses pour chaque jour de la semaine.
+            Configurez les heures de d�but et de fin de journ�e ainsi que les pauses pour chaque jour de la semaine.
           </p>
         </div>
         <Button 
@@ -72,7 +72,7 @@ export default function SchoolDayConfigPage() {
           disabled={isGenerating}
           className="bg-green-600 hover:bg-green-700"
         >
-          {isGenerating ? 'Génération...' : 'Générer les créneaux horaires'}
+          {isGenerating ? 'G�n�ration...' : 'G�n�rer les cr�neaux horaires'}
         </Button>
       </div>
 
@@ -80,3 +80,5 @@ export default function SchoolDayConfigPage() {
     </div>
   )
 } 
+
+

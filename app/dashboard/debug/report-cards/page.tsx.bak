@@ -1,17 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Input } from '@/app/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
-import { Alert, AlertDescription, AlertTitle } from '@/app/components/ui/alert'
-import { useToast } from '@/app/components/ui/use-toast'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { useToast } from '@/components/ui/use-toast'
 import { Download, RefreshCw, Bug, AlertTriangle, CheckCircle2 } from 'lucide-react'
-import { Separator } from '@/app/components/ui/separator'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
-import { generateReportCardPDF } from '@/app/lib/pdf-generator'
-import { DownloadPDFButton } from '@/app/components/report-cards/DownloadPDFButton'
+import { Separator } from '@/components/ui/separator'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { generateReportCardPDF } from '@/lib/pdf-generator'
+import { DownloadPDFButton } from '@/components/report-cards/DownloadPDFButton'
 
 export default function DebugReportCardsPage() {
   const [loading, setLoading] = useState(false)
@@ -25,7 +25,7 @@ export default function DebugReportCardsPage() {
   const [status, setStatus] = useState('DRAFT')
   const { toast } = useToast()
 
-  // Charger les donnÃ©es de test
+  // Charger les données de test
   useEffect(() => {
     fetchDebugData()
   }, [])
@@ -33,7 +33,7 @@ export default function DebugReportCardsPage() {
   const fetchDebugData = async () => {
     setLoading(true)
     try {
-      // Charger les Ã©lÃ¨ves
+      // Charger les élèves
       const studentsResponse = await fetch('/api/debug/students')
       const studentsData = await studentsResponse.json()
       setStudents(studentsData)
@@ -41,7 +41,7 @@ export default function DebugReportCardsPage() {
         setSelectedStudent(studentsData[0].id)
       }
 
-      // Charger les pÃ©riodes
+      // Charger les périodes
       const periodsResponse = await fetch('/api/debug/periods')
       const periodsData = await periodsResponse.json()
       setPeriods(periodsData)
@@ -55,22 +55,22 @@ export default function DebugReportCardsPage() {
       setReportCards(reportCardsData)
 
       toast({
-        title: "DonnÃ©es chargÃ©es",
-        description: `${studentsData.length} Ã©lÃ¨ves, ${periodsData.length} pÃ©riodes, ${reportCardsData.length} bulletins`,
+        title: "Données chargées",
+        description: `${studentsData.length} élèves, ${periodsData.length} périodes, ${reportCardsData.length} bulletins`,
       })
     } catch (error) {
-      console.error('Erreur lors du chargement des donnÃ©es de dÃ©bogage:', error)
+      console.error('Erreur lors du chargement des données de débogage:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de charger les donnÃ©es de dÃ©bogage",
+        description: "Impossible de charger les données de débogage",
       })
     } finally {
       setLoading(false)
     }
   }
 
-  // CrÃ©er un bulletin de test
+  // Créer un bulletin de test
   const createTestReportCard = async () => {
     setLoading(true)
     try {
@@ -83,64 +83,64 @@ export default function DebugReportCardsPage() {
           studentId: selectedStudent,
           periodId: selectedPeriod,
           average: parseFloat(average),
-          appreciation: "Bulletin crÃ©Ã© depuis l'outil de dÃ©bogage",
+          appreciation: "Bulletin créé depuis l'outil de débogage",
           status
         })
       })
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la crÃ©ation du bulletin de test')
+        throw new Error('Erreur lors de la création du bulletin de test')
       }
 
       const data = await response.json()
       
       toast({
-        title: "Bulletin crÃ©Ã©",
-        description: data.message || "Le bulletin de test a Ã©tÃ© crÃ©Ã© avec succÃ¨s",
+        title: "Bulletin créé",
+        description: data.message || "Le bulletin de test a été créé avec succès",
       })
 
-      // RafraÃ®chir la liste des bulletins
+      // Rafraîchir la liste des bulletins
       const reportCardsResponse = await fetch('/api/report-cards')
       const reportCardsData = await reportCardsResponse.json()
       setReportCards(reportCardsData)
     } catch (error) {
-      console.error('Erreur lors de la crÃ©ation du bulletin de test:', error)
+      console.error('Erreur lors de la création du bulletin de test:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de la crÃ©ation du bulletin",
+        description: error instanceof Error ? error.message : "Erreur lors de la création du bulletin",
       })
     } finally {
       setLoading(false)
     }
   }
 
-  // TÃ©lÃ©charger un bulletin en PDF
+  // Télécharger un bulletin en PDF
   const downloadPDF = async (reportCard: any) => {
     try {
       setLoading(true)
       
-      // VÃ©rification des donnÃ©es nÃ©cessaires
+      // Vérification des données nécessaires
       if (!reportCard || !reportCard.student?.user || !reportCard.period) {
-        throw new Error('DonnÃ©es du bulletin incomplÃ¨tes pour gÃ©nÃ©rer le PDF')
+        throw new Error('Données du bulletin incomplètes pour générer le PDF')
       }
       
-      console.log('Tentative de gÃ©nÃ©ration PDF cÃ´tÃ© client...');
+      console.log('Tentative de génération PDF côté client...');
       
       try {
-        // Tentative de gÃ©nÃ©ration cÃ´tÃ© client
+        // Tentative de génération côté client
         const pdfBlob = await generateReportCardPDF(reportCard)
         
-        // CrÃ©er un URL pour le blob
+        // Créer un URL pour le blob
         const url = URL.createObjectURL(pdfBlob)
         
-        // CrÃ©er un lien de tÃ©lÃ©chargement
+        // Créer un lien de téléchargement
         const link = document.createElement('a')
         link.href = url
         const fileName = `Bulletin_${reportCard.student.user.lastName.replace(/\s+/g, '_')}_${reportCard.student.user.firstName.replace(/\s+/g, '_')}`
         link.download = `${fileName}.pdf`
         
-        // Simuler un clic pour tÃ©lÃ©charger
+        // Simuler un clic pour télécharger
         document.body.appendChild(link)
         link.click()
         
@@ -151,38 +151,38 @@ export default function DebugReportCardsPage() {
         }, 100)
         
         toast({
-          title: "PDF gÃ©nÃ©rÃ©",
-          description: "Le bulletin a Ã©tÃ© tÃ©lÃ©chargÃ© en format PDF",
+          title: "PDF généré",
+          description: "Le bulletin a été téléchargé en format PDF",
         })
       } catch (clientError) {
-        console.error('Erreur gÃ©nÃ©ration PDF cÃ´tÃ© client, tentative via API:', clientError);
+        console.error('Erreur génération PDF côté client, tentative via API:', clientError);
         
-        // Si la gÃ©nÃ©ration cÃ´tÃ© client Ã©choue, essayer via l'API
+        // Si la génération côté client échoue, essayer via l'API
         await downloadPDFViaAPI(reportCard);
       }
     } catch (error) {
-      console.error('Erreur lors de la gÃ©nÃ©ration du PDF:', error)
+      console.error('Erreur lors de la génération du PDF:', error)
       toast({
         variant: "destructive",
         title: "Erreur PDF",
-        description: error instanceof Error ? error.message : "Impossible de gÃ©nÃ©rer le PDF du bulletin",
+        description: error instanceof Error ? error.message : "Impossible de générer le PDF du bulletin",
       })
       
-      // DerniÃ¨re tentative via l'API
+      // Dernière tentative via l'API
       try {
         await downloadPDFViaAPI(reportCard);
       } catch (finalError) {
-        console.error('Toutes les tentatives de gÃ©nÃ©ration PDF ont Ã©chouÃ©:', finalError);
+        console.error('Toutes les tentatives de génération PDF ont échoué:', finalError);
       }
     } finally {
       setLoading(false)
     }
   }
   
-  // Fonction alternative pour tÃ©lÃ©charger le PDF via l'API
+  // Fonction alternative pour télécharger le PDF via l'API
   const downloadPDFViaAPI = async (reportCard: any) => {
     try {
-      console.log('TÃ©lÃ©chargement du PDF via l\'API de secours');
+      console.log('Téléchargement du PDF via l\'API de secours');
       
       const response = await fetch('/api/debug/pdf', {
         method: 'POST',
@@ -200,10 +200,10 @@ export default function DebugReportCardsPage() {
       const data = await response.json();
       
       if (!data.success || !data.pdfData) {
-        throw new Error('DonnÃ©es PDF invalides reÃ§ues de l\'API');
+        throw new Error('Données PDF invalides reçues de l\'API');
       }
       
-      // CrÃ©er un lien avec les donnÃ©es base64
+      // Créer un lien avec les données base64
       const link = document.createElement('a');
       link.href = data.pdfData;
       link.download = data.fileName || `Bulletin.pdf`;
@@ -216,23 +216,23 @@ export default function DebugReportCardsPage() {
       }, 100);
       
       toast({
-        title: "PDF gÃ©nÃ©rÃ© via API",
-        description: "Le bulletin a Ã©tÃ© tÃ©lÃ©chargÃ© en format PDF",
+        title: "PDF généré via API",
+        description: "Le bulletin a été téléchargé en format PDF",
       });
     } catch (error) {
-      console.error('Erreur lors du tÃ©lÃ©chargement du PDF via API:', error);
+      console.error('Erreur lors du téléchargement du PDF via API:', error);
       toast({
         variant: "destructive",
         title: "Erreur API PDF",
-        description: error instanceof Error ? error.message : "Impossible de gÃ©nÃ©rer le PDF du bulletin via l'API",
+        description: error instanceof Error ? error.message : "Impossible de générer le PDF du bulletin via l'API",
       });
-      throw error; // Propager l'erreur pour gÃ©rer en amont
+      throw error; // Propager l'erreur pour gérer en amont
     }
   }
 
   // Supprimer un bulletin
   const deleteReportCard = async (id: string) => {
-    if (!confirm('ÃŠtes-vous sÃ»r de vouloir supprimer ce bulletin?')) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce bulletin?')) {
       return
     }
     
@@ -247,11 +247,11 @@ export default function DebugReportCardsPage() {
       }
 
       toast({
-        title: "Bulletin supprimÃ©",
-        description: "Le bulletin a Ã©tÃ© supprimÃ© avec succÃ¨s",
+        title: "Bulletin supprimé",
+        description: "Le bulletin a été supprimé avec succès",
       })
 
-      // RafraÃ®chir la liste des bulletins
+      // Rafraîchir la liste des bulletins
       const reportCardsResponse = await fetch('/api/report-cards')
       const reportCardsData = await reportCardsResponse.json()
       setReportCards(reportCardsData)
@@ -270,7 +270,7 @@ export default function DebugReportCardsPage() {
   // Fonction pour afficher un statut
   const formatStatus = (status: string) => {
     if (status === 'DRAFT') return 'Brouillon'
-    if (status === 'PUBLISHED') return 'PubliÃ©'
+    if (status === 'PUBLISHED') return 'Publié'
     return status
   }
 
@@ -278,49 +278,49 @@ export default function DebugReportCardsPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">DÃ©bogage des bulletins</h1>
-          <p className="text-muted-foreground">Outils pour tester et dÃ©boguer les bulletins de notes</p>
+          <h1 className="text-2xl font-bold">Débogage des bulletins</h1>
+          <p className="text-muted-foreground">Outils pour tester et déboguer les bulletins de notes</p>
         </div>
         <Button onClick={fetchDebugData} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          RafraÃ®chir
+          Rafraîchir
         </Button>
       </div>
 
       <Alert className="mb-6">
         <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Mode de dÃ©bogage</AlertTitle>
+        <AlertTitle>Mode de débogage</AlertTitle>
         <AlertDescription>
-          Cette page est destinÃ©e au dÃ©bogage et Ã  la crÃ©ation de donnÃ©es de test. 
+          Cette page est destinée au débogage et à la création de données de test. 
           N'utilisez pas ces outils en production.
         </AlertDescription>
       </Alert>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
-          <TabsTrigger value="create">CrÃ©er un bulletin</TabsTrigger>
+          <TabsTrigger value="create">Créer un bulletin</TabsTrigger>
           <TabsTrigger value="list">Bulletins existants ({reportCards.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="create">
           <Card>
             <CardHeader>
-              <CardTitle>CrÃ©er un bulletin de test</CardTitle>
+              <CardTitle>Créer un bulletin de test</CardTitle>
               <CardDescription>
-                Utilisez ce formulaire pour crÃ©er rapidement un bulletin de test.
+                Utilisez ce formulaire pour créer rapidement un bulletin de test.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Ã‰lÃ¨ve</label>
+                  <label className="text-sm font-medium mb-2 block">Élève</label>
                   <Select 
                     value={selectedStudent} 
                     onValueChange={setSelectedStudent}
                     disabled={loading || students.length === 0}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="SÃ©lectionner un Ã©lÃ¨ve" />
+                      <SelectValue placeholder="Sélectionner un élève" />
                     </SelectTrigger>
                     <SelectContent>
                       {students.map((student) => (
@@ -333,20 +333,20 @@ export default function DebugReportCardsPage() {
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">PÃ©riode</label>
+                  <label className="text-sm font-medium mb-2 block">Période</label>
                   <Select 
                     value={selectedPeriod} 
                     onValueChange={setSelectedPeriod}
                     disabled={loading || periods.length === 0}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="SÃ©lectionner une pÃ©riode" />
+                      <SelectValue placeholder="Sélectionner une période" />
                     </SelectTrigger>
                     <SelectContent>
                       {periods.map((period) => (
                         <SelectItem key={period.id} value={period.id}>
                           {period.type === 'TRIMESTER' ? 'Trimestre' : 
-                           period.type === 'SEMESTER' ? 'Semestre' : 'AnnÃ©e'} - {period.schoolYear}
+                           period.type === 'SEMESTER' ? 'Semestre' : 'Année'} - {period.schoolYear}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -380,7 +380,7 @@ export default function DebugReportCardsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="DRAFT">Brouillon</SelectItem>
-                      <SelectItem value="PUBLISHED">PubliÃ©</SelectItem>
+                      <SelectItem value="PUBLISHED">Publié</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -389,7 +389,7 @@ export default function DebugReportCardsPage() {
             <CardFooter>
               <Button onClick={createTestReportCard} disabled={loading}>
                 <Bug className="h-4 w-4 mr-2" />
-                CrÃ©er un bulletin de test
+                Créer un bulletin de test
               </Button>
             </CardFooter>
           </Card>
@@ -400,13 +400,13 @@ export default function DebugReportCardsPage() {
             <CardHeader>
               <CardTitle>Bulletins existants</CardTitle>
               <CardDescription>
-                Liste des bulletins crÃ©Ã©s dans la base de donnÃ©es.
+                Liste des bulletins créés dans la base de données.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {reportCards.length === 0 ? (
                 <div className="text-center py-10">
-                  <p className="text-muted-foreground">Aucun bulletin trouvÃ©</p>
+                  <p className="text-muted-foreground">Aucun bulletin trouvé</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -419,7 +419,7 @@ export default function DebugReportCardsPage() {
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             {reportCard.period.type === 'TRIMESTER' ? 'Trimestre' : 
-                             reportCard.period.type === 'SEMESTER' ? 'Semestre' : 'AnnÃ©e'} - {reportCard.period.schoolYear}
+                             reportCard.period.type === 'SEMESTER' ? 'Semestre' : 'Année'} - {reportCard.period.schoolYear}
                           </p>
                         </div>
                         <div className="flex space-x-2">
@@ -446,8 +446,8 @@ export default function DebugReportCardsPage() {
                           <span>{formatStatus(reportCard.status)}</span>
                         </div>
                         <div className="col-span-2">
-                          <span className="text-muted-foreground">ApprÃ©ciation:</span>{' '}
-                          <span>{reportCard.appreciation || 'Aucune apprÃ©ciation'}</span>
+                          <span className="text-muted-foreground">Appréciation:</span>{' '}
+                          <span>{reportCard.appreciation || 'Aucune appréciation'}</span>
                         </div>
                       </div>
                     </div>
@@ -461,3 +461,5 @@ export default function DebugReportCardsPage() {
     </div>
   )
 } 
+
+

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export default function DebugPage() {
@@ -17,7 +17,7 @@ export default function DebugPage() {
   })
 
   useEffect(() => {
-    // Charger les donnÃ©es API au chargement de la page
+    // Charger les données API au chargement de la page
     fetchAllData()
   }, [])
 
@@ -40,13 +40,13 @@ export default function DebugPage() {
 
       setResult({
         success: true,
-        message: 'DonnÃ©es chargÃ©es avec succÃ¨s'
+        message: 'Données chargées avec succès'
       })
     } catch (error) {
-      console.error('Erreur lors du chargement des donnÃ©es:', error)
+      console.error('Erreur lors du chargement des données:', error)
       setResult({
         success: false,
-        message: error instanceof Error ? error.message : 'Erreur lors du chargement des donnÃ©es'
+        message: error instanceof Error ? error.message : 'Erreur lors du chargement des données'
       })
     } finally {
       setLoading(false)
@@ -75,7 +75,7 @@ export default function DebugPage() {
         await fetchAllData()
         setResult({
           success: true,
-          message: 'PÃ©riode de test crÃ©Ã©e avec succÃ¨s'
+          message: 'Période de test créée avec succès'
         })
       } else {
         const data = await response.json()
@@ -112,7 +112,7 @@ export default function DebugPage() {
         await fetchAllData()
         setResult({
           success: true,
-          message: 'Classe de test crÃ©Ã©e avec succÃ¨s'
+          message: 'Classe de test créée avec succès'
         })
       } else {
         const data = await response.json()
@@ -133,14 +133,14 @@ export default function DebugPage() {
     setLoading(true)
     setResult(null)
     try {
-      // CrÃ©er d'abord un utilisateur si nÃ©cessaire
+      // Créer d'abord un utilisateur si nécessaire
       const userResponse = await fetch('/api/students', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstName: 'Ã‰lÃ¨ve',
+          firstName: 'Élève',
           lastName: 'Test',
           email: 'eleve.test@ecole.com',
           password: 'motdepasse',
@@ -152,7 +152,7 @@ export default function DebugPage() {
         await fetchAllData()
         setResult({
           success: true,
-          message: 'Ã‰lÃ¨ve de test crÃ©Ã© avec succÃ¨s'
+          message: 'Élève de test créé avec succès'
         })
       } else {
         const data = await userResponse.json()
@@ -173,9 +173,9 @@ export default function DebugPage() {
     setLoading(true)
     setResult(null)
     try {
-      // VÃ©rifier que nous avons un Ã©lÃ¨ve et une pÃ©riode
+      // Vérifier que nous avons un élève et une période
       if (apiData.students.length === 0 || apiData.periods.length === 0) {
-        throw new Error('Vous devez crÃ©er au moins un Ã©lÃ¨ve et une pÃ©riode avant de crÃ©er un bulletin')
+        throw new Error('Vous devez créer au moins un élève et une période avant de créer un bulletin')
       }
 
       const response = await fetch('/api/report-cards', {
@@ -196,7 +196,7 @@ export default function DebugPage() {
         await fetchAllData()
         setResult({
           success: true,
-          message: 'Bulletin de test crÃ©Ã© avec succÃ¨s'
+          message: 'Bulletin de test créé avec succès'
         })
       } else {
         const data = await response.json()
@@ -215,7 +215,7 @@ export default function DebugPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Outils de dÃ©bogage</h1>
+      <h1 className="text-3xl font-bold mb-6">Outils de débogage</h1>
 
       {result && (
         <div className={`p-4 mb-6 border rounded-md flex items-center gap-3 ${result.success ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
@@ -226,21 +226,21 @@ export default function DebugPage() {
 
       <Tabs defaultValue="data">
         <TabsList>
-          <TabsTrigger value="data">DonnÃ©es</TabsTrigger>
-          <TabsTrigger value="create">CrÃ©er des donnÃ©es</TabsTrigger>
+          <TabsTrigger value="data">Données</TabsTrigger>
+          <TabsTrigger value="create">Créer des données</TabsTrigger>
         </TabsList>
         
         <TabsContent value="data" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>DonnÃ©es actuelles</CardTitle>
+              <CardTitle>Données actuelles</CardTitle>
               <CardDescription>
-                DonnÃ©es rÃ©cupÃ©rÃ©es depuis les API
+                Données récupérées depuis les API
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="text-lg font-medium mb-2">PÃ©riodes ({apiData.periods.length})</h3>
+                <h3 className="text-lg font-medium mb-2">Périodes ({apiData.periods.length})</h3>
                 <ul className="list-disc pl-5">
                   {apiData.periods.map((period: any) => (
                     <li key={period.id}>
@@ -262,7 +262,7 @@ export default function DebugPage() {
               </div>
               
               <div>
-                <h3 className="text-lg font-medium mb-2">Ã‰lÃ¨ves ({apiData.students.length})</h3>
+                <h3 className="text-lg font-medium mb-2">Élèves ({apiData.students.length})</h3>
                 <ul className="list-disc pl-5">
                   {apiData.students.map((student: any) => (
                     <li key={student.id}>
@@ -278,8 +278,8 @@ export default function DebugPage() {
                 <ul className="list-disc pl-5">
                   {apiData.reportCards.map((reportCard: any) => (
                     <li key={reportCard.id}>
-                      Ã‰lÃ¨ve: {reportCard.student.user.firstName} {reportCard.student.user.lastName} -
-                      PÃ©riode: {reportCard.period.type} {reportCard.period.schoolYear} -
+                      Élève: {reportCard.student.user.firstName} {reportCard.student.user.lastName} -
+                      Période: {reportCard.period.type} {reportCard.period.schoolYear} -
                       Moyenne: {reportCard.average} -
                       Statut: {reportCard.status}
                     </li>
@@ -289,7 +289,7 @@ export default function DebugPage() {
             </CardContent>
             <CardFooter>
               <Button onClick={fetchAllData} disabled={loading}>
-                {loading ? "Chargement..." : "RafraÃ®chir les donnÃ©es"}
+                {loading ? "Chargement..." : "Rafraîchir les données"}
               </Button>
             </CardFooter>
           </Card>
@@ -298,43 +298,43 @@ export default function DebugPage() {
         <TabsContent value="create" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>CrÃ©ation de donnÃ©es de test</CardTitle>
+              <CardTitle>Création de données de test</CardTitle>
               <CardDescription>
-                Utilisez ces boutons pour crÃ©er rapidement des donnÃ©es de test
+                Utilisez ces boutons pour créer rapidement des données de test
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="text-lg font-medium mb-2">PÃ©riodes</h3>
+                <h3 className="text-lg font-medium mb-2">Périodes</h3>
                 <Button onClick={createTestPeriod} disabled={loading}>
-                  {loading ? "CrÃ©ation en cours..." : "CrÃ©er une pÃ©riode de test"}
+                  {loading ? "Création en cours..." : "Créer une période de test"}
                 </Button>
               </div>
               
               <div>
                 <h3 className="text-lg font-medium mb-2">Classes</h3>
                 <Button onClick={createTestClass} disabled={loading}>
-                  {loading ? "CrÃ©ation en cours..." : "CrÃ©er une classe de test"}
+                  {loading ? "Création en cours..." : "Créer une classe de test"}
                 </Button>
               </div>
               
               <div>
-                <h3 className="text-lg font-medium mb-2">Ã‰lÃ¨ves</h3>
+                <h3 className="text-lg font-medium mb-2">Élèves</h3>
                 <Button onClick={createTestStudent} disabled={loading}>
-                  {loading ? "CrÃ©ation en cours..." : "CrÃ©er un Ã©lÃ¨ve de test"}
+                  {loading ? "Création en cours..." : "Créer un élève de test"}
                 </Button>
               </div>
               
               <div>
                 <h3 className="text-lg font-medium mb-2">Bulletins</h3>
                 <Button onClick={createTestReportCard} disabled={loading}>
-                  {loading ? "CrÃ©ation en cours..." : "CrÃ©er un bulletin de test"}
+                  {loading ? "Création en cours..." : "Créer un bulletin de test"}
                 </Button>
               </div>
             </CardContent>
             <CardFooter>
               <p className="text-sm text-gray-500">
-                Les donnÃ©es crÃ©Ã©es ici sont destinÃ©es uniquement au dÃ©veloppement et aux tests.
+                Les données créées ici sont destinées uniquement au développement et aux tests.
               </p>
             </CardFooter>
           </Card>
@@ -343,3 +343,5 @@ export default function DebugPage() {
     </div>
   )
 } 
+
+

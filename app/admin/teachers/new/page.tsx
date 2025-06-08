@@ -2,8 +2,8 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import TeacherForm from '@/app/components/teachers/TeacherForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import TeacherForm from '@/components/teachers/TeacherForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function NewTeacherPage() {
   const { data: session, status } = useSession()
@@ -14,7 +14,7 @@ export default function NewTeacherPage() {
   }
 
   if (!session || session.user.role !== 'ADMIN') {
-    return <div>Accès non autorisé</div>
+    return <div>Acc�s non autoris�</div>
   }
 
   return (
@@ -31,3 +31,5 @@ export default function NewTeacherPage() {
     </div>
   )
 } 
+
+

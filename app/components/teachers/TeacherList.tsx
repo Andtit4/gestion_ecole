@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -6,6 +6,7 @@ import Link from 'next/link'
 
 interface Teacher {
   id: string
+  userId: string
   firstName: string
   lastName: string
   email: string
@@ -40,26 +41,17 @@ export default function TeacherList() {
             if (classesResponse.ok) {
               const classes = await classesResponse.json()
               return { 
-                id: teacher.id,
-                firstName: teacher.user?.firstName || teacher.firstName,
-                lastName: teacher.user?.lastName || teacher.lastName,
-                email: teacher.user?.email || teacher.email,
+                ...teacher,
                 classesCount: classes.length 
               }
             }
             return { 
-              id: teacher.id,
-              firstName: teacher.user?.firstName || teacher.firstName,
-              lastName: teacher.user?.lastName || teacher.lastName,
-              email: teacher.user?.email || teacher.email,
+              ...teacher,
               classesCount: 0 
             }
           } catch (e) {
             return { 
-              id: teacher.id,
-              firstName: teacher.user?.firstName || teacher.firstName,
-              lastName: teacher.user?.lastName || teacher.lastName,
-              email: teacher.user?.email || teacher.email,
+              ...teacher,
               classesCount: 0 
             }
           }
@@ -76,7 +68,7 @@ export default function TeacherList() {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/users/${id}`, {
+      const response = await fetch(`/api/teachers?id=${id}`, {
         method: 'DELETE',
       })
       if (!response.ok) {
@@ -208,3 +200,5 @@ export default function TeacherList() {
     </div>
   )
 } 
+
+

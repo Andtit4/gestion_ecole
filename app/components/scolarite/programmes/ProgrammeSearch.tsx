@@ -1,17 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { Input } from '@/app/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Search, AlertCircle, Eye } from 'lucide-react'
-import { Badge } from '@/app/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/components/ui/select'
+} from '@/components/ui/select'
 import {
   Card,
   CardContent,
@@ -19,11 +19,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/app/components/ui/card'
+} from '@/components/ui/card'
 import ProgrammeView from './ProgrammeView'
-import TableEmpty from '@/app/components/ui/TableEmpty'
+import TableEmpty from '@/components/ui/TableEmpty'
 
-const levels = ['6ème', '5ème', '4ème', '3ème', 'Seconde', 'Première', 'Terminale']
+const levels = ['6�me', '5�me', '4�me', '3�me', 'Seconde', 'Premi�re', 'Terminale']
 
 export default function ProgrammeSearch() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -44,18 +44,18 @@ export default function ProgrammeSearch() {
     try {
       const response = await fetch('/api/courses')
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des matières')
+        throw new Error('Erreur lors du chargement des mati�res')
       }
       const data = await response.json()
       setCourses(data)
     } catch (err) {
-      console.error('Erreur lors du chargement des matières:', err)
+      console.error('Erreur lors du chargement des mati�res:', err)
     }
   }
 
   const handleSearch = async () => {
     if (!searchQuery && !selectedLevel && !selectedCourse) {
-      setError('Veuillez saisir au moins un critère de recherche')
+      setError('Veuillez saisir au moins un crit�re de recherche')
       return
     }
 
@@ -63,7 +63,7 @@ export default function ProgrammeSearch() {
     setError('')
     
     try {
-      // Construire les paramètres de requête
+      // Construire les param�tres de requ�te
       const params = new URLSearchParams()
       if (searchQuery) params.append('q', searchQuery)
       if (selectedLevel) params.append('level', selectedLevel)
@@ -79,7 +79,7 @@ export default function ProgrammeSearch() {
       setSearchResults(data)
       
       if (data.length === 0) {
-        setError('Aucun programme ne correspond à votre recherche')
+        setError('Aucun programme ne correspond � votre recherche')
       }
     } catch (err) {
       setError('Une erreur est survenue lors de la recherche')
@@ -99,9 +99,9 @@ export default function ProgrammeSearch() {
       case 'DRAFT':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Brouillon</Badge>
       case 'PUBLISHED':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Publié</Badge>
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Publi�</Badge>
       case 'ARCHIVED':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Archivé</Badge>
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Archiv�</Badge>
       default:
         return <Badge variant="outline">Inconnu</Badge>
     }
@@ -120,7 +120,7 @@ export default function ProgrammeSearch() {
           <div>
             <Input
               type="text"
-              placeholder="Rechercher par mot-clé..."
+              placeholder="Rechercher par mot-cl�..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -133,10 +133,10 @@ export default function ProgrammeSearch() {
               onValueChange={setSelectedCourse}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une matière" />
+                <SelectValue placeholder="S�lectionner une mati�re" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Toutes les matières</SelectItem>
+                <SelectItem value="">Toutes les mati�res</SelectItem>
                 {courses.map((course) => (
                   <SelectItem key={course.id} value={course.id}>
                     {course.name}
@@ -151,7 +151,7 @@ export default function ProgrammeSearch() {
               onValueChange={setSelectedLevel}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un niveau" />
+                <SelectValue placeholder="S�lectionner un niveau" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Tous les niveaux</SelectItem>
@@ -191,7 +191,7 @@ export default function ProgrammeSearch() {
                     {getStatusBadge(programme.status)}
                   </div>
                   <CardDescription>
-                    {course?.name || 'Matière inconnue'} - {programme.level}
+                    {course?.name || 'Mati�re inconnue'} - {programme.level}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow">
@@ -203,7 +203,7 @@ export default function ProgrammeSearch() {
                 </CardContent>
                 <CardFooter className="flex justify-between border-t pt-4">
                   <div className="text-sm text-gray-500">
-                    Année {programme.year}
+                    Ann�e {programme.year}
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => handleView(programme)}>
                     <Eye className="h-4 w-4 mr-1" /> Voir
@@ -217,7 +217,7 @@ export default function ProgrammeSearch() {
 
       {searchResults.length > 0 && (
         <div className="text-sm text-gray-500 mt-4">
-          {searchResults.length} programme(s) trouvé(s)
+          {searchResults.length} programme(s) trouv�(s)
         </div>
       )}
 
@@ -231,3 +231,5 @@ export default function ProgrammeSearch() {
     </div>
   )
 } 
+
+

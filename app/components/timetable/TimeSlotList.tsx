@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
-import { DayOfWeek, TimeSlot, dayOfWeekLabels } from '@/app/types'
+import { DayOfWeek, TimeSlot, dayOfWeekLabels } from '@/types'
 import TimeSlotForm from './TimeSlotForm'
 import LoadingSpinner from '../ui/LoadingSpinner'
 
@@ -142,3 +142,5 @@ export default function TimeSlotList() {
     </div>
   )
 } 
+
+

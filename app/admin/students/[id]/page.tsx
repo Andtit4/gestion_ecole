@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import StudentForm from '@/app/components/students/StudentForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import StudentForm from '@/components/students/StudentForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { use } from 'react'
 
 interface User {
@@ -137,7 +137,7 @@ export default function StudentDetailsPage({ params }: { params: Promise<{ id: s
               {/* Ici on pourrait ajouter des sections pour les notes, présences, etc. */}
               <div className="px-4 py-5 sm:px-6 border-t border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900">Notes récentes</h3>
-                <p className="mt-2 text-sm text-gray-500">Fonctionnalité à venir...</p>
+                <p className="text-gray-600">Aucune donnée d'évaluation trouvée pour cet élève.</p>
               </div>
               
               <div className="px-4 py-5 sm:px-6 border-t border-gray-200">

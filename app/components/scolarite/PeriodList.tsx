@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { formatDate } from '@/app/lib/utils'
+import { Button } from '@/components/ui/button'
+import { formatDate } from '@/lib/utils'
 import PeriodForm from './PeriodForm'
 
 interface Period {
@@ -30,7 +30,7 @@ export default function PeriodList() {
       setIsLoading(true)
       const response = await fetch('/api/periods')
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des périodes')
+        throw new Error('Erreur lors du chargement des p�riodes')
       }
       const data = await response.json()
       setPeriods(data)
@@ -42,14 +42,14 @@ export default function PeriodList() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette période?')) return
+    if (!confirm('�tes-vous s�r de vouloir supprimer cette p�riode?')) return
     
     try {
       const response = await fetch(`/api/periods/${id}`, {
         method: 'DELETE',
       })
       if (!response.ok) {
-        throw new Error('Erreur lors de la suppression de la période')
+        throw new Error('Erreur lors de la suppression de la p�riode')
       }
       setPeriods(periods.filter(period => period.id !== id))
     } catch (err) {
@@ -80,8 +80,8 @@ export default function PeriodList() {
   const getStatusLabel = (status: string) => {
     switch(status.toLowerCase()) {
       case 'active': return 'Active'
-      case 'completed': return 'Terminée'
-      case 'upcoming': return 'À venir'
+      case 'completed': return 'Termin�e'
+      case 'upcoming': return '� venir'
       default: return status
     }
   }
@@ -109,7 +109,7 @@ export default function PeriodList() {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-xl font-semibold text-gray-800">Liste des périodes</h2>
+        <h2 className="text-xl font-semibold text-gray-800">Liste des p�riodes</h2>
         <Button 
           onClick={() => setIsFormOpen(true)}
           className="shadow-sm hover:shadow-md transition-all"
@@ -117,7 +117,7 @@ export default function PeriodList() {
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
-          Ajouter une période
+          Ajouter une p�riode
         </Button>
       </div>
 
@@ -126,8 +126,8 @@ export default function PeriodList() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune période définie</h3>
-          <p className="mt-1 text-sm text-gray-500">Commencez par créer une nouvelle période scolaire.</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune p�riode d�finie</h3>
+          <p className="mt-1 text-sm text-gray-500">Commencez par cr�er une nouvelle p�riode scolaire.</p>
           <div className="mt-6">
             <Button 
               onClick={() => setIsFormOpen(true)}
@@ -136,7 +136,7 @@ export default function PeriodList() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
-              Ajouter une période
+              Ajouter une p�riode
             </Button>
           </div>
         </div>
@@ -146,8 +146,8 @@ export default function PeriodList() {
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Année scolaire</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de début</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ann�e scolaire</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de d�but</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de fin</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -208,3 +208,5 @@ export default function PeriodList() {
     </div>
   )
 } 
+
+

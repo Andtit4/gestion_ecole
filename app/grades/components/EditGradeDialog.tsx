@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect } from 'react'
 import { Grade, Student, Course } from '@prisma/client'
@@ -149,3 +149,5 @@ export default function EditGradeDialog({
     </Dialog>
   )
 } 
+
+

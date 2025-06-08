@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { redirect } from 'next/navigation'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
-import ProgrammeList from '@/app/components/scolarite/programmes/ProgrammeList'
-import ProgrammeSearch from '@/app/components/scolarite/programmes/ProgrammeSearch'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ProgrammeList from '@/components/scolarite/programmes/ProgrammeList'
+import ProgrammeSearch from '@/components/scolarite/programmes/ProgrammeSearch'
 
 export default function ProgrammesPage() {
   const { data: session, status } = useSession()
@@ -34,9 +34,9 @@ export default function ProgrammesPage() {
         <TabsContent value="liste" className="mt-6">
           <Card className="border-gray-200 shadow-md">
             <CardHeader className="bg-gray-50 border-b border-gray-200">
-              <CardTitle className="text-xl text-gray-800">Programmes par Matière</CardTitle>
+              <CardTitle className="text-xl text-gray-800">Programmes par Mati�re</CardTitle>
               <CardDescription className="text-gray-600">
-                Consultez et gérez les programmes scolaires par matière et par niveau.
+                Consultez et g�rez les programmes scolaires par mati�re et par niveau.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -50,7 +50,7 @@ export default function ProgrammesPage() {
             <CardHeader className="bg-gray-50 border-b border-gray-200">
               <CardTitle className="text-xl text-gray-800">Recherche de Programmes</CardTitle>
               <CardDescription className="text-gray-600">
-                Recherchez des programmes par mot-clé, niveau ou matière.
+                Recherchez des programmes par mot-cl�, niveau ou mati�re.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -62,3 +62,5 @@ export default function ProgrammesPage() {
     </div>
   )
 } 
+
+

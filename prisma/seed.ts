@@ -1,4 +1,4 @@
-import { PrismaClient, Role, GradeType } from '@prisma/client'
+﻿import { PrismaClient, Role, GradeType } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
@@ -90,3 +90,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect()
   }) 
+
+

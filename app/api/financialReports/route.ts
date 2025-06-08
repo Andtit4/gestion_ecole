@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/lib/auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/financialReports - Générer des rapports financiers
@@ -34,6 +34,7 @@ export async function GET(request: Request) {
       lte: endDate,
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let response: any = {}
 
     // Rapport sommaire général
@@ -273,8 +274,10 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Erreur lors de la génération du rapport financier:', error)
     return NextResponse.json(
-      { message: 'Erreur serveur', error: error.message },
+      { message: 'Erreur serveur', error: error instanceof Error ? error.message : 'Une erreur inconnue est survenue' },
       { status: 500 }
     )
   }
 } 
+
+

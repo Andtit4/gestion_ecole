@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Vérification de l'état de la base de données
@@ -17,3 +17,5 @@ export async function GET() {
     )
   }
 } 
+
+

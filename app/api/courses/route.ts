@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -128,3 +128,5 @@ const courseSchema = z.object({
   description: z.string().optional(),
   teacherId: z.string().min(1, 'L\'enseignant est requis')
 }) 
+
+

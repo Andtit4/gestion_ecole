@@ -32,10 +32,10 @@ model Renamedclass {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   teacher   teacher?   @relation(fields: [teacherId], references: [id])
+  feegroup  feegroup[]
   schedule  schedule[]
   students  student[]
   course    course[]   @relation("classtocourse")
-  feeGroups FeeGroup[] // Relation avec les groupes de frais
 
   @@index([teacherId], map: "class_teacherId_fkey")
   @@map("class")
@@ -52,9 +52,9 @@ model course {
   updatedAt    DateTime       @updatedAt
   teacher      teacher        @relation(fields: [teacherId], references: [id])
   grades       grade[]
+  programme    programme[]
   schedule     schedule[]
   Renamedclass Renamedclass[] @relation("classtocourse")
-  programmes   Programme[]
 
   @@index([teacherId])
 }
@@ -87,7 +87,7 @@ model parent {
   updatedAt DateTime        @updatedAt
   user      user            @relation(fields: [userId], references: [id], onDelete: Cascade)
   students  parentstudent[]
-  payments  Payment[]       // Relation avec les paiements
+  payment   payment[]
 }
 
 model parentstudent {
@@ -136,9 +136,9 @@ model reportcard {
   status          String
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+  financialStatus FinanceStatus @default(PENDING)
   period          period        @relation(fields: [periodId], references: [id])
   student         student       @relation(fields: [studentId], references: [id])
-  financialStatus FinanceStatus @default(PENDING) // Statut financier du bulletin
 
   @@index([periodId])
   @@index([studentId])
@@ -171,13 +171,13 @@ model student {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   attendances   attendance[]
+  feeassignment feeassignment[]
   grades        grade[]
+  invoice       invoice[]
   parents       parentstudent[]
   reportCards   reportcard[]
   class         Renamedclass?   @relation(fields: [classId], references: [id])
   user          user            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoices      Invoice[]       // Relation avec les factures
-  feeAssignments FeeAssignment[] // Relation avec les assignations de frais
 
   @@index([classId])
 }
@@ -204,37 +204,16 @@ model timeslot {
 }
 
 model SchoolDayConfig {
-  id                String             @id @default(cuid())
-  dayOfWeek         timeslot_dayOfWeek
-  dayStartTime      DateTime
-  dayEndTime        DateTime
-  breakStartTime    DateTime
-  breakEndTime      DateTime
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  id             String             @id @default(cuid())
+  dayOfWeek      timeslot_dayOfWeek @unique
+  dayStartTime   DateTime
+  dayEndTime     DateTime
+  breakStartTime DateTime
+  breakEndTime   DateTime
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
 
-  @@unique([dayOfWeek])
   @@map("schoolday_config")
-}
-
-model Programme {
-  id              String           @id @default(cuid())
-  title           String
-  description     String?
-  level           String
-  year            Int
-  courseId        String
-  content         String?          @db.Text
-  objectives      String?          @db.Text
-  status          programme_status @default(DRAFT)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  userId          String
-  course          course           @relation(fields: [courseId], references: [id])
-  user            user             @relation(fields: [userId], references: [id])
-
-  @@index([courseId])
-  @@index([userId])
 }
 
 model user {
@@ -248,141 +227,159 @@ model user {
   updatedAt   DateTime     @updatedAt
   attendances attendance[]
   parent      parent?
+  programme   programme[]
   schedules   schedule[]
   student     student?
   teacher     teacher?
-  programmes  Programme[]
 }
 
-// Nouveaux modèles pour la gestion des frais de scolarité
+model feeassignment {
+  id                   String                 @id
+  studentId            String
+  feeItemId            String
+  status               feeassignment_status   @default(PENDING)
+  dueDate              DateTime
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  feeitem              feeitem                @relation(fields: [feeItemId], references: [id], map: "FeeAssignment_feeItemId_fkey")
+  student              student                @relation(fields: [studentId], references: [id], map: "FeeAssignment_studentId_fkey")
+  invoicefeeassignment invoicefeeassignment[]
 
-model FeeType {
-  id          String        @id @default(cuid())
+  @@index([feeItemId], map: "FeeAssignment_feeItemId_idx")
+  @@index([studentId], map: "FeeAssignment_studentId_idx")
+}
+
+model feegroup {
+  id           String        @id
+  name         String
+  description  String?
+  classId      String?
+  level        String?
+  year         Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime
+  Renamedclass Renamedclass? @relation(fields: [classId], references: [id], map: "FeeGroup_classId_fkey")
+  feeitem      feeitem[]
+
+  @@index([classId], map: "FeeGroup_classId_idx")
+}
+
+model feeitem {
+  id            String          @id
+  name          String
+  amount        Float
+  dueDate       DateTime?
+  description   String?
+  mandatory     Boolean         @default(true)
+  feeTypeId     String
+  feeGroupId    String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime
+  feeassignment feeassignment[]
+  feegroup      feegroup        @relation(fields: [feeGroupId], references: [id], map: "FeeItem_feeGroupId_fkey")
+  feetype       feetype         @relation(fields: [feeTypeId], references: [id], map: "FeeItem_feeTypeId_fkey")
+
+  @@index([feeGroupId], map: "FeeItem_feeGroupId_idx")
+  @@index([feeTypeId], map: "FeeItem_feeTypeId_idx")
+}
+
+model feetype {
+  id          String             @id @default(cuid())
   name        String
   description String?
-  isRecurrent Boolean       @default(false)
-  frequency   FeeFrequency? // Mensuel, Trimestriel, Annuel, etc.
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  feeItems    FeeItem[]
+  isRecurrent Boolean            @default(false)
+  frequency   feetype_frequency?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  feeitem     feeitem[]
 }
 
-model FeeGroup {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  classId     String?
-  level       String?
-  year        Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  class       Renamedclass? @relation(fields: [classId], references: [id])
-  feeItems    FeeItem[]
+model invoice {
+  id                   String                 @id
+  invoiceNumber        String                 @unique(map: "Invoice_invoiceNumber_key")
+  totalAmount          Float
+  paidAmount           Float                  @default(0)
+  status               invoice_status         @default(PENDING)
+  dueDate              DateTime
+  studentId            String
+  issuedDate           DateTime               @default(now())
+  notes                String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  student              student                @relation(fields: [studentId], references: [id], map: "Invoice_studentId_fkey")
+  invoicefeeassignment invoicefeeassignment[]
+  payment              payment[]
 
-  @@index([classId])
+  @@index([studentId], map: "Invoice_studentId_idx")
 }
 
-model FeeItem {
-  id          String   @id @default(cuid())
-  name        String
-  amount      Float
-  dueDate     DateTime?
-  description String?
-  mandatory   Boolean  @default(true)
-  feeTypeId   String
-  feeGroupId  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  feeType     FeeType  @relation(fields: [feeTypeId], references: [id])
-  feeGroup    FeeGroup @relation(fields: [feeGroupId], references: [id])
-  assignments FeeAssignment[]
-
-  @@index([feeTypeId])
-  @@index([feeGroupId])
-}
-
-model FeeAssignment {
-  id         String   @id @default(cuid())
-  studentId  String
-  feeItemId  String
-  status     PaymentStatus @default(PENDING)
-  dueDate    DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  student    student  @relation(fields: [studentId], references: [id])
-  feeItem    FeeItem  @relation(fields: [feeItemId], references: [id])
-  invoices   InvoiceFeeAssignment[]
-
-  @@index([studentId])
-  @@index([feeItemId])
-}
-
-model Invoice {
-  id              String        @id @default(cuid())
-  invoiceNumber   String        @unique
-  totalAmount     Float
-  paidAmount      Float         @default(0)
-  status          PaymentStatus @default(PENDING)
-  dueDate         DateTime
-  studentId       String
-  issuedDate      DateTime      @default(now())
-  notes           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  student         student       @relation(fields: [studentId], references: [id])
-  payments        Payment[]
-  feeAssignments  InvoiceFeeAssignment[]
-
-  @@index([studentId])
-}
-
-model InvoiceFeeAssignment {
-  id              String        @id @default(cuid())
+model invoicefeeassignment {
+  id              String        @id
   invoiceId       String
   feeAssignmentId String
   amount          Float
   createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  invoice         Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  feeAssignment   FeeAssignment @relation(fields: [feeAssignmentId], references: [id])
+  updatedAt       DateTime
+  feeassignment   feeassignment @relation(fields: [feeAssignmentId], references: [id], map: "InvoiceFeeAssignment_feeAssignmentId_fkey")
+  invoice         invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "InvoiceFeeAssignment_invoiceId_fkey")
 
-  @@unique([invoiceId, feeAssignmentId])
-  @@index([invoiceId])
-  @@index([feeAssignmentId])
+  @@unique([invoiceId, feeAssignmentId], map: "InvoiceFeeAssignment_invoiceId_feeAssignmentId_key")
+  @@index([feeAssignmentId], map: "InvoiceFeeAssignment_feeAssignmentId_idx")
+  @@index([invoiceId], map: "InvoiceFeeAssignment_invoiceId_idx")
 }
 
-model Payment {
-  id              String         @id @default(cuid())
-  amount          Float
-  method          PaymentMethod
-  reference       String?        // Numéro de chèque, référence de transaction, etc.
-  status          PaymentStatus  @default(PENDING)
-  processingFee   Float          @default(0)
-  invoiceId       String
-  parentId        String
-  paymentDate     DateTime       @default(now())
-  notes           String?
-  receiptNumber   String?        @unique
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  invoice         Invoice        @relation(fields: [invoiceId], references: [id])
-  parent          parent         @relation(fields: [parentId], references: [id])
+model payment {
+  id            String         @id
+  amount        Float
+  method        payment_method
+  reference     String?
+  status        payment_status @default(PENDING)
+  processingFee Float          @default(0)
+  invoiceId     String
+  parentId      String
+  paymentDate   DateTime       @default(now())
+  notes         String?
+  receiptNumber String?        @unique(map: "Payment_receiptNumber_key")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  invoice       invoice        @relation(fields: [invoiceId], references: [id], map: "Payment_invoiceId_fkey")
+  parent        parent         @relation(fields: [parentId], references: [id], map: "Payment_parentId_fkey")
 
-  @@index([invoiceId])
-  @@index([parentId])
+  @@index([invoiceId], map: "Payment_invoiceId_idx")
+  @@index([parentId], map: "Payment_parentId_idx")
 }
 
-model PaymentConfig {
-  id                     String   @id @default(cuid())
+model paymentconfig {
+  id                     String   @id
   latePaymentFeePercent  Float    @default(0)
-  latePaymentGracePeriod Int      @default(0) // Jours
+  latePaymentGracePeriod Int      @default(0)
   receiptPrefix          String   @default("RECU-")
   invoicePrefix          String   @default("FACT-")
   allowPartialPayments   Boolean  @default(true)
   allowOnlinePayments    Boolean  @default(true)
-  paymentMethods         String   @default("CASH,CHEQUE,BANK_TRANSFER,ONLINE") // Liste des méthodes séparées par des virgules
+  paymentMethods         String   @default("CASH,CHEQUE,BANK_TRANSFER,ONLINE")
   createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  updatedAt              DateTime
+}
+
+model programme {
+  id          String           @id
+  title       String
+  description String?
+  level       String
+  year        Int
+  courseId    String
+  content     String?          @db.Text
+  objectives  String?          @db.Text
+  status      programme_status @default(DRAFT)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime
+  userId      String
+  course      course           @relation(fields: [courseId], references: [id], map: "Programme_courseId_fkey")
+  user        user             @relation(fields: [userId], references: [id], map: "Programme_userId_fkey")
+
+  @@index([courseId], map: "Programme_courseId_idx")
+  @@index([userId], map: "Programme_userId_idx")
 }
 
 enum timeslot_dayOfWeek {
@@ -415,13 +412,14 @@ enum grade_type {
   EXAM
 }
 
-enum programme_status {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
+enum FinanceStatus {
+  PENDING
+  PAID
+  LATE
+  EXEMPTED
 }
 
-enum PaymentMethod {
+enum payment_method {
   CASH
   CHEQUE
   BANK_TRANSFER
@@ -430,7 +428,7 @@ enum PaymentMethod {
   OTHER
 }
 
-enum PaymentStatus {
+enum feeassignment_status {
   PENDING
   PAID
   PARTIAL
@@ -439,7 +437,7 @@ enum PaymentStatus {
   REFUNDED
 }
 
-enum FeeFrequency {
+enum feetype_frequency {
   ONCE
   MONTHLY
   QUARTERLY
@@ -447,10 +445,26 @@ enum FeeFrequency {
   ANNUAL
 }
 
-enum FinanceStatus {
+enum invoice_status {
   PENDING
   PAID
+  PARTIAL
   LATE
-  EXEMPTED
+  CANCELLED
+  REFUNDED
 }
 
+enum payment_status {
+  PENDING
+  PAID
+  PARTIAL
+  LATE
+  CANCELLED
+  REFUNDED
+}
+
+enum programme_status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

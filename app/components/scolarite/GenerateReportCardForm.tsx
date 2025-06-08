@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
+import { Button } from '@/components/ui/button'
 
 interface GenerateReportCardFormProps {
   onClose: () => void
@@ -26,11 +26,11 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
     try {
       const response = await fetch('/api/periods')
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des périodes')
+        throw new Error('Erreur lors du chargement des p�riodes')
       }
       const data = await response.json()
       
-      // Filtrer les périodes actives ou terminées
+      // Filtrer les p�riodes actives ou termin�es
       const activePeriods = data.filter((p: any) => 
         p.status === 'active' || p.status === 'completed'
       )
@@ -67,19 +67,19 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
     setSuccess('')
 
     if (!selectedPeriod) {
-      setError('Veuillez sélectionner une période')
+      setError('Veuillez s�lectionner une p�riode')
       setIsLoading(false)
       return
     }
 
     if (!generateForAllStudents && !selectedClass) {
-      setError('Veuillez sélectionner une classe ou générer pour tous les élèves')
+      setError('Veuillez s�lectionner une classe ou g�n�rer pour tous les �l�ves')
       setIsLoading(false)
       return
     }
 
     try {
-      // Construire les paramètres
+      // Construire les param�tres
       const params: any = {
         periodId: selectedPeriod
       }
@@ -98,13 +98,13 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Erreur lors de la génération des bulletins')
+        throw new Error(errorData.message || 'Erreur lors de la g�n�ration des bulletins')
       }
 
       const data = await response.json()
-      setSuccess(`${data.count} bulletin(s) généré(s) avec succès.`)
+      setSuccess(`${data.count} bulletin(s) g�n�r�(s) avec succ�s.`)
       
-      // Fermer automatiquement après 2 secondes
+      // Fermer automatiquement apr�s 2 secondes
       setTimeout(() => {
         onClose()
       }, 2000)
@@ -118,7 +118,7 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Générer des bulletins</h2>
+        <h2 className="text-xl font-semibold">G�n�rer des bulletins</h2>
         <button
           type="button"
           onClick={onClose}
@@ -133,7 +133,7 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="period" className="block text-sm font-medium text-gray-700 mb-1">
-            Période
+            P�riode
           </label>
           <select
             id="period"
@@ -142,7 +142,7 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
             required
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           >
-            <option value="">Sélectionner une période</option>
+            <option value="">S�lectionner une p�riode</option>
             {periods.map(period => (
               <option key={period.id} value={period.id}>
                 {period.type} ({period.schoolYear})
@@ -160,7 +160,7 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
             className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
           />
           <label htmlFor="generateForAll" className="ml-2 block text-sm text-gray-900">
-            Générer pour tous les élèves
+            G�n�rer pour tous les �l�ves
           </label>
         </div>
 
@@ -177,7 +177,7 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
               required={!generateForAllStudents}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
             >
-              <option value="">Sélectionner une classe</option>
+              <option value="">S�lectionner une classe</option>
               {classes.map(cls => (
                 <option key={cls.id} value={cls.id}>
                   {cls.name}
@@ -208,10 +208,12 @@ export default function GenerateReportCardForm({ onClose }: GenerateReportCardFo
             type="submit"
             disabled={isLoading}
           >
-            {isLoading ? 'Génération en cours...' : 'Générer les bulletins'}
+            {isLoading ? 'G�n�ration en cours...' : 'G�n�rer les bulletins'}
           </Button>
         </div>
       </form>
     </div>
   )
 } 
+
+

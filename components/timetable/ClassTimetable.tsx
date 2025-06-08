@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useToast } from '@/components/ui/use-toast'
@@ -472,3 +472,5 @@ export default function ClassTimetable({ classes }: Props) {
     </div>
   )
 } 
+
+

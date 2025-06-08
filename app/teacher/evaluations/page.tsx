@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import EvaluationList from '@/app/components/evaluations/EvaluationList'
+import EvaluationList from '@/components/evaluations/EvaluationList'
 
 export default function TeacherEvaluationsPage() {
   const { data: session, status } = useSession()
@@ -16,7 +16,7 @@ export default function TeacherEvaluationsPage() {
   if (!session || session.user.role !== 'TEACHER') {
     return (
       <div className="bg-red-50 border-l-4 border-red-500 p-4">
-        <p className="text-red-700">Accès non autorisé. Vous devez être connecté en tant qu'enseignant.</p>
+        <p className="text-red-700">Acc�s non autoris�. Vous devez �tre connect� en tant qu'enseignant.</p>
       </div>
     )
   }
@@ -25,19 +25,19 @@ export default function TeacherEvaluationsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">
-          Gestion des évaluations
+          Gestion des �valuations
         </h1>
         <Link
           href="/teacher/evaluations/new"
           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Créer une évaluation
+          Cr�er une �valuation
         </Link>
       </div>
 
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-lg font-medium text-gray-900 mb-4">
-          Mes évaluations
+          Mes �valuations
         </h2>
         <EvaluationList teacherId={session.user.id} />
       </div>
@@ -60,7 +60,7 @@ export default function TeacherEvaluationsPage() {
                 </h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
-                    Les statistiques détaillées seront disponibles prochainement. Vous pourrez analyser les performances de vos classes et comparer les résultats entre différentes évaluations.
+                    Les statistiques d�taill�es seront disponibles prochainement. Vous pourrez analyser les performances de vos classes et comparer les r�sultats entre diff�rentes �valuations.
                   </p>
                 </div>
               </div>
@@ -74,21 +74,21 @@ export default function TeacherEvaluationsPage() {
           </h2>
           <div className="divide-y divide-gray-200">
             <div className="py-4">
-              <h3 className="text-sm font-medium text-gray-900">Guide d'évaluation</h3>
+              <h3 className="text-sm font-medium text-gray-900">Guide d'�valuation</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Consultez notre guide détaillé sur les bonnes pratiques d'évaluation
+                Consultez notre guide d�taill� sur les bonnes pratiques d'�valuation
               </p>
               <a href="#" className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-500">
-                Télécharger le guide
+                T�l�charger le guide
               </a>
             </div>
             <div className="py-4">
-              <h3 className="text-sm font-medium text-gray-900">Modèles d'évaluation</h3>
+              <h3 className="text-sm font-medium text-gray-900">Mod�les d'�valuation</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Accédez à notre bibliothèque de modèles d'évaluation prêts à l'emploi
+                Acc�dez � notre biblioth�que de mod�les d'�valuation pr�ts � l'emploi
               </p>
               <a href="#" className="mt-2 text-sm font-medium text-blue-600 hover:text-blue-500">
-                Parcourir les modèles
+                Parcourir les mod�les
               </a>
             </div>
           </div>
@@ -97,3 +97,5 @@ export default function TeacherEvaluationsPage() {
     </div>
   )
 } 
+
+

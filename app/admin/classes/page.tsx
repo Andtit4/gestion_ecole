@@ -1,13 +1,10 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-// import ClassList from '@/components/classes/ClassList'
-// import ClassForm from '@/components/classes/ClassForm'
-// import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import ClassList from '@/app/components/classes/ClassList'
-import ClassForm from '@/app/components/classes/ClassForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import ClassList from '@/components/classes/ClassList'
+import ClassForm from '@/components/classes/ClassForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function ClassesPage() {
   const { data: session, status } = useSession()
@@ -49,3 +46,5 @@ export default function ClassesPage() {
     </div>
   )
 } 
+
+

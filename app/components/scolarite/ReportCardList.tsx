@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { formatDate } from '@/app/lib/utils'
+import { Button } from '@/components/ui/button'
+import { formatDate } from '@/lib/utils'
 import GenerateReportCardForm from './GenerateReportCardForm'
 
 interface ReportCard {
@@ -52,12 +52,12 @@ export default function ReportCardList() {
     try {
       const response = await fetch('/api/periods')
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des périodes')
+        throw new Error('Erreur lors du chargement des p�riodes')
       }
       const data = await response.json()
       setPeriods(data)
     } catch (err) {
-      console.error('Erreur lors du chargement des périodes:', err)
+      console.error('Erreur lors du chargement des p�riodes:', err)
     }
   }
 
@@ -120,7 +120,7 @@ export default function ReportCardList() {
 
   const handleViewReportCard = (id: string) => {
     setViewReportCardId(id)
-    // Ici, on pourrait ouvrir un modal ou rediriger vers une page détaillée
+    // Ici, on pourrait ouvrir un modal ou rediriger vers une page d�taill�e
     window.open(`/report-cards/${id}`, '_blank')
   }
 
@@ -133,7 +133,7 @@ export default function ReportCardList() {
         throw new Error('Erreur lors de la publication du bulletin')
       }
       
-      // Mettre à jour l'état local
+      // Mettre � jour l'�tat local
       setReportCards(reportCards.map(rc => 
         rc.id === id ? {...rc, status: 'published'} : rc
       ))
@@ -154,8 +154,8 @@ export default function ReportCardList() {
   const getStatusLabel = (status: string) => {
     switch (status.toLowerCase()) {
       case 'draft': return 'Brouillon'
-      case 'published': return 'Publié'
-      case 'archived': return 'Archivé'
+      case 'published': return 'Publi�'
+      case 'archived': return 'Archiv�'
       default: return status
     }
   }
@@ -180,7 +180,7 @@ export default function ReportCardList() {
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
           </svg>
-          Générer des bulletins
+          G�n�rer des bulletins
         </Button>
       </div>
 
@@ -190,7 +190,7 @@ export default function ReportCardList() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label htmlFor="periodFilter" className="block text-sm font-medium text-gray-700 mb-1">
-              Période
+              P�riode
             </label>
             <select
               id="periodFilter"
@@ -198,7 +198,7 @@ export default function ReportCardList() {
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
             >
-              <option value="">Toutes les périodes</option>
+              <option value="">Toutes les p�riodes</option>
               {periods.map(period => (
                 <option key={period.id} value={period.id}>
                   {period.type} ({period.schoolYear})
@@ -235,7 +235,7 @@ export default function ReportCardList() {
               id="searchQuery"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Nom ou prénom de l'élève"
+              placeholder="Nom ou pr�nom de l'�l�ve"
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
             />
           </div>
@@ -258,7 +258,7 @@ export default function ReportCardList() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
               </svg>
-              Réinitialiser
+              R�initialiser
             </Button>
           </div>
         </div>
@@ -278,8 +278,8 @@ export default function ReportCardList() {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun bulletin trouvé</h3>
-          <p className="mt-1 text-sm text-gray-500">Utilisez le bouton "Générer des bulletins" pour en créer.</p>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun bulletin trouv�</h3>
+          <p className="mt-1 text-sm text-gray-500">Utilisez le bouton "G�n�rer des bulletins" pour en cr�er.</p>
           <div className="mt-6">
             <Button 
               onClick={() => setIsGenerateFormOpen(true)}
@@ -288,7 +288,7 @@ export default function ReportCardList() {
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
               </svg>
-              Générer des bulletins
+              G�n�rer des bulletins
             </Button>
           </div>
         </div>
@@ -297,11 +297,11 @@ export default function ReportCardList() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Élève</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">�l�ve</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Classe</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Période</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P�riode</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Moyenne</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Généré le</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">G�n�r� le</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -374,3 +374,5 @@ export default function ReportCardList() {
     </div>
   )
 } 
+
+

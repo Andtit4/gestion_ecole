@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -186,3 +186,5 @@ export function ReportCardDetail({ reportCard, onClose, showBackButton = true }:
     </Card>
   )
 } 
+
+

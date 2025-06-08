@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { Button } from '@/app/components/ui/button'
-import { Input } from '@/app/components/ui/input'
-import { Textarea } from '@/app/components/ui/textarea'
-import { Label } from '@/app/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/components/ui/select'
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -20,14 +20,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/app/components/ui/dialog'
-import { useToast } from '@/app/components/ui/use-toast'
+} from '@/components/ui/dialog'
+import { useToast } from '@/components/ui/use-toast'
 
-const levels = ['6ème', '5ème', '4ème', '3ème', 'Seconde', 'Première', 'Terminale']
+const levels = ['6�me', '5�me', '4�me', '3�me', 'Seconde', 'Premi�re', 'Terminale']
 const statuses = [
   { value: 'DRAFT', label: 'Brouillon' },
-  { value: 'PUBLISHED', label: 'Publié' },
-  { value: 'ARCHIVED', label: 'Archivé' }
+  { value: 'PUBLISHED', label: 'Publi�' },
+  { value: 'ARCHIVED', label: 'Archiv�' }
 ]
 
 export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }) {
@@ -118,10 +118,10 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
       const savedProgramme = await response.json()
       
       toast({
-        title: formData.id ? 'Programme mis à jour' : 'Programme créé',
+        title: formData.id ? 'Programme mis � jour' : 'Programme cr��',
         description: formData.id 
-          ? 'Le programme a été mis à jour avec succès' 
-          : 'Le programme a été créé avec succès',
+          ? 'Le programme a �t� mis � jour avec succ�s' 
+          : 'Le programme a �t� cr�� avec succ�s',
       })
 
       onSubmit(savedProgramme)
@@ -145,8 +145,8 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
           </DialogTitle>
           <DialogDescription>
             {programme
-              ? 'Mettez à jour les informations du programme scolaire'
-              : 'Créez un nouveau programme scolaire pour une matière et un niveau'}
+              ? 'Mettez � jour les informations du programme scolaire'
+              : 'Cr�ez un nouveau programme scolaire pour une mati�re et un niveau'}
           </DialogDescription>
         </DialogHeader>
 
@@ -168,14 +168,14 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
 
             <div className="space-y-2">
               <Label htmlFor="courseId" className="font-medium">
-                Matière <span className="text-red-500">*</span>
+                Mati�re <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={formData.courseId}
                 onValueChange={(value) => handleSelectChange('courseId', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une matière" />
+                  <SelectValue placeholder="S�lectionner une mati�re" />
                 </SelectTrigger>
                 <SelectContent>
                   {courses.map((course) => (
@@ -196,7 +196,7 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
                 onValueChange={(value) => handleSelectChange('level', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un niveau" />
+                  <SelectValue placeholder="S�lectionner un niveau" />
                 </SelectTrigger>
                 <SelectContent>
                   {levels.map((level) => (
@@ -210,7 +210,7 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
 
             <div className="space-y-2">
               <Label htmlFor="year" className="font-medium">
-                Année scolaire <span className="text-red-500">*</span>
+                Ann�e scolaire <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="year"
@@ -233,7 +233,7 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
                 onValueChange={(value) => handleSelectChange('status', value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un statut" />
+                  <SelectValue placeholder="S�lectionner un statut" />
                 </SelectTrigger>
                 <SelectContent>
                   {statuses.map((status) => (
@@ -261,14 +261,14 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
 
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="objectives" className="font-medium">
-                Objectifs pédagogiques
+                Objectifs p�dagogiques
               </Label>
               <Textarea
                 id="objectives"
                 name="objectives"
                 value={formData.objectives || ''}
                 onChange={handleChange}
-                placeholder="Objectifs pédagogiques du programme"
+                placeholder="Objectifs p�dagogiques du programme"
                 rows={3}
               />
             </div>
@@ -282,7 +282,7 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
                 name="content"
                 value={formData.content || ''}
                 onChange={handleChange}
-                placeholder="Contenu détaillé du programme"
+                placeholder="Contenu d�taill� du programme"
                 rows={8}
               />
             </div>
@@ -293,7 +293,7 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
               Annuler
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Enregistrement...' : programme ? 'Mettre à jour' : 'Créer'}
+              {isLoading ? 'Enregistrement...' : programme ? 'Mettre � jour' : 'Cr�er'}
             </Button>
           </DialogFooter>
         </form>
@@ -301,3 +301,5 @@ export default function ProgrammeForm({ programme, courses, onSubmit, onCancel }
     </Dialog>
   )
 } 
+
+

@@ -1,18 +1,18 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import TeacherForm from '@/app/components/teachers/TeacherForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import TeacherForm from '@/components/teachers/TeacherForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { use } from 'react'
 
 interface Teacher {
   id: string
+  userId: string
   firstName: string
   lastName: string
   email: string
-  role: string
   classes?: {
     id: string
     name: string
@@ -44,13 +44,11 @@ export default function TeacherDetailsPage({ params }: { params: Promise<{ id: s
   const fetchTeacherDetails = async () => {
     setIsLoading(true)
     try {
-      // Récupérer les données de l'enseignant
-      const teacherResponse = await fetch(`/api/users/${teacherId}`)
-      if (!teacherResponse.ok) {
-        throw new Error('Erreur lors du chargement de l\'enseignant')
-      }
-      const teacherData = await teacherResponse.json()
-      setTeacher(teacherData)
+      const response = await fetch(`/api/teachers/${teacherId}`)
+      if (!response.ok) throw new Error('Erreur de chargement')
+      
+      const data: Teacher = await response.json()
+      setTeacher(data)
 
       // Récupérer les classes associées à l'enseignant
       const classesResponse = await fetch(`/api/teachers/${teacherId}/classes`)
@@ -58,8 +56,9 @@ export default function TeacherDetailsPage({ params }: { params: Promise<{ id: s
         const classesData = await classesResponse.json()
         setClasses(classesData)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+    } catch (error) {
+      console.error('Erreur:', error)
+      setError('Impossible de charger les détails du professeur')
     } finally {
       setIsLoading(false)
     }
@@ -67,7 +66,7 @@ export default function TeacherDetailsPage({ params }: { params: Promise<{ id: s
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/users/${teacherId}`, {
+      const response = await fetch(`/api/teachers?id=${teacherId}`, {
         method: 'DELETE',
       })
       if (!response.ok) {
@@ -179,7 +178,7 @@ export default function TeacherDetailsPage({ params }: { params: Promise<{ id: s
                     </table>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">Aucune classe assignée à cet enseignant</p>
+                  <p className="text-gray-600">Aucune donnée d'évaluation trouvée pour ce professeur.</p>
                 )}
               </div>
             </div>

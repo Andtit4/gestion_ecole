@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { NextRequestWithAuth } from 'next-auth/middleware'
 
@@ -63,3 +63,5 @@ export const config = {
     '/settings/:path*',
   ],
 } 
+
+

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import ParentForm from '@/app/components/parents/ParentForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import ParentForm from '@/components/parents/ParentForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { use } from 'react'
 import Link from 'next/link'
 
@@ -43,35 +43,34 @@ export default function ParentDetailsPage({ params }: { params: Promise<{ id: st
   const resolvedParams = use(params)
   const parentId = resolvedParams.id || ''
 
-  useEffect(() => {
-    if (parentId) {
-      fetchParentDetails()
-    }
-  }, [parentId])
-
-  const fetchParentDetails = async () => {
+  const fetchParentDetails = useCallback(async () => {
+    if (!parentId) return
+    
     setIsLoading(true)
     try {
-      // Récupérer les données du parent
-      const parentResponse = await fetch(`/api/users/${parentId}`)
-      if (!parentResponse.ok) {
-        throw new Error('Erreur lors du chargement du parent')
-      }
-      const parentData = await parentResponse.json()
-      setParent(parentData)
+      const response = await fetch(`/api/parents/${parentId}`)
+      if (!response.ok) throw new Error('Erreur de chargement')
+      
+      const data = await response.json()
+      setParent(data)
 
-      // Récupérer les enfants associés au parent
+      // Récupérer les enfants du parent
       const childrenResponse = await fetch(`/api/parents/${parentId}/children`)
       if (childrenResponse.ok) {
         const childrenData = await childrenResponse.json()
         setChildren(childrenData)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue')
+    } catch (error) {
+      console.error('Erreur:', error)
+      setError('Impossible de charger les détails du parent')
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [parentId])
+
+  useEffect(() => {
+    fetchParentDetails()
+  }, [fetchParentDetails])
 
   const handleDelete = async () => {
     try {

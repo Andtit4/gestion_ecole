@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Eye, Edit, Trash2, AlertCircle, PlusCircle, RefreshCw, BugPlay, Download, ExternalLink } from 'lucide-react'
@@ -29,10 +29,10 @@ import {
 } from '../../components/ui/dialog'
 import { Badge } from '../../components/ui/badge'
 import { Skeleton } from '../../components/ui/skeleton'
-import { formatDate } from '@/app/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { ReportCardForm } from './ReportCardForm'
 import { useToast } from '../../components/ui/use-toast'
-import { generateReportCardPDF } from '@/app/lib/pdf-generator'
+import { generateReportCardPDF } from '@/lib/pdf-generator'
 import { DownloadPDFButton } from './DownloadPDFButton'
 import { useRouter } from 'next/navigation'
 
@@ -578,3 +578,5 @@ export function ReportCardList({
     </>
   )
 } 
+
+

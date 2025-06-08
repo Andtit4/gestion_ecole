@@ -3,25 +3,25 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { Plus, BugPlay, AlertCircle } from 'lucide-react'
-import { Button } from '@/app/components/ui/button'
-import { Input } from '@/app/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/components/ui/select'
-import { ReportCardList } from '@/app/components/report-cards/ReportCardList'
-import { ReportCardForm } from '@/app/components/report-cards/ReportCardForm'
-import { StudentReportCardsList } from '@/app/components/report-cards/StudentReportCardsList'
-import { StudentsWithGradesList } from '@/app/components/report-cards/StudentsWithGradesList'
-import { AllStudentsList } from '@/app/components/report-cards/AllStudentsList'
-import { Skeleton } from '@/app/components/ui/skeleton'
-import { useToast } from '@/app/components/ui/use-toast'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/app/components/ui/alert'
+} from '@/components/ui/select'
+import { ReportCardList } from '@/components/report-cards/ReportCardList'
+import { ReportCardForm } from '@/components/report-cards/ReportCardForm'
+import { StudentReportCardsList } from '@/components/report-cards/StudentReportCardsList'
+import { StudentsWithGradesList } from '@/components/report-cards/StudentsWithGradesList'
+import { AllStudentsList } from '@/components/report-cards/AllStudentsList'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useToast } from '@/components/ui/use-toast'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export default function ReportCardsPage() {
   const { data: session, status } = useSession()
@@ -35,17 +35,17 @@ export default function ReportCardsPage() {
   const [userRole, setUserRole] = useState<string>('STUDENT')
   const { toast } = useToast()
 
-  // Charger les périodes et les classes
+  // Charger les p�riodes et les classes
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true)
         setError(null)
         
-        // Charger les périodes
+        // Charger les p�riodes
         const periodsResponse = await fetch('/api/periods')
         if (!periodsResponse.ok) {
-          throw new Error('Impossible de charger les périodes')
+          throw new Error('Impossible de charger les p�riodes')
         }
         const periodsData = await periodsResponse.json()
         setPeriods(periodsData)
@@ -58,7 +58,7 @@ export default function ReportCardsPage() {
         const classesData = await classesResponse.json()
         setClasses(classesData)
         
-        // Déterminer le rôle de l'utilisateur
+        // D�terminer le r�le de l'utilisateur
         if (session?.user?.role) {
           setUserRole(session.user.role)
         }
@@ -67,8 +67,8 @@ export default function ReportCardsPage() {
           setSelectedClassId(classesData[0].id)
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des données:', error)
-        setError('Erreur lors du chargement des données. Veuillez réessayer plus tard.')
+        console.error('Erreur lors du chargement des donn�es:', error)
+        setError('Erreur lors du chargement des donn�es. Veuillez r�essayer plus tard.')
       } finally {
         setIsLoading(false)
       }
@@ -79,7 +79,7 @@ export default function ReportCardsPage() {
     }
   }, [session])
 
-  // Gérer la soumission du formulaire de bulletin
+  // G�rer la soumission du formulaire de bulletin
   const handleFormSubmit = async (data: any) => {
     try {
       const response = await fetch('/api/report-cards', {
@@ -97,23 +97,23 @@ export default function ReportCardsPage() {
       
       setShowForm(false)
       toast({
-        title: "Bulletin créé",
-        description: "Le bulletin a été créé avec succès",
+        title: "Bulletin cr��",
+        description: "Le bulletin a �t� cr�� avec succ�s",
       })
       
       // Recharger la page pour voir le nouveau bulletin
       window.location.reload()
     } catch (error) {
-      console.error('Erreur lors de la création du bulletin:', error)
+      console.error('Erreur lors de la cr�ation du bulletin:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la création du bulletin",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la cr�ation du bulletin",
       })
     }
   }
 
-  // Créer un bulletin de test via notre API de secours
+  // Cr�er un bulletin de test via notre API de secours
   const createTestReportCard = async () => {
     try {
       const response = await fetch('/api/debug/test-report-card', {
@@ -125,25 +125,25 @@ export default function ReportCardsPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Erreur lors de la création du bulletin de test')
+        throw new Error('Erreur lors de la cr�ation du bulletin de test')
       }
 
       const data = await response.json()
-      console.log('Bulletin de test créé:', data)
+      console.log('Bulletin de test cr��:', data)
       
       toast({
-        title: "Bulletin de test créé",
-        description: data.message || "Le bulletin de test a été créé avec succès",
+        title: "Bulletin de test cr��",
+        description: data.message || "Le bulletin de test a �t� cr�� avec succ�s",
       })
 
-      // Rafraîchir la page
+      // Rafra�chir la page
       window.location.reload()
     } catch (error) {
-      console.error('Erreur lors de la création du bulletin de test:', error)
+      console.error('Erreur lors de la cr�ation du bulletin de test:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de la création du bulletin de test",
+        description: error instanceof Error ? error.message : "Erreur lors de la cr�ation du bulletin de test",
       })
     }
   }
@@ -165,9 +165,9 @@ export default function ReportCardsPage() {
     return (
       <div className="p-6">
         <Alert variant="destructive">
-          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertTitle>Acc�s refus�</AlertTitle>
           <AlertDescription>
-            Vous devez être connecté pour accéder à cette page.
+            Vous devez �tre connect� pour acc�der � cette page.
           </AlertDescription>
         </Alert>
       </div>
@@ -189,7 +189,7 @@ export default function ReportCardsPage() {
           
           <Button variant="outline" onClick={createTestReportCard}>
             <BugPlay className="h-4 w-4 mr-2" />
-            Créer bulletin test
+            Cr�er bulletin test
           </Button>
         </div>
       </div>
@@ -203,9 +203,9 @@ export default function ReportCardsPage() {
 
       <Tabs defaultValue="all-students">
         <TabsList className="mb-6">
-          <TabsTrigger value="all-students">Tous les élèves</TabsTrigger>
+          <TabsTrigger value="all-students">Tous les �l�ves</TabsTrigger>
           <TabsTrigger value="bulletins">Bulletins</TabsTrigger>
-          <TabsTrigger value="students-with-grades">Élèves avec notes</TabsTrigger>
+          <TabsTrigger value="students-with-grades">�l�ves avec notes</TabsTrigger>
           {userRole === 'ADMIN' && <TabsTrigger value="admin">Gestion</TabsTrigger>}
         </TabsList>
         
@@ -225,7 +225,7 @@ export default function ReportCardsPage() {
                         onValueChange={setSelectedClassId}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner une classe" />
+                          <SelectValue placeholder="S�lectionner une classe" />
                         </SelectTrigger>
                         <SelectContent>
                           {classes.map((class_) => (
@@ -238,19 +238,19 @@ export default function ReportCardsPage() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium mb-1">Période</label>
+                      <label className="block text-sm font-medium mb-1">P�riode</label>
                       <Select
                         value={selectedPeriod}
                         onValueChange={setSelectedPeriod}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner une période" />
+                          <SelectValue placeholder="S�lectionner une p�riode" />
                         </SelectTrigger>
                         <SelectContent>
                           {periods.map((period) => (
                             <SelectItem key={period.id} value={period.id}>
                               {period.type === 'TRIMESTER' ? 'Trimestre' : 
-                               period.type === 'SEMESTER' ? 'Semestre' : 'Année'} - {period.schoolYear}
+                               period.type === 'SEMESTER' ? 'Semestre' : 'Ann�e'} - {period.schoolYear}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -259,7 +259,7 @@ export default function ReportCardsPage() {
                     
                     <div>
                       <label className="block text-sm font-medium mb-1">Recherche</label>
-                      <Input placeholder="Rechercher un élève..." />
+                      <Input placeholder="Rechercher un �l�ve..." />
                     </div>
                   </div>
                 </CardContent>
@@ -297,7 +297,7 @@ export default function ReportCardsPage() {
             <CardHeader>
               <CardTitle>Outils d'administration des bulletins</CardTitle>
               <CardDescription>
-                Outils pour gérer les bulletins de notes et les périodes
+                Outils pour g�rer les bulletins de notes et les p�riodes
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -306,19 +306,19 @@ export default function ReportCardsPage() {
                   <h3 className="text-lg font-medium mb-2">Bulletins</h3>
                   <div className="flex space-x-2">
                     <Button variant="outline" onClick={createTestReportCard}>
-                      Créer un bulletin de test
+                      Cr�er un bulletin de test
                     </Button>
                     <Button variant="outline">
-                      Générer les bulletins pour une classe
+                      G�n�rer les bulletins pour une classe
                     </Button>
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Périodes</h3>
+                  <h3 className="text-lg font-medium mb-2">P�riodes</h3>
                   <div className="flex space-x-2">
                     <Button variant="outline">
-                      Gérer les périodes
+                      G�rer les p�riodes
                     </Button>
                   </div>
                 </div>
@@ -328,7 +328,7 @@ export default function ReportCardsPage() {
         </TabsContent>
       </Tabs>
       
-      {/* Formulaire de création de bulletin */}
+      {/* Formulaire de cr�ation de bulletin */}
       {showForm && (
         <ReportCardForm 
           onSubmit={handleFormSubmit}
@@ -338,3 +338,5 @@ export default function ReportCardsPage() {
     </div>
   )
 } 
+
+

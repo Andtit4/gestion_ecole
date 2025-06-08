@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import ClassForm from '@/app/components/classes/ClassForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import ClassForm from '@/components/classes/ClassForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { use } from 'react'
 
 interface Class {
@@ -38,13 +38,9 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
   const resolvedParams = use(params)
   const classId = resolvedParams.id || ''
 
-  useEffect(() => {
-    if (classId) {
-      fetchClassDetails()
-    }
-  }, [classId])
-
-  const fetchClassDetails = async () => {
+  const fetchClassDetails = useCallback(async () => {
+    if (!classId) return
+    
     try {
       const response = await fetch(`/api/classes/${classId}`)
       if (!response.ok) {
@@ -57,7 +53,11 @@ export default function ClassDetailsPage({ params }: { params: Promise<{ id: str
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [classId])
+
+  useEffect(() => {
+    fetchClassDetails()
+  }, [fetchClassDetails])
 
   const handleDelete = async () => {
     try {

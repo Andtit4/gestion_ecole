@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useToast } from '@/components/ui/use-toast'
@@ -202,3 +202,5 @@ export default function SchoolDayConfigForm({ config, onSuccess }: SchoolDayConf
     </Card>
   )
 } 
+
+

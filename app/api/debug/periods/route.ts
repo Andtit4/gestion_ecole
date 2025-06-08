@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // API de secours pour obtenir la liste des périodes
@@ -111,3 +111,5 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(staticPeriods);
   }
 } 
+
+

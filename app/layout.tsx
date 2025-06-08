@@ -1,10 +1,9 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from './theme-provider'
 import { NextAuthProvider } from './components/providers/NextAuthProvider'
 import Layout from './components/Layout'
 import { Toaster } from './components/ui/toaster'
-import { inter } from './fonts'
 
 export const metadata: Metadata = {
   title: 'Gestion École',
@@ -17,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning className={inter.variable}>
-      <body className={`${inter.className} font-sans antialiased`}>
+    <html lang="fr" suppressHydrationWarning>
+      <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -35,3 +34,5 @@ export default function RootLayout({
     </html>
   )
 } 
+
+

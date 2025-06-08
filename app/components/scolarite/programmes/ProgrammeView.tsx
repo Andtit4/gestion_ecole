@@ -7,9 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/app/components/ui/dialog'
-import { Button } from '@/app/components/ui/button'
-import { Badge } from '@/app/components/ui/badge'
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 export default function ProgrammeView({ programme, courses, onClose }) {
   const course = courses.find(c => c.id === programme.courseId)
@@ -19,9 +19,9 @@ export default function ProgrammeView({ programme, courses, onClose }) {
       case 'DRAFT':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Brouillon</Badge>
       case 'PUBLISHED':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Publié</Badge>
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Publi�</Badge>
       case 'ARCHIVED':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Archivé</Badge>
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Archiv�</Badge>
       default:
         return <Badge variant="outline">Inconnu</Badge>
     }
@@ -35,12 +35,12 @@ export default function ProgrammeView({ programme, courses, onClose }) {
             {programme.title}
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2">
-            <span>{course?.name || 'Matière inconnue'}</span>
-            <span className="text-gray-400">•</span>
+            <span>{course?.name || 'Mati�re inconnue'}</span>
+            <span className="text-gray-400">�</span>
             <span>{programme.level}</span>
-            <span className="text-gray-400">•</span>
-            <span>Année {programme.year}</span>
-            <span className="text-gray-400">•</span>
+            <span className="text-gray-400">�</span>
+            <span>Ann�e {programme.year}</span>
+            <span className="text-gray-400">�</span>
             {getStatusBadge(programme.status)}
           </DialogDescription>
         </DialogHeader>
@@ -55,7 +55,7 @@ export default function ProgrammeView({ programme, courses, onClose }) {
 
           {programme.objectives && (
             <div>
-              <h3 className="text-lg font-medium mb-2">Objectifs pédagogiques</h3>
+              <h3 className="text-lg font-medium mb-2">Objectifs p�dagogiques</h3>
               <p className="text-gray-700 whitespace-pre-line">{programme.objectives}</p>
             </div>
           )}
@@ -72,11 +72,11 @@ export default function ProgrammeView({ programme, courses, onClose }) {
           <div className="mt-6 pt-4 border-t">
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500">
               <div>
-                <span className="font-medium">Créé le:</span>{' '}
+                <span className="font-medium">Cr�� le:</span>{' '}
                 {new Date(programme.createdAt).toLocaleDateString('fr-FR')}
               </div>
               <div>
-                <span className="font-medium">Dernière mise à jour:</span>{' '}
+                <span className="font-medium">Derni�re mise � jour:</span>{' '}
                 {new Date(programme.updatedAt).toLocaleDateString('fr-FR')}
               </div>
             </div>
@@ -92,3 +92,5 @@ export default function ProgrammeView({ programme, courses, onClose }) {
     </Dialog>
   )
 } 
+
+

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { formatDate } from '@/app/lib/utils'
+import { Button } from '@/components/ui/button'
+import { formatDate } from '@/lib/utils'
 
 interface AttendanceData {
   id: string
@@ -34,7 +34,7 @@ export default function AttendanceOverview() {
   const [classes, setClasses] = useState<{id: string, name: string}[]>([])
 
   useEffect(() => {
-    // Initialiser les dates par défaut (dernier mois)
+    // Initialiser les dates par d�faut (dernier mois)
     const today = new Date()
     const lastMonth = new Date()
     lastMonth.setMonth(today.getMonth() - 1)
@@ -43,7 +43,7 @@ export default function AttendanceOverview() {
     setStartDate(lastMonth.toISOString().split('T')[0])
     
     fetchClasses()
-    // Attendons que les filtres soient initialisés avant de charger les données
+    // Attendons que les filtres soient initialis�s avant de charger les donn�es
     setTimeout(() => fetchAttendances(), 100)
   }, [])
 
@@ -106,7 +106,7 @@ export default function AttendanceOverview() {
     setSelectedStatus('')
     setSearchQuery('')
     
-    // Attendons que les états soient mis à jour
+    // Attendons que les �tats soient mis � jour
     setTimeout(() => fetchAttendances(), 100)
   }
 
@@ -122,10 +122,10 @@ export default function AttendanceOverview() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'PRESENT': return 'Présent'
+      case 'PRESENT': return 'Pr�sent'
       case 'ABSENT': return 'Absent'
       case 'LATE': return 'En retard'
-      case 'EXCUSED': return 'Excusé'
+      case 'EXCUSED': return 'Excus�'
       default: return status
     }
   }
@@ -167,7 +167,7 @@ export default function AttendanceOverview() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
           <div className="text-green-600 text-lg font-semibold">{statusCounts.PRESENT}</div>
-          <div className="text-gray-500 text-sm">Présences</div>
+          <div className="text-gray-500 text-sm">Pr�sences</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
           <div className="text-red-600 text-lg font-semibold">{statusCounts.ABSENT}</div>
@@ -179,7 +179,7 @@ export default function AttendanceOverview() {
         </div>
         <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
           <div className="text-blue-600 text-lg font-semibold">{statusCounts.EXCUSED}</div>
-          <div className="text-gray-500 text-sm">Absences excusées</div>
+          <div className="text-gray-500 text-sm">Absences excus�es</div>
         </div>
       </div>
 
@@ -188,7 +188,7 @@ export default function AttendanceOverview() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
-              Date de début
+              Date de d�but
             </label>
             <input
               type="date"
@@ -244,10 +244,10 @@ export default function AttendanceOverview() {
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             >
               <option value="">Tous les statuts</option>
-              <option value="PRESENT">Présent</option>
+              <option value="PRESENT">Pr�sent</option>
               <option value="ABSENT">Absent</option>
               <option value="LATE">En retard</option>
-              <option value="EXCUSED">Excusé</option>
+              <option value="EXCUSED">Excus�</option>
             </select>
           </div>
           
@@ -260,7 +260,7 @@ export default function AttendanceOverview() {
               id="searchQuery"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Nom ou prénom de l'élève"
+              placeholder="Nom ou pr�nom de l'�l�ve"
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
           </div>
@@ -276,7 +276,7 @@ export default function AttendanceOverview() {
               variant="outline"
               onClick={resetFilters}
             >
-              Réinitialiser
+              R�initialiser
             </Button>
           </div>
         </div>
@@ -288,14 +288,14 @@ export default function AttendanceOverview() {
 
       {attendances.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
-          Aucune donnée d'absence trouvée pour les critères sélectionnés.
+          Aucune donn�e d'absence trouv�e pour les crit�res s�lectionn�s.
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Élève</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">�l�ve</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Classe</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
@@ -327,3 +327,5 @@ export default function AttendanceOverview() {
     </div>
   )
 } 
+
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Grade, Course } from '@prisma/client'
@@ -113,3 +113,5 @@ export default function GradesTable({ grades, onDelete, onUpdate }: GradesTableP
     </>
   )
 } 
+
+

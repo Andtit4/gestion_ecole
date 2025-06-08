@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
@@ -236,3 +236,5 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 } 
+
+

@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { BookIcon, DownloadIcon, EyeIcon } from 'lucide-react'
-import { Button } from '@/app/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
-import { Skeleton } from '@/app/components/ui/skeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/app/components/ui/alert'
-import { getStudentReportCards, downloadReportCardPDF } from '@/app/components/report-cards/ReportCardAPI'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { getStudentReportCards, downloadReportCardPDF } from '@/components/report-cards/ReportCardAPI'
 import { useRouter } from 'next/navigation'
 
 export default function MyReportCardsPage() {
@@ -25,22 +25,22 @@ export default function MyReportCardsPage() {
   const router = useRouter()
   const userRole = session?.user?.role || 'STUDENT'
 
-  // Chargement initial des données
+  // Chargement initial des donn�es
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true)
         setError(null)
         
-        // Charger les périodes
+        // Charger les p�riodes
         const periodsResponse = await fetch('/api/periods')
         if (!periodsResponse.ok) {
-          throw new Error('Impossible de charger les périodes')
+          throw new Error('Impossible de charger les p�riodes')
         }
         const periodsData = await periodsResponse.json()
         setPeriods(periodsData)
         
-        // Extraire les années scolaires uniques
+        // Extraire les ann�es scolaires uniques
         const years = [...new Set(periodsData.map((p: any) => p.schoolYear))].sort().reverse()
         setSchoolYears(years)
         
@@ -48,19 +48,19 @@ export default function MyReportCardsPage() {
           setSelectedSchoolYear(years[0])
         }
         
-        // Récupérer l'ID de l'élève selon le rôle
+        // R�cup�rer l'ID de l'�l�ve selon le r�le
         if (userRole === 'STUDENT') {
-          // Pour un élève, récupérer son propre ID
+          // Pour un �l�ve, r�cup�rer son propre ID
           const studentResponse = await fetch('/api/students/me')
           if (studentResponse.ok) {
             const studentData = await studentResponse.json()
             setSelectedStudentId(studentData.id)
             setStudents([studentData])
           } else {
-            throw new Error('Impossible de récupérer les informations de l\'élève')
+            throw new Error('Impossible de r�cup�rer les informations de l\'�l�ve')
           }
         } else if (userRole === 'PARENT') {
-          // Pour un parent, récupérer la liste de ses enfants
+          // Pour un parent, r�cup�rer la liste de ses enfants
           const childrenResponse = await fetch('/api/parents/children')
           if (childrenResponse.ok) {
             const childrenData = await childrenResponse.json()
@@ -70,12 +70,12 @@ export default function MyReportCardsPage() {
               setSelectedStudentId(childrenData[0].id)
             }
           } else {
-            throw new Error('Impossible de récupérer la liste des enfants')
+            throw new Error('Impossible de r�cup�rer la liste des enfants')
           }
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des données:', error)
-        setError('Erreur lors du chargement des données. Veuillez réessayer plus tard.')
+        console.error('Erreur lors du chargement des donn�es:', error)
+        setError('Erreur lors du chargement des donn�es. Veuillez r�essayer plus tard.')
       } finally {
         setIsLoading(false)
       }
@@ -86,7 +86,7 @@ export default function MyReportCardsPage() {
     }
   }, [session, userRole])
 
-  // Charger les bulletins quand l'élève ou l'année scolaire change
+  // Charger les bulletins quand l'�l�ve ou l'ann�e scolaire change
   useEffect(() => {
     const loadReportCards = async () => {
       if (!selectedStudentId || !selectedSchoolYear) return
@@ -99,7 +99,7 @@ export default function MyReportCardsPage() {
         setReportCards(data)
       } catch (error) {
         console.error('Erreur lors du chargement des bulletins:', error)
-        setError('Impossible de charger les bulletins. Veuillez réessayer plus tard.')
+        setError('Impossible de charger les bulletins. Veuillez r�essayer plus tard.')
       } finally {
         setIsLoading(false)
       }
@@ -117,7 +117,7 @@ export default function MyReportCardsPage() {
     })
   }
 
-  // Fonction pour déterminer la couleur de la moyenne
+  // Fonction pour d�terminer la couleur de la moyenne
   function getAverageColor(average: number): string {
     if (average >= 16) return 'text-green-600 font-semibold'
     if (average >= 12) return 'text-blue-600'
@@ -146,9 +146,9 @@ export default function MyReportCardsPage() {
     return (
       <div className="p-6">
         <Alert variant="destructive">
-          <AlertTitle>Accès refusé</AlertTitle>
+          <AlertTitle>Acc�s refus�</AlertTitle>
           <AlertDescription>
-            Vous devez être connecté pour accéder à cette page.
+            Vous devez �tre connect� pour acc�der � cette page.
           </AlertDescription>
         </Alert>
       </div>
@@ -176,20 +176,20 @@ export default function MyReportCardsPage() {
         <CardHeader>
           <CardTitle>Filtres</CardTitle>
           <CardDescription>
-            Sélectionnez une année scolaire pour afficher les bulletins correspondants
+            S�lectionnez une ann�e scolaire pour afficher les bulletins correspondants
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {userRole === 'PARENT' && students.length > 0 && (
               <div>
-                <label className="block text-sm font-medium mb-1">Élève</label>
+                <label className="block text-sm font-medium mb-1">�l�ve</label>
                 <Select
                   value={selectedStudentId}
                   onValueChange={(value) => setSelectedStudentId(value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un élève" />
+                    <SelectValue placeholder="S�lectionner un �l�ve" />
                   </SelectTrigger>
                   <SelectContent>
                     {students.map((student) => (
@@ -203,13 +203,13 @@ export default function MyReportCardsPage() {
             )}
             
             <div>
-              <label className="block text-sm font-medium mb-1">Année scolaire</label>
+              <label className="block text-sm font-medium mb-1">Ann�e scolaire</label>
               <Select
                 value={selectedSchoolYear}
                 onValueChange={(value) => setSelectedSchoolYear(value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une année" />
+                  <SelectValue placeholder="S�lectionner une ann�e" />
                 </SelectTrigger>
                 <SelectContent>
                   {schoolYears.map((year) => (
@@ -229,7 +229,7 @@ export default function MyReportCardsPage() {
           <BookIcon className="mx-auto h-12 w-12 text-gray-400 mb-3" />
           <h3 className="text-lg font-medium text-gray-900">Aucun bulletin disponible</h3>
           <p className="mt-2 text-sm text-gray-500">
-            Aucun bulletin n'est disponible pour cette année scolaire
+            Aucun bulletin n'est disponible pour cette ann�e scolaire
           </p>
         </div>
       ) : (
@@ -244,33 +244,33 @@ export default function MyReportCardsPage() {
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium">
                     {reportCard.period.type === 'TRIMESTER' ? 'Trimestre' : 
-                     reportCard.period.type === 'SEMESTER' ? 'Semestre' : 'Année'} - {reportCard.period.schoolYear}
+                     reportCard.period.type === 'SEMESTER' ? 'Semestre' : 'Ann�e'} - {reportCard.period.schoolYear}
                   </h3>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                     reportCard.status === 'PUBLISHED' 
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-amber-100 text-amber-800'
                   }`}>
-                    {reportCard.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}
+                    {reportCard.status === 'PUBLISHED' ? 'Publi�' : 'Brouillon'}
                   </span>
                 </div>
               </div>
               <CardContent className="p-4">
                 <div className="mb-3">
-                  <p className="text-sm text-gray-500">Période</p>
+                  <p className="text-sm text-gray-500">P�riode</p>
                   <p className="text-sm">
                     {formatDate(reportCard.period.startDate)} - {formatDate(reportCard.period.endDate)}
                   </p>
                 </div>
                 <div className="mb-4">
-                  <p className="text-sm text-gray-500">Moyenne générale</p>
+                  <p className="text-sm text-gray-500">Moyenne g�n�rale</p>
                   <p className={`text-xl font-bold ${getAverageColor(reportCard.average)}`}>
                     {reportCard.average.toFixed(2)}/20
                   </p>
                 </div>
                 {reportCard.appreciation && (
                   <div className="mb-4">
-                    <p className="text-sm text-gray-500">Appréciation</p>
+                    <p className="text-sm text-gray-500">Appr�ciation</p>
                     <p className="text-sm line-clamp-2">{reportCard.appreciation}</p>
                   </div>
                 )}
@@ -303,3 +303,5 @@ export default function MyReportCardsPage() {
     </div>
   )
 } 
+
+

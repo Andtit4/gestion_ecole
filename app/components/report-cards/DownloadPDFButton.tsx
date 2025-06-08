@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/app/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Download, Loader2 } from 'lucide-react'
-import { useToast } from '@/app/components/ui/use-toast'
-import { generateReportCardPDF } from '@/app/lib/pdf-generator'
+import { useToast } from '@/components/ui/use-toast'
+import { generateReportCardPDF } from '@/lib/pdf-generator'
 
 // Types
 interface ReportCard {
@@ -40,51 +40,51 @@ export function DownloadPDFButton({
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
-  // Fonction principale pour télécharger le PDF
+  // Fonction principale pour t�l�charger le PDF
   const handleDownload = async () => {
     try {
       setLoading(true)
       
       if (!reportCard || !reportCard.student?.user || !reportCard.period) {
-        throw new Error('Données du bulletin incomplètes pour générer le PDF')
+        throw new Error('Donn�es du bulletin incompl�tes pour g�n�rer le PDF')
       }
       
-      // Afficher une notification pour indiquer que le téléchargement est en cours
+      // Afficher une notification pour indiquer que le t�l�chargement est en cours
       toast({
-        title: "Génération du PDF en cours",
-        description: "Veuillez patienter pendant la création du document...",
+        title: "G�n�ration du PDF en cours",
+        description: "Veuillez patienter pendant la cr�ation du document...",
       });
       
       try {
-        // Tentative de génération côté client
-        console.log('Tentative de génération PDF côté client...');
+        // Tentative de g�n�ration c�t� client
+        console.log('Tentative de g�n�ration PDF c�t� client...');
         const pdfBlob = await generateReportCardPDF(reportCard)
         await downloadBlob(pdfBlob)
       } catch (clientError) {
-        console.error('Erreur génération PDF côté client, tentative via API:', clientError)
-        // Si la génération côté client échoue, essayer via l'API
+        console.error('Erreur g�n�ration PDF c�t� client, tentative via API:', clientError)
+        // Si la g�n�ration c�t� client �choue, essayer via l'API
         await downloadViaAPI()
       }
     } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error)
+      console.error('Erreur lors de la g�n�ration du PDF:', error)
       toast({
         variant: "destructive",
         title: "Erreur PDF",
-        description: error instanceof Error ? error.message : "Impossible de générer le PDF du bulletin",
+        description: error instanceof Error ? error.message : "Impossible de g�n�rer le PDF du bulletin",
       })
       
-      // Dernière tentative via l'API
+      // Derni�re tentative via l'API
       try {
         await downloadViaAPI()
       } catch (finalError) {
-        console.error('Toutes les tentatives de génération PDF ont échoué:', finalError)
+        console.error('Toutes les tentatives de g�n�ration PDF ont �chou�:', finalError)
       }
     } finally {
       setLoading(false)
     }
   }
 
-  // Télécharger à partir d'un Blob
+  // T�l�charger � partir d'un Blob
   const downloadBlob = async (blob: Blob) => {
     try {
       const url = URL.createObjectURL(blob)
@@ -102,21 +102,21 @@ export function DownloadPDFButton({
       }, 100)
       
       toast({
-        title: "PDF généré avec succès",
-        description: "Le bulletin a été téléchargé en format PDF",
+        title: "PDF g�n�r� avec succ�s",
+        description: "Le bulletin a �t� t�l�charg� en format PDF",
         variant: "default",
       })
       
       return true
     } catch (error) {
-      console.error('Erreur lors du téléchargement du blob PDF:', error)
+      console.error('Erreur lors du t�l�chargement du blob PDF:', error)
       throw error
     }
   }
 
-  // Télécharger via l'API
+  // T�l�charger via l'API
   const downloadViaAPI = async () => {
-    console.log('Tentative de téléchargement via API...');
+    console.log('Tentative de t�l�chargement via API...');
     
     try {
       const response = await fetch('/api/debug/pdf', {
@@ -135,7 +135,7 @@ export function DownloadPDFButton({
       const data = await response.json()
       
       if (!data.success || !data.pdfData) {
-        throw new Error('Données PDF invalides reçues de l\'API')
+        throw new Error('Donn�es PDF invalides re�ues de l\'API')
       }
       
       const link = document.createElement('a')
@@ -149,18 +149,18 @@ export function DownloadPDFButton({
       }, 100)
       
       toast({
-        title: "PDF généré via serveur",
-        description: "Le bulletin a été téléchargé en format PDF",
+        title: "PDF g�n�r� via serveur",
+        description: "Le bulletin a �t� t�l�charg� en format PDF",
         variant: "default",
       })
       
       return true
     } catch (error) {
-      console.error('Erreur lors du téléchargement du PDF via API:', error)
+      console.error('Erreur lors du t�l�chargement du PDF via API:', error)
       toast({
         variant: "destructive",
-        title: "Échec de génération PDF",
-        description: error instanceof Error ? error.message : "Impossible de générer le PDF du bulletin via l'API",
+        title: "�chec de g�n�ration PDF",
+        description: error instanceof Error ? error.message : "Impossible de g�n�rer le PDF du bulletin via l'API",
       })
       throw error
     }
@@ -179,7 +179,9 @@ export function DownloadPDFButton({
       ) : (
         <Download className={`h-4 w-4 ${showText ? 'mr-2' : ''}`} />
       )}
-      {showText && (loading ? 'Génération...' : 'PDF')}
+      {showText && (loading ? 'G�n�ration...' : 'PDF')}
     </Button>
   )
 } 
+
+

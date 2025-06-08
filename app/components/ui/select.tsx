@@ -1,5 +1,5 @@
-import * as React from "react"
-import { cn } from "../../lib/utils"
+﻿import * as React from "react"
+import { cn } from "@/lib/utils"
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   onValueChange?: (value: string) => void
@@ -92,3 +92,5 @@ const SelectItem = React.forwardRef<
 SelectItem.displayName = "SelectItem"
 
 export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } 
+
+

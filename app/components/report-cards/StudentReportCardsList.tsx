@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { DataTable } from '@/app/components/ui/data-table'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
-import { Input } from '@/app/components/ui/input'
-import { Alert, AlertDescription } from '@/app/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { DataTable } from '@/components/ui/data-table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { DownloadIcon, AlertCircleIcon, EyeIcon } from 'lucide-react'
 import { getClassReportCards, downloadReportCardPDF } from './ReportCardAPI'
 import { useRouter } from 'next/navigation'
@@ -29,7 +29,7 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
   const columns = [
     {
       id: 'student',
-      header: 'Élève',
+      header: '�l�ve',
       cell: ({ row }: any) => (
         <div className="font-medium">
           {row.original.student.user.lastName} {row.original.student.user.firstName}
@@ -59,7 +59,7 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
             ? 'bg-green-100 text-green-800' 
             : 'bg-amber-100 text-amber-800'
         }`}>
-          {row.original.status === 'PUBLISHED' ? 'Publié' : 'Brouillon'}
+          {row.original.status === 'PUBLISHED' ? 'Publi�' : 'Brouillon'}
         </div>
       )
     },
@@ -90,12 +90,12 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
     }
   ]
 
-  // Charger les données quand le classId ou la période change
+  // Charger les donn�es quand le classId ou la p�riode change
   useEffect(() => {
     if (classId && selectedPeriod) {
       fetchReportCards()
     } else if (periods.length > 0 && !selectedPeriod) {
-      // Sélectionner la période la plus récente par défaut
+      // S�lectionner la p�riode la plus r�cente par d�faut
       const sortedPeriods = [...periods].sort((a, b) => {
         if (a.schoolYear !== b.schoolYear) {
           return b.schoolYear.localeCompare(a.schoolYear)
@@ -118,7 +118,7 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
       setClassData(data)
     } catch (error) {
       console.error('Erreur lors du chargement des bulletins:', error)
-      setError('Impossible de charger les bulletins. Veuillez réessayer plus tard.')
+      setError('Impossible de charger les bulletins. Veuillez r�essayer plus tard.')
     } finally {
       setLoading(false)
     }
@@ -132,7 +132,7 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
       })
     : reportCards
 
-  // Fonction pour déterminer la couleur de la moyenne
+  // Fonction pour d�terminer la couleur de la moyenne
   function getAverageColor(average: number): string {
     if (average >= 16) return 'text-green-600 font-semibold'
     if (average >= 12) return 'text-blue-600'
@@ -144,19 +144,19 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Période</label>
+          <label className="block text-sm font-medium mb-1">P�riode</label>
           <Select
             value={selectedPeriod}
             onValueChange={(value) => setSelectedPeriod(value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner une période" />
+              <SelectValue placeholder="S�lectionner une p�riode" />
             </SelectTrigger>
             <SelectContent>
               {periods.map((period) => (
                 <SelectItem key={period.id} value={period.id}>
                   {period.type === 'TRIMESTER' ? 'Trimestre' : 
-                   period.type === 'SEMESTER' ? 'Semestre' : 'Année'} - {period.schoolYear}
+                   period.type === 'SEMESTER' ? 'Semestre' : 'Ann�e'} - {period.schoolYear}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -164,9 +164,9 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Rechercher un élève</label>
+          <label className="block text-sm font-medium mb-1">Rechercher un �l�ve</label>
           <Input
-            placeholder="Nom ou prénom..."
+            placeholder="Nom ou pr�nom..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -177,7 +177,7 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
       {classData && classData.stats && (userRole === 'ADMIN' || userRole === 'TEACHER') && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
           <div className="bg-gray-50 p-3 rounded-lg text-center">
-            <div className="text-sm text-gray-500">Élèves</div>
+            <div className="text-sm text-gray-500">�l�ves</div>
             <div className="text-xl font-semibold">{classData.stats.totalStudents}</div>
           </div>
           <div className="bg-gray-50 p-3 rounded-lg text-center">
@@ -210,14 +210,16 @@ export function StudentReportCardsList({ classId, periods, userRole = 'STUDENT' 
         columns={columns}
         data={filteredReportCards}
         loading={loading}
-        searchPlaceholder="Rechercher un élève..."
+        searchPlaceholder="Rechercher un �l�ve..."
       />
       
       {filteredReportCards.length === 0 && !loading && !error && (
         <div className="text-center py-6 text-gray-500">
-          Aucun bulletin disponible pour cette période
+          Aucun bulletin disponible pour cette p�riode
         </div>
       )}
     </div>
   )
 } 
+
+

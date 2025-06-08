@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/app/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export default function AdminPage() {
@@ -31,7 +31,7 @@ export default function AdminPage() {
       if (response.ok) {
         setResult({
           success: true,
-          message: 'PÃ©riode de test crÃ©Ã©e avec succÃ¨s'
+          message: 'Période de test créée avec succès'
         })
       } else {
         const data = await response.json()
@@ -58,7 +58,7 @@ export default function AdminPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstName: 'Ã‰lÃ¨ve',
+          firstName: 'Élève',
           lastName: 'Test',
           email: 'eleve.test@ecole.com',
           password: 'motdepasse',
@@ -68,7 +68,7 @@ export default function AdminPage() {
       if (response.ok) {
         setResult({
           success: true,
-          message: 'Ã‰lÃ¨ve de test crÃ©Ã© avec succÃ¨s'
+          message: 'Élève de test créé avec succès'
         })
       } else {
         const data = await response.json()
@@ -104,7 +104,7 @@ export default function AdminPage() {
       if (response.ok) {
         setResult({
           success: true,
-          message: 'Classe de test crÃ©Ã©e avec succÃ¨s'
+          message: 'Classe de test créée avec succès'
         })
       } else {
         const data = await response.json()
@@ -134,41 +134,41 @@ export default function AdminPage() {
 
       <Tabs defaultValue="test-data">
         <TabsList>
-          <TabsTrigger value="test-data">DonnÃ©es de test</TabsTrigger>
+          <TabsTrigger value="test-data">Données de test</TabsTrigger>
         </TabsList>
         <TabsContent value="test-data" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>CrÃ©ation de donnÃ©es de test</CardTitle>
+              <CardTitle>Création de données de test</CardTitle>
               <CardDescription>
-                Utilisez ces boutons pour crÃ©er rapidement des donnÃ©es de test pour le dÃ©veloppement
+                Utilisez ces boutons pour créer rapidement des données de test pour le développement
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="text-lg font-medium mb-2">PÃ©riodes</h3>
+                <h3 className="text-lg font-medium mb-2">Périodes</h3>
                 <Button onClick={createTestPeriod} disabled={loading}>
-                  {loading ? "CrÃ©ation en cours..." : "CrÃ©er une pÃ©riode de test"}
+                  {loading ? "Création en cours..." : "Créer une période de test"}
                 </Button>
               </div>
               
               <div>
-                <h3 className="text-lg font-medium mb-2">Ã‰lÃ¨ves</h3>
+                <h3 className="text-lg font-medium mb-2">Élèves</h3>
                 <Button onClick={createTestStudent} disabled={loading}>
-                  {loading ? "CrÃ©ation en cours..." : "CrÃ©er un Ã©lÃ¨ve de test"}
+                  {loading ? "Création en cours..." : "Créer un élève de test"}
                 </Button>
               </div>
               
               <div>
                 <h3 className="text-lg font-medium mb-2">Classes</h3>
                 <Button onClick={createTestClass} disabled={loading}>
-                  {loading ? "CrÃ©ation en cours..." : "CrÃ©er une classe de test"}
+                  {loading ? "Création en cours..." : "Créer une classe de test"}
                 </Button>
               </div>
             </CardContent>
             <CardFooter>
               <p className="text-sm text-gray-500">
-                Les donnÃ©es crÃ©Ã©es ici sont destinÃ©es uniquement au dÃ©veloppement et aux tests.
+                Les données créées ici sont destinées uniquement au développement et aux tests.
               </p>
             </CardFooter>
           </Card>
@@ -177,3 +177,5 @@ export default function AdminPage() {
     </div>
   )
 } 
+
+

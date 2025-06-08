@@ -1,4 +1,4 @@
-// Types pour l'application
+﻿// Types pour l'application
 
 export enum DayOfWeek {
   MONDAY = 'MONDAY',
@@ -26,3 +26,5 @@ export const dayOfWeekLabels: Record<DayOfWeek, string> = {
   [DayOfWeek.SATURDAY]: 'Samedi',
   [DayOfWeek.SUNDAY]: 'Dimanche'
 } 
+
+

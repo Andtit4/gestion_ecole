@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/lib/auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/timetable/timeslots - Récupérer tous les créneaux horaires
@@ -87,3 +87,5 @@ export async function POST(request: Request) {
     )
   }
 } 
+
+

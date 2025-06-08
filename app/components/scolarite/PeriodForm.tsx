@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
+import { Button } from '@/components/ui/button'
 
 interface PeriodFormProps {
   periodId?: string | null
@@ -31,7 +31,7 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
     if (periodId) {
       fetchPeriodData()
     } else {
-      // Initialiser avec l'année scolaire actuelle
+      // Initialiser avec l'ann�e scolaire actuelle
       const currentYear = new Date().getFullYear()
       const nextYear = currentYear + 1
       setFormData(prev => ({
@@ -46,7 +46,7 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
       setIsLoading(true)
       const response = await fetch(`/api/periods/${periodId}`)
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des données de la période')
+        throw new Error('Erreur lors du chargement des donn�es de la p�riode')
       }
       const data = await response.json()
       
@@ -92,7 +92,7 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Erreur lors de l\'enregistrement de la période')
+        throw new Error(errorData.message || 'Erreur lors de l\'enregistrement de la p�riode')
       }
 
       onClose()
@@ -112,7 +112,7 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-gray-800">
-          {periodId ? 'Modifier la période' : 'Ajouter une période'}
+          {periodId ? 'Modifier la p�riode' : 'Ajouter une p�riode'}
         </h2>
         <button
           type="button"
@@ -129,7 +129,7 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-1">
           <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-            Type de période<span className="text-red-500 ml-1">*</span>
+            Type de p�riode<span className="text-red-500 ml-1">*</span>
           </label>
           <select
             id="type"
@@ -139,19 +139,19 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
             required
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
           >
-            <option value="">Sélectionner un type</option>
+            <option value="">S�lectionner un type</option>
             <option value="Trimestre 1">Trimestre 1</option>
             <option value="Trimestre 2">Trimestre 2</option>
             <option value="Trimestre 3">Trimestre 3</option>
             <option value="Semestre 1">Semestre 1</option>
             <option value="Semestre 2">Semestre 2</option>
-            <option value="Année complète">Année complète</option>
+            <option value="Ann�e compl�te">Ann�e compl�te</option>
           </select>
         </div>
 
         <div className="space-y-1">
           <label htmlFor="schoolYear" className="block text-sm font-medium text-gray-700">
-            Année scolaire<span className="text-red-500 ml-1">*</span>
+            Ann�e scolaire<span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
@@ -169,7 +169,7 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">
-              Date de début<span className="text-red-500 ml-1">*</span>
+              Date de d�but<span className="text-red-500 ml-1">*</span>
             </label>
             <input
               type="date"
@@ -210,9 +210,9 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
             required
             className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
           >
-            <option value="upcoming">À venir</option>
+            <option value="upcoming">� venir</option>
             <option value="active">Active</option>
-            <option value="completed">Terminée</option>
+            <option value="completed">Termin�e</option>
           </select>
         </div>
 
@@ -259,3 +259,5 @@ export default function PeriodForm({ periodId, onClose }: PeriodFormProps) {
     </div>
   )
 } 
+
+

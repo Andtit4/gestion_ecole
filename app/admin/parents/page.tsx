@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import ParentList from '@/app/components/parents/ParentList'
-import ParentForm from '@/app/components/parents/ParentForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import ParentList from '@/components/parents/ParentList'
+import ParentForm from '@/components/parents/ParentForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function ParentsPage() {
   const { data: session, status } = useSession()
@@ -15,7 +15,7 @@ export default function ParentsPage() {
   }
 
   if (!session || session.user.role !== 'ADMIN') {
-    return <div>Accès non autorisé</div>
+    return <div>Acc�s non autoris�</div>
   }
 
   return (
@@ -46,3 +46,5 @@ export default function ParentsPage() {
     </div>
   )
 } 
+
+

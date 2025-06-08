@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -9,14 +9,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/app/components/ui/table'
-import { Badge } from '@/app/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
-import { Input } from '@/app/components/ui/input'
-import { Alert, AlertDescription } from '@/app/components/ui/alert'
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, FileSpreadsheet, AlertCircle, Check, X } from 'lucide-react'
-import { Skeleton } from '@/app/components/ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useRouter } from 'next/navigation'
 
 interface AllStudentsListProps {
@@ -33,11 +33,11 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
   const [students, setStudents] = useState<any[]>([])
   const router = useRouter()
 
-  // Utiliser un indicateur de montage pour s'assurer que les données sont chargées au montage du composant
+  // Utiliser un indicateur de montage pour s'assurer que les donn�es sont charg�es au montage du composant
   useEffect(() => {
-    console.log('AllStudentsList - Composant monté')
+    console.log('AllStudentsList - Composant mont�')
     
-    // Sélectionner la période la plus récente par défaut si nécessaire
+    // S�lectionner la p�riode la plus r�cente par d�faut si n�cessaire
     if (periods.length > 0 && !selectedPeriod) {
       const sortedPeriods = [...periods].sort((a, b) => {
         if (a.schoolYear !== b.schoolYear) {
@@ -47,30 +47,30 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
       })
       
       setSelectedPeriod(sortedPeriods[0].id)
-      console.log('Période sélectionnée par défaut:', sortedPeriods[0].id)
+      console.log('P�riode s�lectionn�e par d�faut:', sortedPeriods[0].id)
     }
     
-    // Toujours charger les élèves au montage
+    // Toujours charger les �l�ves au montage
     fetchAllStudents()
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Dépendance vide pour exécuter uniquement au montage
+  }, []) // D�pendance vide pour ex�cuter uniquement au montage
 
-  // Recharger les données quand le classId change
+  // Recharger les donn�es quand le classId change
   useEffect(() => {
     console.log('AllStudentsList - classId changed:', classId)
     fetchAllStudents()
   }, [classId])
 
-  // Fonction pour charger tous les élèves
+  // Fonction pour charger tous les �l�ves
   const fetchAllStudents = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      console.log('Chargement des élèves - classId:', classId || 'tous')
+      console.log('Chargement des �l�ves - classId:', classId || 'tous')
       
-      // Construire les paramètres de la requête
+      // Construire les param�tres de la requ�te
       const params = new URLSearchParams()
       if (classId) {
         params.append('classId', classId)
@@ -83,17 +83,17 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
       }
       
       const data = await response.json()
-      console.log('Nombre d\'élèves reçus:', data.length)
+      console.log('Nombre d\'�l�ves re�us:', data.length)
       setStudents(data)
     } catch (error) {
-      console.error('Erreur lors du chargement des élèves:', error)
-      setError('Impossible de charger les élèves. Veuillez réessayer plus tard.')
+      console.error('Erreur lors du chargement des �l�ves:', error)
+      setError('Impossible de charger les �l�ves. Veuillez r�essayer plus tard.')
     } finally {
       setLoading(false)
     }
   }
 
-  // Filtrer les élèves par recherche
+  // Filtrer les �l�ves par recherche
   const filteredStudents = searchQuery
     ? students.filter((student: any) => {
         const studentName = `${student.user.firstName} ${student.user.lastName}`.toLowerCase()
@@ -101,17 +101,17 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
       })
     : students
 
-  // Naviguer vers la création d'un bulletin
+  // Naviguer vers la cr�ation d'un bulletin
   const navigateToCreateReportCard = (studentId: string) => {
     router.push(`/dashboard/report-cards/new?studentId=${studentId}&periodId=${selectedPeriod}`)
   }
 
-  // Naviguer vers les notes de l'élève
+  // Naviguer vers les notes de l'�l�ve
   const navigateToStudentGrades = (studentId: string) => {
     router.push(`/dashboard/grades?studentId=${studentId}&periodId=${selectedPeriod}`)
   }
 
-  // Ajouter un bouton pour rafraîchir manuellement
+  // Ajouter un bouton pour rafra�chir manuellement
   const handleRefresh = () => {
     fetchAllStudents()
   }
@@ -120,19 +120,19 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Période</label>
+          <label className="block text-sm font-medium mb-1">P�riode</label>
           <Select
             value={selectedPeriod}
             onValueChange={(value) => setSelectedPeriod(value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner une période" />
+              <SelectValue placeholder="S�lectionner une p�riode" />
             </SelectTrigger>
             <SelectContent>
               {periods.map((period) => (
                 <SelectItem key={period.id} value={period.id}>
                   {period.type === 'TRIMESTER' ? 'Trimestre' : 
-                   period.type === 'SEMESTER' ? 'Semestre' : 'Année'} - {period.schoolYear}
+                   period.type === 'SEMESTER' ? 'Semestre' : 'Ann�e'} - {period.schoolYear}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -140,9 +140,9 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Rechercher un élève</label>
+          <label className="block text-sm font-medium mb-1">Rechercher un �l�ve</label>
           <Input
-            placeholder="Nom ou prénom..."
+            placeholder="Nom ou pr�nom..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -150,7 +150,7 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
         
         <div className="flex items-end">
           <Button onClick={handleRefresh} variant="outline" className="mb-0.5">
-            Rafraîchir la liste
+            Rafra�chir la liste
           </Button>
         </div>
       </div>
@@ -165,12 +165,12 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl">
-            Liste complète des élèves {classId ? 'de la classe' : ''}
+            Liste compl�te des �l�ves {classId ? 'de la classe' : ''}
           </CardTitle>
           <div>
             {!loading && (
               <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                {filteredStudents.length} élève(s)
+                {filteredStudents.length} �l�ve(s)
               </Badge>
             )}
           </div>
@@ -184,13 +184,13 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
             </div>
           ) : filteredStudents.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
-              Aucun élève trouvé.
+              Aucun �l�ve trouv�.
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Élève</TableHead>
+                  <TableHead>�l�ve</TableHead>
                   <TableHead>Classe</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead>Bulletin</TableHead>
@@ -203,7 +203,7 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
                     <TableCell className="font-medium">
                       {student.user.lastName} {student.user.firstName}
                     </TableCell>
-                    <TableCell>{student.class?.name || 'Non assigné'}</TableCell>
+                    <TableCell>{student.class?.name || 'Non assign�'}</TableCell>
                     <TableCell>
                       {student._count.grades > 0 ? (
                         <Badge variant="outline" className="bg-green-50 text-green-700">
@@ -248,7 +248,7 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
                           onClick={() => navigateToCreateReportCard(student.id)}
                         >
                           <FileSpreadsheet className="h-4 w-4 mr-1" />
-                          Créer bulletin
+                          Cr�er bulletin
                         </Button>
                       )}
                     </TableCell>
@@ -262,3 +262,5 @@ export function AllStudentsList({ classId, periods, userRole = 'STUDENT' }: AllS
     </div>
   )
 } 
+
+

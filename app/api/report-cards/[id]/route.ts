@@ -236,8 +236,8 @@ export async function PUT(
             id: true,
             user: {
               select: {
-                firstName: true,
-                lastName: true,
+            firstName: true,
+            lastName: true,
               }
             },
             class: {

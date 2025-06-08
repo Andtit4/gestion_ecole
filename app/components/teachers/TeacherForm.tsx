@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -31,10 +31,12 @@ export default function TeacherForm({ teacherId, onClose }: TeacherFormProps) {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/users/${teacherId}`)
+      // Utiliser le nouvel endpoint spécifique pour récupérer un enseignant par ID
+      const response = await fetch(`/api/teachers/${teacherId}`)
       if (!response.ok) {
         throw new Error('Erreur lors du chargement des données de l\'enseignant')
       }
+      
       const data = await response.json()
       setFormData({
         firstName: data.firstName || '',
@@ -60,11 +62,26 @@ export default function TeacherForm({ teacherId, onClose }: TeacherFormProps) {
       const url = teacherId ? `/api/teachers` : '/api/teachers'
       const method = teacherId ? 'PUT' : 'POST'
 
+      // Créer un objet de données simple, sans le champ role qui n'est pas utilisé par l'API
       const payload = {
-        ...formData,
-        // Ne pas envoyer le mot de passe s'il est vide et que c'est une mise à jour
-        ...(teacherId && formData.password === '' ? { password: undefined } : {})
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
       }
+      
+      // Ajouter l'ID uniquement pour les mises à jour
+      if (teacherId) {
+        payload.id = teacherId
+      }
+      
+      // Ne pas envoyer le mot de passe vide lors d'une mise à jour
+      if (teacherId && formData.password === '') {
+        delete payload.password
+      }
+      
+      console.log('Envoi de données vers', url, 'avec méthode', method)
+      console.log('Payload:', payload)
 
       const response = await fetch(url, {
         method,
@@ -74,11 +91,27 @@ export default function TeacherForm({ teacherId, onClose }: TeacherFormProps) {
         body: JSON.stringify(payload),
       })
 
+      // Analyser la réponse pour le débogage
+      const responseData = await response.json().catch(() => ({}))
+      
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(data.error || 'Erreur lors de l\'enregistrement de l\'enseignant')
+        console.error('Erreur de réponse:', responseData)
+        let errorMessage = responseData.error || 'Erreur lors de l\'enregistrement de l\'enseignant'
+        
+        // Afficher les détails d'erreur s'ils sont disponibles
+        if (responseData.details) {
+          if (Array.isArray(responseData.details)) {
+            errorMessage += ': ' + responseData.details.join(', ')
+          } else {
+            errorMessage += ': ' + responseData.details
+          }
+        }
+        
+        throw new Error(errorMessage)
       }
 
+      console.log('Succès:', responseData)
+      
       if (onClose) {
         onClose()
       } else {
@@ -195,3 +228,5 @@ export default function TeacherForm({ teacherId, onClose }: TeacherFormProps) {
     </div>
   )
 } 
+
+

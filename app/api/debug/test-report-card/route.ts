@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // API de secours pour les bulletins - pour tester sans validation
@@ -131,3 +131,5 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 } 
+
+

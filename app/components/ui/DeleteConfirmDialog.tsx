@@ -9,8 +9,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/app/components/ui/alert-dialog'
-import { Button } from '@/app/components/ui/button'
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean
@@ -50,3 +50,5 @@ export default function DeleteConfirmDialog({
     </AlertDialog>
   )
 } 
+
+

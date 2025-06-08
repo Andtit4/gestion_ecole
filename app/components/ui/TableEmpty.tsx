@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 
 interface TableEmptyProps {
   message: string
@@ -13,3 +13,5 @@ export default function TableEmpty({ message, icon }: TableEmptyProps) {
     </div>
   )
 } 
+
+

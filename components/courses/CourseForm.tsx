@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
@@ -143,3 +143,5 @@ export function CourseForm({ course, onClose, onSubmit, teachers }: CourseFormPr
     </Dialog>
   )
 } 
+
+

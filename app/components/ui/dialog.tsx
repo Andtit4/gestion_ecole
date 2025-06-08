@@ -1,6 +1,6 @@
-import * as React from "react"
+﻿import * as React from "react"
 
-import { cn } from "../../lib/utils"
+import { cn } from "@/lib/utils"
 
 interface DialogProps {
   open?: boolean
@@ -44,3 +44,5 @@ function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLPar
 }
 
 export { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } 
+
+

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * API client pour les bulletins de notes
  * Ce fichier contient des fonctions utilitaires pour interagir avec l'API des bulletins
  */
@@ -284,3 +284,5 @@ export async function deleteReportCards(reportCardIds: string[]) {
 export function downloadReportCardPDF(id: string) {
   window.open(`/api/report-cards/export?id=${id}`, '_blank')
 } 
+
+

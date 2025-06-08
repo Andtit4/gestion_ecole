@@ -1,8 +1,8 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { DayOfWeek, TimeSlot } from '@/app/types'
+import { DayOfWeek, TimeSlot } from '@/types'
 
 type TimeSlotFormProps = {
   timeSlot?: TimeSlot
@@ -131,3 +131,5 @@ export default function TimeSlotForm({ timeSlot, onClose }: TimeSlotFormProps) {
     </form>
   )
 } 
+
+

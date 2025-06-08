@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Cette API est conçue pour être appelée par un service CRON (comme Vercel Cron Jobs)
@@ -118,3 +118,5 @@ export async function GET(request: Request) {
     )
   }
 } 
+
+

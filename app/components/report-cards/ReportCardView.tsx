@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef } from 'react'
 import { useReactToPrint } from 'react-to-print'
@@ -363,3 +363,5 @@ export default function ReportCardView({ reportCard, open, onClose }: ReportCard
     </Dialog>
   )
 } 
+
+

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
-import TimeSlotList from '@/app/components/timetable/TimeSlotList'
-import TimeSlotForm from '@/app/components/timetable/TimeSlotForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import TimeSlotList from '@/components/timetable/TimeSlotList'
+import TimeSlotForm from '@/components/timetable/TimeSlotForm'
 
 export default function TimeSlotPage() {
   const { data: session, status } = useSession()
@@ -15,7 +15,7 @@ export default function TimeSlotPage() {
   }
 
   if (!session || session.user.role !== 'ADMIN') {
-    return <div>Accès non autorisé</div>
+    return <div>Acc�s non autoris�</div>
   }
 
   return (
@@ -23,13 +23,13 @@ export default function TimeSlotPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Gestion des créneaux horaires
+            Gestion des cr�neaux horaires
           </h1>
           <button
             onClick={() => setIsAddingTimeSlot(true)}
             className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
           >
-            Ajouter un créneau horaire
+            Ajouter un cr�neau horaire
           </button>
         </div>
 
@@ -46,3 +46,5 @@ export default function TimeSlotPage() {
     </div>
   )
 } 
+
+

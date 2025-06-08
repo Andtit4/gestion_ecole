@@ -1,116 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // GET /api/teachers - Récupérer tous les enseignants
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     
     if (!session) {
-      return NextResponse.json({
-        error: 'Vous devez être connecté pour accéder à cette ressource'
-      }, {
-        status: 401
-      })
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      )
     }
 
-    const url = new URL(request.url)
-    const search = url.searchParams.get('search')
-    
-    let where = {}
-    if (search) {
-      where = {
-        OR: [
-          {
-            user: {
-              firstName: {
-                contains: search,
-                mode: 'insensitive'
-              }
-            }
+    // Récupérer tous les enseignants avec les données utilisateur associées
+    const teachers = await prisma.teacher.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true, 
+            lastName: true,
+            email: true,
           },
-          {
-            user: {
-              lastName: {
-                contains: search,
-                mode: 'insensitive'
-              }
-            }
-          }
-        ]
-      }
-    }
-    
-    let teachers
-    
-    // Récupérer les enseignants avec leurs utilisateurs associés
-    if (session.user.role === 'ADMIN') {
-      teachers = await prisma.teacher.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true, 
-              lastName: true,
-              email: true,
-              createdAt: true
-            }
-          }
-        }
-      })
-
-      // Transformer la réponse pour avoir un format plus simple
-      teachers = teachers.map(teacher => ({
-        id: teacher.id,
-        firstName: teacher.user.firstName,
-        lastName: teacher.user.lastName,
-        email: teacher.user.email,
-        createdAt: teacher.user.createdAt
-      }))
-    } else {
-      teachers = await prisma.user.findMany({
-        where: {
-          ...where,
-          role: 'TEACHER'
         },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          createdAt: true,
-          teacher: {
-            select: {
-              id: true
-            }
-          }
-        }
-      })
-      
-      // Transformer la réponse pour avoir le même format
-      teachers = teachers
-        .filter(user => user.teacher)
-        .map(user => ({
-          id: user.teacher.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          createdAt: user.createdAt
-        }))
-    }
-    
-    return NextResponse.json(teachers)
-
-  } catch (error) {
-    console.error('Erreur GET /api/teachers :', error)
-    return NextResponse.json({
-      error: 'Erreur de connexion à la base de données. Assurez-vous que le serveur MySQL est bien démarré.'
-    }, {
-      status: 503
+      },
+      orderBy: [
+        {
+          user: {
+            lastName: 'asc',
+          },
+        },
+        {
+          user: {
+            firstName: 'asc',
+          },
+        },
+      ],
     })
+    
+    // Transformer les données pour une structure plus simple
+    const formattedTeachers = teachers.map(teacher => ({
+      id: teacher.id,
+      userId: teacher.userId,
+      firstName: teacher.user.firstName,
+      lastName: teacher.user.lastName,
+      email: teacher.user.email
+    }))
+    
+    return NextResponse.json(formattedTeachers)
+  } catch (error) {
+    console.error('Erreur lors de la récupération des enseignants:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la récupération des enseignants', details: error instanceof Error ? error.message : String(error) },
+      { status: 500 }
+    )
   }
 }
 
@@ -118,6 +64,7 @@ export async function GET(request: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Non autorisé. Seuls les administrateurs peuvent créer des enseignants.' },
@@ -126,19 +73,35 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { firstName, lastName, email, password, subjects } = body
+    console.log('Données reçues dans POST /api/teachers:', body)
+    
+    // Extraire seulement les champs nécessaires
+    const firstName = body.firstName || '';
+    const lastName = body.lastName || '';
+    const email = body.email || '';
+    const password = body.password || '';
 
-    // Validation des données
-    if (!firstName || !lastName || !email || !password) {
+    // Validation des données avec des messages d'erreur spécifiques
+    const validationErrors = [];
+    if (!firstName) validationErrors.push('Le prénom est requis');
+    if (!lastName) validationErrors.push('Le nom est requis');
+    if (!email) validationErrors.push('L\'email est requis');
+    if (!password) validationErrors.push('Le mot de passe est requis');
+
+    if (validationErrors.length > 0) {
       return NextResponse.json(
-        { error: 'Prénom, nom, email et mot de passe sont requis' },
+        { 
+          error: 'Données invalides',
+          details: validationErrors,
+          receivedData: { firstName, lastName, email, hasPassword: !!password }
+        },
         { status: 400 }
       )
     }
 
     // Vérifier si l'email existe déjà
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email }
     })
 
     if (existingUser) {
@@ -148,47 +111,41 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Créer l'enseignant
-    const user = await prisma.user.create({
-      data: {
-        firstName,
-        lastName,
-        email,
-        password, // Dans une application réelle, vous devriez hacher le mot de passe
-        role: 'TEACHER',
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-    })
-
-    // Créer l'entrée dans la table teacher
-    const teacher = await prisma.teacher.create({
-      data: {
-        userId: user.id,
-      },
-      select: {
-        id: true,
-        user: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true,
-          }
+    // Créer l'utilisateur et l'enseignant dans une transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Créer l'utilisateur avec le rôle TEACHER
+      const user = await tx.user.create({
+        data: {
+          firstName,
+          lastName,
+          email,
+          password, // Dans une application réelle, vous devriez hacher le mot de passe
+          role: 'TEACHER'
         }
+      })
+
+      // Créer l'enseignant avec seulement l'userId
+      const teacher = await tx.teacher.create({
+        data: {
+          userId: user.id,
+        }
+      })
+
+      // Renvoyer l'enseignant avec les informations complètes de l'utilisateur
+      return {
+        id: teacher.id,
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
       }
     })
 
-    return NextResponse.json(teacher, { status: 201 })
+    return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    console.error('Erreur POST /api/teachers :', error)
+    console.error('Erreur lors de la création de l\'enseignant:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la création de l\'enseignant' },
+      { error: 'Erreur lors de la création de l\'enseignant', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
@@ -198,6 +155,7 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Non autorisé. Seuls les administrateurs peuvent modifier des enseignants.' },
@@ -206,6 +164,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json()
+    console.log('Données reçues dans PUT /api/teachers:', body)
     const { id, firstName, lastName, email, password } = body
 
     if (!id) {
@@ -215,22 +174,42 @@ export async function PUT(req: NextRequest) {
       )
     }
 
-    // Vérifier si l'enseignant existe
-    const teacher = await prisma.user.findFirst({
-      where: { id, role: 'TEACHER' },
+    // Récupérer l'enseignant existant (qui ne contient que userId)
+    let teacherRecord = await prisma.teacher.findUnique({
+      where: { id }
     })
 
-    if (!teacher) {
+    // Si nous n'avons pas trouvé un enseignant avec cet ID, 
+    // vérifions si c'est un ID d'utilisateur et trouvons l'enseignant associé
+    if (!teacherRecord) {
+      teacherRecord = await prisma.teacher.findFirst({
+        where: { userId: id }
+      })
+      
+      if (!teacherRecord) {
+        return NextResponse.json(
+          { error: 'Enseignant non trouvé' },
+          { status: 404 }
+        )
+      }
+    }
+
+    // Récupérer les données de l'utilisateur associé
+    const userData = await prisma.user.findUnique({
+      where: { id: teacherRecord.userId }
+    });
+
+    if (!userData) {
       return NextResponse.json(
-        { error: 'Enseignant non trouvé' },
+        { error: 'Utilisateur associé à l\'enseignant non trouvé' },
         { status: 404 }
       )
     }
 
     // Vérifier si l'email existe déjà (sauf pour cet utilisateur)
-    if (email && email !== teacher.email) {
+    if (email && email !== userData.email) {
       const existingUser = await prisma.user.findUnique({
-        where: { email },
+        where: { email }
       })
 
       if (existingUser) {
@@ -241,37 +220,60 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    // Préparer les données à mettre à jour
-    const updateData: any = {
-      firstName: firstName ?? teacher.firstName,
-      lastName: lastName ?? teacher.lastName,
-      email: email ?? teacher.email,
-    }
+    // Mettre à jour l'utilisateur dans une transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Mettre à jour l'utilisateur
+      // Définir un type plus spécifique pour userUpdateData
+      const userUpdateData: {
+        firstName?: string;
+        lastName?: string;
+        email?: string;
+        password?: string;
+      } = {};
+      
+      if (firstName) userUpdateData.firstName = firstName
+      if (lastName) userUpdateData.lastName = lastName
+      if (email) userUpdateData.email = email
+      if (password) userUpdateData.password = password // Dans une application réelle, vous devriez hacher le mot de passe
 
-    // Ajouter le mot de passe uniquement s'il est fourni
-    if (password) {
-      updateData.password = password // Dans une application réelle, vous devriez hacher le mot de passe
-    }
+      if (Object.keys(userUpdateData).length > 0) {
+        await tx.user.update({
+          where: { id: teacherRecord.userId },
+          data: userUpdateData
+        })
+      }
 
-    // Mettre à jour l'enseignant
-    const updatedTeacher = await prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        updatedAt: true,
-      },
+      // Récupérer les données mises à jour
+      const updatedUser = await tx.user.findUnique({
+        where: { id: teacherRecord.userId },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true
+        }
+      })
+
+      // Vérification de sécurité pour s'assurer que updatedUser n'est pas null
+      if (!updatedUser) {
+        throw new Error("Impossible de récupérer les données utilisateur après mise à jour");
+      }
+
+      // Renvoyer l'enseignant avec les informations de l'utilisateur
+      return {
+        id: teacherRecord.id,
+        userId: updatedUser.id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email
+      }
     })
 
-    return NextResponse.json(updatedTeacher)
+    return NextResponse.json(result)
   } catch (error) {
-    console.error('Erreur PUT /api/teachers :', error)
+    console.error('Erreur lors de la mise à jour de l\'enseignant:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la mise à jour de l\'enseignant' },
+      { error: 'Erreur lors de la mise à jour de l\'enseignant', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
@@ -281,6 +283,7 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Non autorisé. Seuls les administrateurs peuvent supprimer des enseignants.' },
@@ -313,49 +316,30 @@ export async function DELETE(req: NextRequest) {
       )
     }
 
-    // Vérifier si l'enseignant est associé à des classes
-    const classes = await prisma.renamedclass.findMany({
-      where: { teacherId: id },
-    })
-
-    if (classes.length > 0) {
-      return NextResponse.json(
-        { error: 'Impossible de supprimer un enseignant assigné à des classes. Veuillez d\'abord réassigner ces classes.' },
-        { status: 400 }
-      )
-    }
-
-    // Vérifier si l'enseignant est associé à des cours
-    const courses = await prisma.course.findMany({
-      where: { teacherId: id },
-    })
-
-    if (courses.length > 0) {
-      return NextResponse.json(
-        { error: 'Impossible de supprimer un enseignant assigné à des cours. Veuillez d\'abord réassigner ces cours.' },
-        { status: 400 }
-      )
-    }
-
-    // Supprimer l'enseignant et son utilisateur associé
-    await prisma.$transaction([
-      prisma.teacher.delete({
+    // Supprimer l'enseignant et l'utilisateur dans une transaction
+    await prisma.$transaction(async (tx) => {
+      // Supprimer l'enseignant
+      await tx.teacher.delete({
         where: { id }
-      }),
-      prisma.user.delete({
+      })
+
+      // Supprimer l'utilisateur
+      await tx.user.delete({
         where: { id: teacher.userId }
       })
-    ])
+    })
 
     return NextResponse.json(
       { message: 'Enseignant supprimé avec succès' },
       { status: 200 }
     )
   } catch (error) {
-    console.error('Erreur DELETE /api/teachers :', error)
+    console.error('Erreur lors de la suppression de l\'enseignant:', error)
     return NextResponse.json(
       { error: 'Erreur lors de la suppression de l\'enseignant' },
       { status: 500 }
     )
   }
 } 
+
+

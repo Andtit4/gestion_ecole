@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/lib/auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // POST /api/timetable/generate-timeslots - Générer automatiquement des créneaux horaires
@@ -167,3 +167,5 @@ export async function POST(request: NextRequest) {
     )
   }
 } 
+
+

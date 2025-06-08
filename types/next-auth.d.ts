@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth'
+﻿import NextAuth from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 
 declare module 'next-auth' {
@@ -29,3 +29,5 @@ declare module 'next-auth/jwt' {
     role: 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT'
   }
 } 
+
+

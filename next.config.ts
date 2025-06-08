@@ -1,9 +1,7 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  optimizeFonts: true,
   images: {
     domains: [],
     formats: ['image/avif', 'image/webp'],
@@ -11,3 +9,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+

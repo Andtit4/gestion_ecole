@@ -1,6 +1,7 @@
-import * as React from "react"
+﻿import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { cn } from "../../lib/utils"
+import { cn } from "@/lib/utils"
+import { Controller, useFormContext } from "react-hook-form"
 
 // Types simplifiés pour supporter react-hook-form
 type FormFieldContextValue = {
@@ -8,6 +9,14 @@ type FormFieldContextValue = {
 }
 
 const FormFieldContext = React.createContext<FormFieldContextValue>({ name: "" })
+
+const useFormField = () => {
+  const context = React.useContext(FormFieldContext)
+  if (!context) {
+    throw new Error("useFormField doit être utilisé dans un FormField")
+  }
+  return context
+}
 
 const Form = React.forwardRef<
   HTMLFormElement,
@@ -31,9 +40,15 @@ const FormField = React.forwardRef<
 >(({ name, control, render, ...props }, ref) => {
   return (
     <FormFieldContext.Provider value={{ name }}>
-      <div ref={ref} {...props}>
-        {render({ field: { name, value: "", onChange: () => {}, onBlur: () => {}, ref: null } })}
-      </div>
+      <Controller
+        name={name}
+        control={control}
+        render={({ field, fieldState }) => (
+          <div ref={ref} {...props}>
+            {render({ field, fieldState })}
+          </div>
+        )}
+      />
     </FormFieldContext.Provider>
   )
 })
@@ -70,6 +85,20 @@ const FormControl = React.forwardRef<
 ))
 FormControl.displayName = "FormControl"
 
+const FormDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, children, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  >
+    {children}
+  </p>
+))
+FormDescription.displayName = "FormDescription"
+
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -87,8 +116,11 @@ FormMessage.displayName = "FormMessage"
 export {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage
 } 
+
+

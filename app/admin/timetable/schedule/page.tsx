@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
-import ScheduleManager from '@/app/components/timetable/ScheduleManager'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ScheduleManager from '@/components/timetable/ScheduleManager'
 
 export default function SchedulePage() {
   const { data: session, status } = useSession()
@@ -40,7 +40,7 @@ export default function SchedulePage() {
   }
 
   if (!session || session.user.role !== 'ADMIN') {
-    return <div>Accès non autorisé</div>
+    return <div>Acc�s non autoris�</div>
   }
 
   return (
@@ -55,7 +55,7 @@ export default function SchedulePage() {
             <div>
               <div className="mb-4">
                 <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-1">
-                  Sélectionner une classe
+                  S�lectionner une classe
                 </label>
                 <select
                   id="class-select"
@@ -80,7 +80,7 @@ export default function SchedulePage() {
               <div className="flex">
                 <div className="ml-3">
                   <p className="text-sm text-yellow-700">
-                    Aucune classe n'a été créée. Veuillez d'abord créer des classes.
+                    Aucune classe n'a �t� cr��e. Veuillez d'abord cr�er des classes.
                   </p>
                 </div>
               </div>
@@ -91,3 +91,5 @@ export default function SchedulePage() {
     </div>
   )
 } 
+
+

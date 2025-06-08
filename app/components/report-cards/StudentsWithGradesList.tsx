@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/app/components/ui/button'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -9,13 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/app/components/ui/table'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
-import { Input } from '@/app/components/ui/input'
-import { Alert, AlertDescription } from '@/app/components/ui/alert'
+} from '@/components/ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, FileSpreadsheet, AlertCircle } from 'lucide-react'
-import { Skeleton } from '@/app/components/ui/skeleton'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useRouter } from 'next/navigation'
 
 interface StudentsWithGradesListProps {
@@ -32,10 +32,10 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
   const [students, setStudents] = useState<any[]>([])
   const router = useRouter()
 
-  // Charger les données quand le classId ou la période change
+  // Charger les donn�es quand le classId ou la p�riode change
   useEffect(() => {
     if (periods.length > 0 && !selectedPeriod) {
-      // Sélectionner la période la plus récente par défaut
+      // S�lectionner la p�riode la plus r�cente par d�faut
       const sortedPeriods = [...periods].sort((a, b) => {
         if (a.schoolYear !== b.schoolYear) {
           return b.schoolYear.localeCompare(a.schoolYear)
@@ -49,13 +49,13 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
     }
   }, [classId, selectedPeriod, periods])
 
-  // Fonction pour charger les élèves ayant des notes
+  // Fonction pour charger les �l�ves ayant des notes
   const fetchStudentsWithGrades = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      // Construire les paramètres de la requête
+      // Construire les param�tres de la requ�te
       const params = new URLSearchParams()
       if (selectedPeriod) {
         params.append('periodId', selectedPeriod)
@@ -73,14 +73,14 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
       const data = await response.json()
       setStudents(data)
     } catch (error) {
-      console.error('Erreur lors du chargement des élèves avec notes:', error)
-      setError('Impossible de charger les élèves. Veuillez réessayer plus tard.')
+      console.error('Erreur lors du chargement des �l�ves avec notes:', error)
+      setError('Impossible de charger les �l�ves. Veuillez r�essayer plus tard.')
     } finally {
       setLoading(false)
     }
   }
 
-  // Filtrer les élèves par recherche
+  // Filtrer les �l�ves par recherche
   const filteredStudents = searchQuery
     ? students.filter((student: any) => {
         const studentName = `${student.user.firstName} ${student.user.lastName}`.toLowerCase()
@@ -88,12 +88,12 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
       })
     : students
 
-  // Naviguer vers la création d'un bulletin
+  // Naviguer vers la cr�ation d'un bulletin
   const navigateToCreateReportCard = (studentId: string) => {
     router.push(`/dashboard/report-cards/new?studentId=${studentId}&periodId=${selectedPeriod}`)
   }
 
-  // Naviguer vers les notes de l'élève
+  // Naviguer vers les notes de l'�l�ve
   const navigateToStudentGrades = (studentId: string) => {
     router.push(`/dashboard/grades?studentId=${studentId}&periodId=${selectedPeriod}`)
   }
@@ -102,19 +102,19 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Période</label>
+          <label className="block text-sm font-medium mb-1">P�riode</label>
           <Select
             value={selectedPeriod}
             onValueChange={(value) => setSelectedPeriod(value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner une période" />
+              <SelectValue placeholder="S�lectionner une p�riode" />
             </SelectTrigger>
             <SelectContent>
               {periods.map((period) => (
                 <SelectItem key={period.id} value={period.id}>
                   {period.type === 'TRIMESTER' ? 'Trimestre' : 
-                   period.type === 'SEMESTER' ? 'Semestre' : 'Année'} - {period.schoolYear}
+                   period.type === 'SEMESTER' ? 'Semestre' : 'Ann�e'} - {period.schoolYear}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -122,9 +122,9 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Rechercher un élève</label>
+          <label className="block text-sm font-medium mb-1">Rechercher un �l�ve</label>
           <Input
-            placeholder="Nom ou prénom..."
+            placeholder="Nom ou pr�nom..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -141,7 +141,7 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">
-            Élèves avec notes {classId ? 'de la classe' : ''}
+            �l�ves avec notes {classId ? 'de la classe' : ''}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -153,13 +153,13 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
             </div>
           ) : filteredStudents.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">
-              Aucun élève avec des notes pour cette période.
+              Aucun �l�ve avec des notes pour cette p�riode.
             </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Élève</TableHead>
+                  <TableHead>�l�ve</TableHead>
                   <TableHead>Classe</TableHead>
                   <TableHead>Nombre de notes</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -171,7 +171,7 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
                     <TableCell className="font-medium">
                       {student.user.lastName} {student.user.firstName}
                     </TableCell>
-                    <TableCell>{student.class?.name || 'Non assigné'}</TableCell>
+                    <TableCell>{student.class?.name || 'Non assign�'}</TableCell>
                     <TableCell>{student._count.grades}</TableCell>
                     <TableCell className="text-right">
                       <Button
@@ -191,7 +191,7 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
                           onClick={() => navigateToCreateReportCard(student.id)}
                         >
                           <FileSpreadsheet className="h-4 w-4 mr-1" />
-                          Créer bulletin
+                          Cr�er bulletin
                         </Button>
                       )}
                     </TableCell>
@@ -205,3 +205,5 @@ export function StudentsWithGradesList({ classId, periods, userRole = 'STUDENT' 
     </div>
   )
 } 
+
+

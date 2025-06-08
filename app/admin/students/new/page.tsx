@@ -2,8 +2,8 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import StudentForm from '@/app/components/students/StudentForm'
-import LoadingSpinner from '@/app/components/ui/LoadingSpinner'
+import StudentForm from '@/components/students/StudentForm'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 export default function NewStudentPage() {
   const { data: session, status } = useSession()
@@ -14,7 +14,7 @@ export default function NewStudentPage() {
   }
 
   if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'TEACHER')) {
-    return <div>Accès non autorisé</div>
+    return <div>Acc�s non autoris�</div>
   }
 
   return (
@@ -22,7 +22,7 @@ export default function NewStudentPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Ajouter un nouvel élève
+            Ajouter un nouvel �l�ve
           </h1>
         </div>
         
@@ -31,3 +31,5 @@ export default function NewStudentPage() {
     </div>
   )
 } 
+
+

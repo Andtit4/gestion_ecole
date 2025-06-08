@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 
@@ -21,25 +21,26 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'Cet email est déjà utilisé' },
+        { error: 'Un utilisateur avec cet email existe déjà' },
         { status: 400 }
       )
     }
 
     // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password, 12)
 
     // Créer l'utilisateur
     const user = await prisma.user.create({
       data: {
-        email,
-        password: hashedPassword,
         firstName,
         lastName,
+        email,
+        password: hashedPassword,
         role
       }
     })
 
+    // Retourner l'utilisateur sans le mot de passe
     const { password: _, ...userWithoutPassword } = user
 
     return NextResponse.json(
@@ -57,3 +58,5 @@ export async function POST(request: Request) {
     )
   }
 } 
+
+

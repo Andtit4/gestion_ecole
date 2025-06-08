@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 
 export async function GET() {
   // Liste des routes API disponibles
@@ -58,3 +58,5 @@ export async function GET() {
 
   return NextResponse.json(debugInfo)
 } 
+
+

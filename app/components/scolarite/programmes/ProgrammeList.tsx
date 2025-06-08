@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { Button } from '@/app/components/ui/button'
+import { Button } from '@/components/ui/button'
 import { Plus, Edit, Trash2, Eye, AlertCircle } from 'lucide-react'
 import {
   Table,
@@ -11,20 +11,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/app/components/ui/table'
+} from '@/components/ui/table'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/components/ui/select'
-import { Badge } from '@/app/components/ui/badge'
+} from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import ProgrammeForm from './ProgrammeForm'
 import ProgrammeView from './ProgrammeView'
-import { useToast } from '@/app/components/ui/use-toast'
-import DeleteConfirmDialog from '@/app/components/ui/DeleteConfirmDialog'
-import TableEmpty from '@/app/components/ui/TableEmpty'
+import { useToast } from '@/components/ui/use-toast'
+import DeleteConfirmDialog from '@/components/ui/DeleteConfirmDialog'
+import TableEmpty from '@/components/ui/TableEmpty'
 
 export default function ProgrammeList() {
   const { data: session } = useSession()
@@ -42,7 +42,7 @@ export default function ProgrammeList() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [programmeToDelete, setProgrammeToDelete] = useState(null)
 
-  const levels = ['6ème', '5ème', '4ème', '3ème', 'Seconde', 'Première', 'Terminale']
+  const levels = ['6�me', '5�me', '4�me', '3�me', 'Seconde', 'Premi�re', 'Terminale']
 
   useEffect(() => {
     fetchProgrammes()
@@ -70,12 +70,12 @@ export default function ProgrammeList() {
     try {
       const response = await fetch('/api/courses')
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement des matières')
+        throw new Error('Erreur lors du chargement des mati�res')
       }
       const data = await response.json()
       setCourses(data)
     } catch (err) {
-      console.error('Erreur lors du chargement des matières:', err)
+      console.error('Erreur lors du chargement des mati�res:', err)
     }
   }
 
@@ -113,8 +113,8 @@ export default function ProgrammeList() {
 
       setProgrammes(programmes.filter((p) => p.id !== programmeToDelete.id))
       toast({
-        title: 'Programme supprimé',
-        description: 'Le programme a été supprimé avec succès',
+        title: 'Programme supprim�',
+        description: 'Le programme a �t� supprim� avec succ�s',
       })
     } catch (err) {
       toast({
@@ -130,7 +130,7 @@ export default function ProgrammeList() {
 
   const handleFormSubmit = (newProgramme) => {
     if (editingProgramme) {
-      // Mise à jour d'un programme existant
+      // Mise � jour d'un programme existant
       setProgrammes(
         programmes.map((p) => (p.id === newProgramme.id ? newProgramme : p))
       )
@@ -152,15 +152,15 @@ export default function ProgrammeList() {
       case 'DRAFT':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Brouillon</Badge>
       case 'PUBLISHED':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Publié</Badge>
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Publi�</Badge>
       case 'ARCHIVED':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Archivé</Badge>
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Archiv�</Badge>
       default:
         return <Badge variant="outline">Inconnu</Badge>
     }
   }
 
-  // Vérifier si l'utilisateur a le droit de modifier les programmes
+  // V�rifier si l'utilisateur a le droit de modifier les programmes
   const canEditProgrammes = session?.user?.role === 'ADMIN' || session?.user?.role === 'TEACHER'
 
   if (isLoading) {
@@ -174,7 +174,7 @@ export default function ProgrammeList() {
           <AlertCircle className="mr-2" />
           <span>{error}</span>
         </div>
-        <Button onClick={fetchProgrammes}>Réessayer</Button>
+        <Button onClick={fetchProgrammes}>R�essayer</Button>
       </div>
     )
   }
@@ -186,10 +186,10 @@ export default function ProgrammeList() {
           <div className="w-full sm:w-48">
             <Select value={selectedCourse} onValueChange={setSelectedCourse}>
               <SelectTrigger>
-                <SelectValue placeholder="Filtrer par matière" />
+                <SelectValue placeholder="Filtrer par mati�re" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes les matières</SelectItem>
+                <SelectItem value="all">Toutes les mati�res</SelectItem>
                 {courses.map((course) => (
                   <SelectItem key={course.id} value={course.id}>
                     {course.name}
@@ -223,24 +223,24 @@ export default function ProgrammeList() {
 
       {programmes.length === 0 ? (
         <TableEmpty 
-          message="Aucun programme n'a été créé" 
+          message="Aucun programme n'a �t� cr��" 
           icon={canEditProgrammes && (
             <Button onClick={handleAdd} variant="outline" className="mt-4">
-              <Plus className="mr-2 h-4 w-4" /> Créer un programme
+              <Plus className="mr-2 h-4 w-4" /> Cr�er un programme
             </Button>
           )}
         />
       ) : filteredProgrammes.length === 0 ? (
-        <TableEmpty message="Aucun programme ne correspond aux critères de filtrage" />
+        <TableEmpty message="Aucun programme ne correspond aux crit�res de filtrage" />
       ) : (
         <div className="border rounded-md overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Titre</TableHead>
-                <TableHead>Matière</TableHead>
+                <TableHead>Mati�re</TableHead>
                 <TableHead>Niveau</TableHead>
-                <TableHead>Année</TableHead>
+                <TableHead>Ann�e</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -302,8 +302,10 @@ export default function ProgrammeList() {
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={confirmDelete}
         title="Supprimer le programme"
-        description="Êtes-vous sûr de vouloir supprimer ce programme? Cette action est irréversible."
+        description="�tes-vous s�r de vouloir supprimer ce programme? Cette action est irr�versible."
       />
     </div>
   )
 } 
+
+
