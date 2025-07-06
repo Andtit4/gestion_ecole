@@ -1,0 +1,48 @@
+﻿import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { TenantModule } from './modules/tenant/tenant.module';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { StudentModule } from './modules/student/student.module';
+import { AcademicModule } from './modules/academic/academic.module';
+import { UsersModule } from './modules/users/users.module';
+import { SuperAdminModule } from './modules/super-admin/super-admin.module';
+import { TeachersModule } from './modules/teachers/teachers.module';
+import { EvaluationModule } from './modules/evaluation/evaluation.module';
+import databaseConfig from './config/database.config';
+import appConfig from './config/app.config';
+
+@Module({
+  imports: [
+    // Configuration globale
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [databaseConfig, appConfig],
+      envFilePath: '.env',
+    }),
+    
+    // Configuration MongoDB
+    MongooseModule.forRootAsync({
+      useFactory: () => ({
+        uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/gestion_ecole',
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }),
+    }),
+    
+    // Modules de l'application
+    TenantModule,
+    SubscriptionModule,
+    StudentModule,
+    AcademicModule,
+    UsersModule,
+    SuperAdminModule,
+    TeachersModule,
+    EvaluationModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
