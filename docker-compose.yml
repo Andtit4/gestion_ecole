@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  vue-dev:
+    build: .
+    volumes:
+      - .:/src
+    ports:
+      - "8083:8083"
+    command: npm run dev
+
+  api-gestion:
+    build: .
+    volumes:
+      - .:/backend
+    ports:
+        - "8084:8084"
+    command: npm run start:dev
+
