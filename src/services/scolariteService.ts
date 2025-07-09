@@ -82,14 +82,99 @@ export interface FiltersOptions {
   search?: string
 }
 
+// Cache pour stocker les domaines des tenants
+const tenantDomainCache = new Map<string, string>()
+
+// Helper pour récupérer le domaine du tenant à partir de l'ID
+const getTenantDomain = async (tenantId: string): Promise<string> => {
+  // Vérifier le cache d'abord
+  if (tenantDomainCache.has(tenantId)) {
+    return tenantDomainCache.get(tenantId)!
+  }
+
+  try {
+    // Récupérer les informations du tenant
+    const response = await fetch(`http://localhost:3000/api/v1/tenants/${tenantId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`Erreur lors de la récupération du tenant: ${response.status}`)
+    }
+
+    const tenant = await response.json()
+    const domain = tenant.domain
+
+    // Mettre en cache pour les futures utilisations
+    tenantDomainCache.set(tenantId, domain)
+    
+    return domain
+  } catch (error) {
+    console.error('Erreur lors de la récupération du domaine du tenant:', error)
+    throw new Error('Impossible de récupérer le domaine du tenant')
+  }
+}
+
+// Helper pour créer les headers avec tenant domain
+const createTenantHeaders = async (tenantId: string) => {
+  const tenantDomain = await getTenantDomain(tenantId)
+  return {
+    'Content-Type': 'application/json',
+    'X-Tenant-Domain': tenantDomain, // Utiliser le domaine au lieu de l'ID
+  }
+}
+
+// Helper pour les requêtes avec tenant
+const makeRequest = async (method: string, url: string, tenantId: string, data?: any) => {
+  const headers = await createTenantHeaders(tenantId)
+  
+  const config: RequestInit = {
+    method,
+    headers,
+  }
+  
+  if (data) {
+    config.body = JSON.stringify(data)
+  }
+  
+  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'}${url}`, config)
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+    
+    try {
+      const errorData = JSON.parse(errorText)
+      if (errorData.message) {
+        errorMessage = errorData.message
+      }
+    } catch (e) {
+      if (errorText) {
+        errorMessage = errorText
+      }
+    }
+    
+    throw new Error(errorMessage)
+  }
+  
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json()
+  }
+  
+  return null
+}
+
 class ScolariteService {
-  private baseUrl = '/api/scolarite'
+  private baseUrl = '/scolarite'
 
   // Dossiers scolaires
-  async createDossier(dossier: CreateDossierScolaire): Promise<DossierScolaire> {
+  async createDossier(dossier: CreateDossierScolaire, tenantId: string): Promise<DossierScolaire> {
     try {
-      const response = await api.post(`${this.baseUrl}/dossiers`, dossier)
-      return response.data
+      const response = await makeRequest('POST', `${this.baseUrl}/dossiers`, tenantId, dossier)
+      return response
     } catch (error) {
       console.error('Erreur lors de la création du dossier:', error)
       throw error
@@ -97,6 +182,7 @@ class ScolariteService {
   }
 
   async getDossiers(
+    tenantId: string,
     page: number = 1,
     limit: number = 20,
     filters: FiltersOptions = {}
@@ -110,81 +196,71 @@ class ScolariteService {
         )
       })
 
-      const response = await api.get(`${this.baseUrl}/dossiers?${params}`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/dossiers?${params}`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération des dossiers:', error)
       throw error
     }
   }
 
-  async getDossier(id: string): Promise<DossierScolaire> {
+  async getDossier(id: string, tenantId: string): Promise<DossierScolaire> {
     try {
-      const response = await api.get(`${this.baseUrl}/dossiers/${id}`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/dossiers/${id}`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération du dossier:', error)
       throw error
     }
   }
 
-  async getDossierByMatricule(matricule: string): Promise<DossierScolaire> {
+  async getDossierByMatricule(matricule: string, tenantId: string): Promise<DossierScolaire> {
     try {
-      const response = await api.get(`${this.baseUrl}/dossiers/matricule/${matricule}`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/dossiers/matricule/${matricule}`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération du dossier par matricule:', error)
       throw error
     }
   }
 
-  async updateDossier(id: string, updates: Partial<CreateDossierScolaire>): Promise<DossierScolaire> {
+  async updateDossier(id: string, updates: Partial<CreateDossierScolaire>, tenantId: string): Promise<DossierScolaire> {
     try {
-      const response = await api.patch(`${this.baseUrl}/dossiers/${id}`, updates)
-      return response.data
+      const response = await makeRequest('PATCH', `${this.baseUrl}/dossiers/${id}`, tenantId, updates)
+      return response
     } catch (error) {
       console.error('Erreur lors de la mise à jour du dossier:', error)
       throw error
     }
   }
 
-  async deleteDossier(id: string): Promise<{ message: string }> {
+  // Frais scolaires
+  async addFrais(dossierId: string, frais: FraisScolaire, tenantId: string): Promise<DossierScolaire> {
     try {
-      const response = await api.delete(`${this.baseUrl}/dossiers/${id}`)
-      return response.data
-    } catch (error) {
-      console.error('Erreur lors de la suppression du dossier:', error)
-      throw error
-    }
-  }
-
-  // Gestion des frais
-  async addFrais(dossierId: string, frais: FraisScolaire): Promise<DossierScolaire> {
-    try {
-      const response = await api.post(`${this.baseUrl}/dossiers/${dossierId}/frais`, frais)
-      return response.data
+      const response = await makeRequest('POST', `${this.baseUrl}/dossiers/${dossierId}/frais`, tenantId, frais)
+      return response
     } catch (error) {
       console.error('Erreur lors de l\'ajout des frais:', error)
       throw error
     }
   }
 
-  // Gestion des paiements
-  async addPaiement(dossierId: string, paiement: Paiement): Promise<DossierScolaire> {
+  // Paiements
+  async addPaiement(dossierId: string, paiement: Paiement, tenantId: string): Promise<DossierScolaire> {
     try {
-      const response = await api.post(`${this.baseUrl}/dossiers/${dossierId}/paiements`, paiement)
-      return response.data
+      const response = await makeRequest('POST', `${this.baseUrl}/dossiers/${dossierId}/paiements`, tenantId, paiement)
+      return response
     } catch (error) {
       console.error('Erreur lors de l\'ajout du paiement:', error)
       throw error
     }
   }
 
-  // Gestion des documents
-  async addDocument(dossierId: string, document: DocumentScolaire): Promise<DossierScolaire> {
+  // Documents
+  async addDocument(dossierId: string, document: DocumentScolaire, tenantId: string): Promise<DossierScolaire> {
     try {
-      const response = await api.post(`${this.baseUrl}/dossiers/${dossierId}/documents`, document)
-      return response.data
+      const response = await makeRequest('POST', `${this.baseUrl}/dossiers/${dossierId}/documents`, tenantId, document)
+      return response
     } catch (error) {
       console.error('Erreur lors de l\'ajout du document:', error)
       throw error
@@ -192,11 +268,11 @@ class ScolariteService {
   }
 
   // Statistiques
-  async getStatistics(anneeScolaire?: string): Promise<ScolariteStatistics> {
+  async getStatistics(tenantId: string, anneeScolaire?: string): Promise<ScolariteStatistics> {
     try {
       const params = anneeScolaire ? `?anneeScolaire=${anneeScolaire}` : ''
-      const response = await api.get(`${this.baseUrl}/statistics${params}`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/statistics${params}`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération des statistiques:', error)
       throw error
@@ -205,6 +281,7 @@ class ScolariteService {
 
   // Rapports
   async getFinancialReport(
+    tenantId: string,
     anneeScolaire: string,
     startDate?: string,
     endDate?: string
@@ -213,50 +290,50 @@ class ScolariteService {
       const params = new URLSearchParams({ anneeScolaire })
       if (startDate) params.append('startDate', startDate)
       if (endDate) params.append('endDate', endDate)
-
-      const response = await api.get(`${this.baseUrl}/reports/financial?${params}`)
-      return response.data
+      
+      const response = await makeRequest('GET', `${this.baseUrl}/reports/financial?${params}`, tenantId)
+      return response
     } catch (error) {
-      console.error('Erreur lors de la génération du rapport financier:', error)
+      console.error('Erreur lors de la génération du rapport:', error)
       throw error
     }
   }
 
   // Données utilitaires
-  async getAvailableClasses(): Promise<{ classes: string[] }> {
+  async getAvailableClasses(tenantId: string): Promise<{ classes: string[] }> {
     try {
-      const response = await api.get(`${this.baseUrl}/classes`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/utils/classes`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération des classes:', error)
       throw error
     }
   }
 
-  async getFraisTypes(): Promise<{ types: string[] }> {
+  async getFraisTypes(tenantId: string): Promise<{ types: string[] }> {
     try {
-      const response = await api.get(`${this.baseUrl}/frais-types`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/utils/frais-types`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération des types de frais:', error)
       throw error
     }
   }
 
-  async getMethodesPaiement(): Promise<{ methodes: string[] }> {
+  async getMethodesPaiement(tenantId: string): Promise<{ methodes: string[] }> {
     try {
-      const response = await api.get(`${this.baseUrl}/methodes-paiement`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/utils/methodes-paiement`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération des méthodes de paiement:', error)
       throw error
     }
   }
 
-  async getAnneesScolaires(): Promise<{ annees: string[] }> {
+  async getAnneesScolaires(tenantId: string): Promise<{ annees: string[] }> {
     try {
-      const response = await api.get(`${this.baseUrl}/annees-scolaires`)
-      return response.data
+      const response = await makeRequest('GET', `${this.baseUrl}/utils/annees-scolaires`, tenantId)
+      return response
     } catch (error) {
       console.error('Erreur lors de la récupération des années scolaires:', error)
       throw error
@@ -264,4 +341,5 @@ class ScolariteService {
   }
 }
 
-export default new ScolariteService() 
+export const scolariteService = new ScolariteService()
+export default scolariteService 

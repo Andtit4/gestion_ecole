@@ -130,7 +130,7 @@ const router = createRouter({
     {
       path: '/school/:tenantId/scolarite',
       name: 'SchoolScolariteManagement',
-      component: () => import('../views/Scolarite/ScolariteManagement.vue'),
+      component: () => import('../views/School/ScolariteManagement.vue'),
       meta: {
         title: 'Gestion de la Scolarité - Établissement',
         requiresAuth: true,
