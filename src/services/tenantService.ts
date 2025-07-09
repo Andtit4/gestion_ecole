@@ -1,166 +1,200 @@
 import { get, post, patch, del } from './api'
-import type { 
-  Tenant, 
-  CreateTenantDto,
-  CreateTenantResponse,
-  AdminLoginDto,
-  AdminLoginResponse,
-  TenantStatus, 
-  SubscriptionPlan 
-} from '../types/tenant'
+import type { Tenant, SubscriptionPlan } from '../types/tenant'
 
 export interface TenantListResponse {
   tenants: Tenant[]
   total: number
-  pages: number
+  page: number
+  limit: number
 }
 
-export interface TenantFilters {
-  page?: number
-  limit?: number
-  status?: TenantStatus
-  plan?: SubscriptionPlan
+export interface GlobalStats {
+  totalTenants: number
+  activeSubscriptions: number
+  expiringSoon: number
+  monthlyRevenue: number
 }
 
-class TenantService {
+export interface PlanChangeRequest {
+  plan: SubscriptionPlan
+  duration?: number
+}
+
+export interface SubscriptionExtensionRequest {
+  months: number
+}
+
+class TenantAdminService {
   
-  // Créer un nouveau tenant avec admin
-  async createTenant(tenantData: CreateTenantDto): Promise<CreateTenantResponse> {
-    const response = await post<CreateTenantResponse>('/tenants', tenantData)
-    return response.data
-  }
-
-  // Authentification admin
-  async loginAdmin(loginData: AdminLoginDto): Promise<AdminLoginResponse> {
-    const response = await post<AdminLoginResponse>('/tenants/auth/login', loginData)
-    return response.data
-  }
-
-  // Réinitialiser le mot de passe admin
-  async resetAdminPassword(tenantId: string): Promise<{ username: string, password: string }> {
-    const response = await post<{ username: string, password: string }>(`/tenants/${tenantId}/reset-admin-password`)
-    return response.data
-  }
-
-  // Obtenir tous les tenants avec filtres
-  async getTenants(filters: TenantFilters = {}): Promise<TenantListResponse> {
-    const params = new URLSearchParams()
+  // Récupérer tous les établissements avec pagination et filtres
+  async getAllTenants(
+    page: number = 1,
+    limit: number = 10,
+    filters?: {
+      status?: string
+      plan?: string
+      search?: string
+    }
+  ): Promise<TenantListResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(filters?.status && { status: filters.status }),
+      ...(filters?.plan && { plan: filters.plan }),
+      ...(filters?.search && { search: filters.search })
+    })
     
-    if (filters.page) params.append('page', filters.page.toString())
-    if (filters.limit) params.append('limit', filters.limit.toString())
-    if (filters.status) params.append('status', filters.status)
-    if (filters.plan) params.append('plan', filters.plan)
-
-    const response = await get<TenantListResponse>(`/tenants?${params.toString()}`)
+    const response = await get<TenantListResponse>(`/tenants?${params}`)
     return response.data
   }
 
-  // Obtenir un tenant par ID
-  async getTenant(id: string): Promise<Tenant> {
-    const response = await get<Tenant>(`/tenants/${id}`)
+  // Récupérer les statistiques globales pour le super admin
+  async getGlobalStats(): Promise<GlobalStats> {
+    const response = await get<GlobalStats>('/tenants/stats/global')
     return response.data
   }
 
-  // Obtenir un tenant par domaine
-  async getTenantByDomain(domain: string): Promise<Tenant> {
-    const response = await get<Tenant>(`/tenants/domain/${domain}`)
-    return response.data
-  }
-
-  // Mettre à jour un tenant
-  async updateTenant(id: string, updateData: Partial<{
-    name?: string;
-    domain?: string;
-    email?: string;
-    phone?: string;
-    address?: {
-      street: string;
-      city: string;
-      postalCode: string;
-      country: string;
-    };
-    settings?: {
-      schoolType?: 'primary' | 'secondary' | 'university' | 'mixed';
-      academicYearStart?: string;
-      academicYearEnd?: string;
-      gradeSystem?: 'numeric' | 'letter' | 'points';
-      maxGrade?: number;
-      language?: string;
-      timezone?: string;
-      currency?: string;
-      logoUrl?: string;
-      theme?: {
-        primaryColor: string;
-        secondaryColor: string;
-      };
-    };
-    status?: TenantStatus;
-    subscription?: any;
-  }>): Promise<Tenant> {
-    const response = await patch<Tenant>(`/tenants/${id}`, updateData)
-    return response.data
-  }
-
-  // Activer un tenant
-  async activateTenant(id: string): Promise<Tenant> {
-    const response = await patch<Tenant>(`/tenants/${id}/activate`)
-    return response.data
-  }
-
-  // Suspendre un tenant
-  async suspendTenant(id: string): Promise<Tenant> {
-    const response = await patch<Tenant>(`/tenants/${id}/suspend`)
-    return response.data
-  }
-
-  // Annuler un tenant
-  async cancelTenant(id: string): Promise<Tenant> {
-    const response = await patch<Tenant>(`/tenants/${id}/cancel`)
-    return response.data
-  }
-
-  // Supprimer un tenant
-  async deleteTenant(id: string): Promise<void> {
-    await del(`/tenants/${id}`)
-  }
-
-  // Obtenir les tenants avec abonnement expirant
+  // Récupérer les abonnements qui expirent bientôt
   async getExpiringSubscriptions(): Promise<Tenant[]> {
     const response = await get<Tenant[]>('/tenants/expiring-subscriptions')
     return response.data
   }
 
-  // Obtenir les limites d'abonnement
-  async getSubscriptionLimits(id: string): Promise<any> {
-    const response = await get(`/tenants/${id}/limits`)
+  // Changer le plan d'un établissement
+  async changeTenantPlan(tenantId: string, planRequest: PlanChangeRequest): Promise<Tenant> {
+    const response = await patch<Tenant>(`/subscriptions/${tenantId}/upgrade`, planRequest)
     return response.data
   }
 
-  // Vérifier la disponibilité d'un domaine
-  async checkDomainAvailability(domain: string): Promise<boolean> {
-    try {
-      await this.getTenantByDomain(domain)
-      return false // Domaine déjà pris
-    } catch (error) {
-      return true // Domaine disponible
+  // Prolonger l'abonnement d'un établissement
+  async extendSubscription(tenantId: string, extension: SubscriptionExtensionRequest): Promise<Tenant> {
+    const response = await patch<Tenant>(`/subscriptions/${tenantId}/extend`, extension)
+    return response.data
+  }
+
+  // Suspendre un établissement
+  async suspendTenant(tenantId: string): Promise<Tenant> {
+    const response = await patch<Tenant>(`/tenants/${tenantId}/suspend`)
+    return response.data
+  }
+
+  // Activer un établissement
+  async activateTenant(tenantId: string): Promise<Tenant> {
+    const response = await patch<Tenant>(`/tenants/${tenantId}/activate`)
+    return response.data
+  }
+
+  // Supprimer un établissement
+  async deleteTenant(tenantId: string): Promise<void> {
+    await del(`/tenants/${tenantId}`)
+  }
+
+  // Récupérer les limites d'abonnement d'un établissement
+  async getTenantLimits(tenantId: string): Promise<{
+    maxStudents: number
+    maxTeachers: number
+    currentStudents: number
+    currentTeachers: number
+    usagePercentage: {
+      students: number
+      teachers: number
+    }
+  }> {
+    const response = await get(`/tenants/${tenantId}/limits`)
+    return response.data
+  }
+
+  // Réinitialiser le mot de passe admin d'un établissement
+  async resetTenantAdminPassword(tenantId: string): Promise<{
+    newPassword: string
+    message: string
+  }> {
+    const response = await post(`/tenants/${tenantId}/reset-admin-password`)
+    return response.data
+  }
+
+  // Récupérer les statistiques détaillées d'un établissement
+  async getTenantStats(tenantId: string): Promise<{
+    studentsCount: number
+    teachersCount: number
+    classesCount: number
+    subjectsCount: number
+    evaluationsCount: number
+    lastActivity: string
+  }> {
+    const response = await get(`/tenants/${tenantId}/stats`)
+    return response.data
+  }
+
+  // Créer un rapport global des abonnements
+  async generateSubscriptionReport(format: 'pdf' | 'csv' | 'excel' = 'pdf'): Promise<{
+    downloadUrl: string
+    filename: string
+  }> {
+    const response = await get(`/tenants/reports/subscriptions?format=${format}`)
+    return response.data
+  }
+
+  // Créer un rapport d'utilisation
+  async generateUsageReport(
+    startDate: string,
+    endDate: string,
+    format: 'pdf' | 'csv' | 'excel' = 'pdf'
+  ): Promise<{
+    downloadUrl: string
+    filename: string
+  }> {
+    const response = await get(`/tenants/reports/usage?startDate=${startDate}&endDate=${endDate}&format=${format}`)
+    return response.data
+  }
+
+  // Rechercher des établissements
+  async searchTenants(query: string): Promise<Tenant[]> {
+    const response = await get<Tenant[]>(`/tenants/search?q=${encodeURIComponent(query)}`)
+    return response.data
+  }
+
+  // Obtenir l'historique des modifications d'un établissement
+  async getTenantHistory(tenantId: string): Promise<{
+    id: string
+    action: string
+    details: any
+    timestamp: string
+    performedBy: string
+  }[]> {
+    const response = await get(`/tenants/${tenantId}/history`)
+    return response.data
+  }
+
+  // Envoyer une notification à un établissement
+  async sendTenantNotification(tenantId: string, notification: {
+    title: string
+    message: string
+    type: 'info' | 'warning' | 'success' | 'error'
+    urgent?: boolean
+  }): Promise<void> {
+    await post(`/tenants/${tenantId}/notifications`, notification)
+  }
+
+  // Obtenir les métriques de revenus
+  async getRevenueMetrics(period: 'month' | 'quarter' | 'year' = 'month'): Promise<{
+    totalRevenue: number
+    recurringRevenue: number
+    newSubscriptions: number
+    churnRate: number
+    averageRevenuePerUser: number
+    growth: number
+    breakdown: {
+      plan: string
+      revenue: number
+      subscribers: number
+    }[]
+  }> {
+    const response = await get(`/tenants/metrics/revenue?period=${period}`)
+    return response.data
     }
   }
 
-  // Vérifier la disponibilité d'un email
-  async checkEmailAvailability(email: string): Promise<boolean> {
-    try {
-      const tenants = await this.getTenants({ limit: 1 })
-      const existingTenant = tenants.tenants.find(t => 
-        t.email.toLowerCase() === email.toLowerCase() || 
-        t.admin.email.toLowerCase() === email.toLowerCase()
-      )
-      return !existingTenant
-    } catch (error) {
-      return true
-    }
-  }
-
-}
-
-export const tenantService = new TenantService()
-export default tenantService 
+// Export singleton instance
+export const tenantAdminService = new TenantAdminService()
+export default tenantAdminService 

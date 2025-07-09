@@ -173,17 +173,18 @@
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Élèves</span>
                   <span class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ tenant?.currentStudents }}/{{ tenant?.maxStudents }}
+                    {{ realStats?.currentStudents ?? tenant?.currentStudents ?? 0 }}/{{ realStats?.maxStudents ?? tenant?.maxStudents ?? 500 }}
                   </span>
                 </div>
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                   <div 
                     class="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-300" 
-                    :style="{ width: `${getUsagePercentage(tenant?.currentStudents, tenant?.maxStudents)}%` }"
+                    :style="{ width: `${getUsagePercentage(realStats?.currentStudents ?? tenant?.currentStudents, realStats?.maxStudents ?? tenant?.maxStudents)}%` }"
                   ></div>
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {{ getUsagePercentage(tenant?.currentStudents, tenant?.maxStudents) }}% utilisé
+                  {{ getUsagePercentage(realStats?.currentStudents ?? tenant?.currentStudents, realStats?.maxStudents ?? tenant?.maxStudents) }}% utilisé
+                  <span v-if="loadingStats" class="ml-2">⟳</span>
                 </p>
               </div>
 
@@ -192,17 +193,18 @@
                 <div class="flex justify-between items-center mb-2">
                   <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Professeurs</span>
                   <span class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ tenant?.currentTeachers }}/{{ tenant?.maxTeachers }}
+                    {{ realStats?.currentTeachers ?? tenant?.currentTeachers ?? 0 }}/{{ realStats?.maxTeachers ?? tenant?.maxTeachers ?? 20 }}
                   </span>
                 </div>
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                   <div 
                     class="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-300" 
-                    :style="{ width: `${getUsagePercentage(tenant?.currentTeachers, tenant?.maxTeachers)}%` }"
+                    :style="{ width: `${getUsagePercentage(realStats?.currentTeachers ?? tenant?.currentTeachers, realStats?.maxTeachers ?? tenant?.maxTeachers)}%` }"
                   ></div>
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {{ getUsagePercentage(tenant?.currentTeachers, tenant?.maxTeachers) }}% utilisé
+                  {{ getUsagePercentage(realStats?.currentTeachers ?? tenant?.currentTeachers, realStats?.maxTeachers ?? tenant?.maxTeachers) }}% utilisé
+                  <span v-if="loadingStats" class="ml-2">⟳</span>
                 </p>
               </div>
             </div>
@@ -333,6 +335,8 @@ const route = useRoute()
 // État local
 const loading = ref(false)
 const tenant = ref<TenantListItem | null>(null)
+const realStats = ref<any>(null)
+const loadingStats = ref(false)
 
 // Modal de confirmation
 const confirmModal = ref({
@@ -348,46 +352,56 @@ const confirmModal = ref({
 const tenantMetrics = computed(() => {
   if (!tenant.value) return []
   
+  // Utiliser les vraies données si disponibles, sinon fallback sur les données du tenant
+  const currentStudents = realStats.value?.currentStudents ?? tenant.value.currentStudents ?? 0
+  const currentTeachers = realStats.value?.currentTeachers ?? tenant.value.currentTeachers ?? 0
+  const maxStudents = realStats.value?.maxStudents ?? tenant.value.maxStudents ?? 500
+  const maxTeachers = realStats.value?.maxTeachers ?? tenant.value.maxTeachers ?? 20
+  const usagePercent = maxStudents > 0 ? Math.round((currentStudents / maxStudents) * 100) : 0
+  const daysLeft = realStats.value?.daysUntilExpiry ?? getDaysUntilExpiry(tenant.value.endDate) ?? 365
+  
   return [
     {
       label: 'Élèves Inscrits',
-      value: tenant.value.currentStudents,
-      subtitle: `/ ${tenant.value.maxStudents} max`,
+      value: currentStudents,
+      subtitle: `/ ${maxStudents} max`,
       icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z',
       iconBg: 'bg-gradient-to-r from-blue-500 to-blue-600',
       iconColor: 'text-white',
-      change: '+12',
-      badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+      change: currentStudents > 0 ? `+${currentStudents}` : '0',
+      badgeColor: usagePercent > 80 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
     },
     {
       label: 'Professeurs',
-      value: tenant.value.currentTeachers,
-      subtitle: `/ ${tenant.value.maxTeachers} max`,
+      value: currentTeachers,
+      subtitle: `/ ${maxTeachers} max`,
       icon: 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z',
       iconBg: 'bg-gradient-to-r from-green-500 to-green-600',
       iconColor: 'text-white',
-      change: '+3',
+      change: currentTeachers > 0 ? `+${currentTeachers}` : '0',
       badgeColor: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
     },
     {
       label: 'Utilisation',
-      value: `${getUsagePercentage(tenant.value.currentStudents, tenant.value.maxStudents)}%`,
+      value: `${usagePercent}%`,
       subtitle: 'des limites',
       icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
       iconBg: 'bg-gradient-to-r from-yellow-500 to-orange-500',
       iconColor: 'text-white',
-      change: '85%',
-      badgeColor: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+      change: `${usagePercent}%`,
+      badgeColor: usagePercent > 80 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 
+                  usagePercent > 60 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
     },
     {
       label: 'Jours Restants',
-      value: getDaysUntilExpiry(tenant.value.endDate),
+      value: daysLeft,
       subtitle: "d'abonnement",
       icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
       iconBg: 'bg-gradient-to-r from-purple-500 to-pink-500',
       iconColor: 'text-white',
-      change: '30j',
-      badgeColor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+      change: daysLeft < 30 ? `${daysLeft}j` : `${Math.floor(daysLeft/30)}m`,
+      badgeColor: daysLeft < 30 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
     }
   ]
 })
@@ -572,6 +586,9 @@ async function refreshData() {
     
     console.log('Loaded tenant data:', tenantData)
     tenant.value = tenantData
+
+    // Charger les vraies statistiques en parallèle
+    await loadRealStats(tenantId)
   } catch (error) {
     console.error('Erreur lors du chargement des détails du tenant:', error)
     
@@ -584,6 +601,8 @@ async function refreshData() {
       if (foundTenant) {
         console.log('Found tenant in list:', foundTenant)
         tenant.value = foundTenant
+        // Essayer de charger les stats même en mode fallback
+        await loadRealStats(tenantId)
       } else {
         console.error('Tenant not found with ID:', tenantId)
         alert('Établissement non trouvé')
@@ -595,6 +614,43 @@ async function refreshData() {
     }
   } finally {
     loading.value = false
+  }
+}
+
+async function loadRealStats(tenantId: string) {
+  if (!tenantId) return
+
+  loadingStats.value = true
+  try {
+    console.log('🔍 Chargement des statistiques réelles pour tenant:', tenantId)
+    
+    // Importer le service tenant pour les vraies données
+    const { fetchCompleteTenantStats } = await import('@/services/tenantService')
+    const stats = await fetchCompleteTenantStats(tenantId)
+    
+    console.log('✅ Statistiques réelles chargées:', stats)
+    realStats.value = stats
+  } catch (error) {
+    console.error('❌ Erreur lors du chargement des statistiques réelles:', error)
+    
+    // En cas d'erreur, essayer de charger les données partielles
+    try {
+      const { fetchRealTenantStats } = await import('@/services/tenantService')
+      const partialStats = await fetchRealTenantStats(tenantId)
+      
+      console.log('⚡ Statistiques partielles chargées:', partialStats)
+      realStats.value = {
+        ...partialStats,
+        maxStudents: 500, // valeurs par défaut
+        maxTeachers: 20,
+        daysUntilExpiry: 365
+      }
+    } catch (partialError) {
+      console.warn('⚠️ Impossible de charger les statistiques:', partialError)
+      // Garder les valeurs par défaut du tenant
+    }
+  } finally {
+    loadingStats.value = false
   }
 }
 

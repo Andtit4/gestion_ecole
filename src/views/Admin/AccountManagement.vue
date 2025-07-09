@@ -6,6 +6,17 @@
         <div class="flex justify-between items-center h-20">
           <!-- Navigation breadcrumb -->
           <div class="flex items-center space-x-4">
+            <!-- Bouton retour -->
+            <button
+              @click="goBackToDashboard"
+              class="flex items-center p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group"
+              title="Retour au dashboard"
+            >
+              <svg class="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            
             <div>
               <h1 class="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                 Gestion des Établissements
@@ -547,6 +558,10 @@ function clearFilters() {
   searchQuery.value = ''
   selectedStatus.value = ''
   selectedPlan.value = ''
+}
+
+function goBackToDashboard() {
+  router.push('/school/dashboard')
 }
 
 function viewTenant(tenant: TenantListItem) {

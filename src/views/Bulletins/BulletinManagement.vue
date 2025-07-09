@@ -13,7 +13,7 @@
             >
               <svg class="w-6 h-6 text-gray-600 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
+          </svg>
             </button>
             <div class="relative">
               <div class="h-12 w-12 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg transform group-hover:scale-105 transition-transform duration-200">
@@ -21,16 +21,16 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
                 <div class="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>
-              </div>
+        </div>
             </div>
-            <div>
+          <div>
               <h1 class="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
                 Bulletins de Notes
               </h1>
               <p class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">{{ tenantName ? `${tenantName} - ` : '' }}Consultation et génération des bulletins</p>
-            </div>
           </div>
         </div>
+      </div>
       </div>
     </header>
 
@@ -46,7 +46,7 @@
           </svg>
           <p class="text-white font-medium">{{ error }}</p>
         </div>
-      </div>
+          </div>
 
       <!-- Métriques des bulletins -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -58,20 +58,20 @@
               <div class="p-3 rounded-2xl shadow-lg transform group-hover:scale-110 transition-transform duration-200 bg-gradient-to-r from-blue-500 to-blue-600">
                 <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-6.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
-                </svg>
+            </svg>
               </div>
               <span class="flex items-center gap-1 rounded-full bg-blue-100 py-0.5 pl-2 pr-2.5 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                 <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                 Étudiants
-              </span>
-            </div>
+          </span>
+        </div>
             <div class="space-y-2">
               <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Étudiants</p>
               <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats.totalStudents || 0 }}</p>
               <p class="text-xs text-gray-500 dark:text-gray-400">Inscrits cette année</p>
-            </div>
-          </div>
+      </div>
         </div>
+          </div>
 
         <!-- Classes -->
         <div class="group relative overflow-hidden rounded-3xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-white/20 dark:border-gray-700/30">
@@ -81,20 +81,20 @@
               <div class="p-3 rounded-2xl shadow-lg transform group-hover:scale-110 transition-transform duration-200 bg-gradient-to-r from-purple-500 to-purple-600">
                 <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
+            </svg>
               </div>
               <span class="flex items-center gap-1 rounded-full bg-purple-100 py-0.5 pl-2 pr-2.5 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                 <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
                 Classes
-              </span>
+          </span>
             </div>
             <div class="space-y-2">
               <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Classes</p>
               <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats.totalClasses || 0 }}</p>
               <p class="text-xs text-gray-500 dark:text-gray-400">Créées dans l'établissement</p>
             </div>
-          </div>
         </div>
+      </div>
 
         <!-- Bulletins générés -->
         <div class="group relative overflow-hidden rounded-3xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-white/20 dark:border-gray-700/30">
@@ -104,13 +104,13 @@
               <div class="p-3 rounded-2xl shadow-lg transform group-hover:scale-110 transition-transform duration-200 bg-gradient-to-r from-emerald-500 to-emerald-600">
                 <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-              </div>
+          </svg>
+        </div>
               <span class="flex items-center gap-1 rounded-full bg-emerald-100 py-0.5 pl-2 pr-2.5 text-sm font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                 <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
                 Bulletins
               </span>
-            </div>
+          </div>
             <div class="space-y-2">
               <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Bulletins générés</p>
               <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats.generatedBulletins || 0 }}</p>
@@ -127,21 +127,21 @@
               <div class="p-3 rounded-2xl shadow-lg transform group-hover:scale-110 transition-transform duration-200 bg-gradient-to-r from-orange-500 to-red-500">
                 <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
+            </svg>
               </div>
               <span class="flex items-center gap-1 rounded-full py-0.5 pl-2 pr-2.5 text-sm font-medium" :class="averageColorClass">
                 <div class="w-2 h-2 rounded-full" :class="averageDotClass"></div>
                 {{ averageLabel }}
-              </span>
+          </span>
             </div>
             <div class="space-y-2">
               <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Moyenne générale</p>
               <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ formattedAverage }}/20</p>
               <p class="text-xs text-gray-500 dark:text-gray-400">Toutes classes</p>
             </div>
-          </div>
         </div>
       </div>
+    </div>
 
       <!-- Section de consultation des bulletins -->
       <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/30 p-8">
@@ -149,7 +149,7 @@
           Consultation des bulletins
         </h3>
 
-        <!-- Filtres -->
+          <!-- Filtres -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <!-- Sélection de classe -->
           <div>
@@ -157,7 +157,7 @@
               Classe
             </label>
             <div class="relative">
-              <select
+            <select
                 v-model="selectedClassId"
                 @change="onClassChange"
                 :disabled="loadingClasses"
@@ -168,8 +168,8 @@
                 </option>
                 <option v-for="classItem in classes" :key="classItem._id" :value="classItem._id">
                   {{ classItem.name }} ({{ classItem.level || 'Non défini' }})
-                </option>
-              </select>
+              </option>
+            </select>
               <div v-if="loadingClasses" class="absolute right-3 top-1/2 transform -translate-y-1/2">
                 <svg class="w-5 h-5 animate-spin text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -214,7 +214,7 @@
             </div>
           </div>
         </div>
-
+        
         <!-- Actions groupées -->
         <div v-if="!loading && filteredStudents.length > 0" class="flex justify-between items-center mb-6">
           <div class="text-sm text-gray-600 dark:text-gray-400">
@@ -243,8 +243,8 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             <span class="font-medium">Chargement des données...</span>
-          </div>
-        </div>
+      </div>
+    </div>
 
         <div v-else-if="filteredStudents.length === 0" class="text-center py-12">
           <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,7 +252,7 @@
           </svg>
           <p class="text-gray-600 dark:text-gray-400 font-medium">Aucun élève trouvé</p>
           <p class="text-gray-500 dark:text-gray-500 text-sm mt-1">Modifiez vos critères de recherche</p>
-        </div>
+      </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div
@@ -264,45 +264,45 @@
               <!-- Avatar avec initiales -->
               <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold shadow-lg transform group-hover:scale-110 transition-transform duration-200">
                 {{ getStudentInitials(student) }}
-              </div>
+                  </div>
               <div class="flex-1 min-w-0">
                 <h4 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
                   {{ student.firstName }} {{ student.lastName }}
-                </h4>
+                    </h4>
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                   {{ student.academicInfo?.className || 'Classe non définie' }}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-500">
                   {{ student.studentNumber }}
                 </p>
-              </div>
-            </div>
+                  </div>
+                </div>
 
             <!-- Moyennes par matière (exemple) -->
             <div class="space-y-2 mb-4">
               <div class="flex justify-between items-center text-sm">
                 <span class="text-gray-600 dark:text-gray-400">Moyenne générale</span>
                 <span class="font-semibold text-gray-900 dark:text-white">{{ getStudentAverage(student) }}/20</span>
-              </div>
+                </div>
             </div>
 
             <!-- Actions -->
             <div class="flex gap-2">
-              <button
+                  <button
                 @click="viewBulletin(student)"
                 class="flex-1 px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
                 Voir bulletin
-              </button>
-              <button
+                  </button>
+                  <button
                 @click="generatePDF(student)"
                 class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
               >
                 PDF
-              </button>
-            </div>
-          </div>
-        </div>
+                  </button>
+                </div>
+      </div>
+    </div>
       </div>
     </main>
 
@@ -314,23 +314,23 @@
         <div class="relative w-full max-w-4xl transform rounded-3xl bg-white dark:bg-gray-800 shadow-2xl transition-all">
           <!-- Header du modal -->
           <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <div>
+        <div>
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
                 Bulletin de {{ selectedStudent?.firstName }} {{ selectedStudent?.lastName }}
               </h3>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {{ selectedStudent?.academicInfo?.className || 'Classe non définie' }} - {{ selectedPeriod || 'Année complète' }}
               </p>
-            </div>
-            <button
+        </div>
+        <button
               @click="closeBulletinModal"
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
+        >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+          </svg>
+        </button>
+      </div>
 
           <!-- Contenu du bulletin -->
           <div class="p-6 space-y-6">
@@ -340,11 +340,11 @@
                 <div>
                   <span class="font-medium text-gray-600 dark:text-gray-400">Nom complet:</span>
                   <p class="text-gray-900 dark:text-white">{{ selectedStudent?.firstName }} {{ selectedStudent?.lastName }}</p>
-                </div>
+              </div>
                 <div>
                   <span class="font-medium text-gray-600 dark:text-gray-400">Numéro:</span>
                   <p class="text-gray-900 dark:text-white">{{ selectedStudent?.studentNumber }}</p>
-                </div>
+            </div>
                 <div>
                   <span class="font-medium text-gray-600 dark:text-gray-400">Classe:</span>
                   <p class="text-gray-900 dark:text-white">{{ selectedStudent?.academicInfo?.className || 'Non définie' }}</p>
@@ -353,9 +353,9 @@
                   <span class="font-medium text-gray-600 dark:text-gray-400">Statut:</span>
                   <span class="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
                     {{ selectedStudent?.academicInfo?.status || 'Active' }}
-                  </span>
-                </div>
-              </div>
+            </span>
+          </div>
+            </div>
             </div>
 
             <!-- Notes par matière -->
@@ -366,14 +366,14 @@
                 <svg class="w-6 h-6 animate-spin text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-              </div>
+            </div>
 
               <div v-else-if="studentGrades.length === 0" class="text-center py-8">
                 <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
                 <p class="text-gray-600 dark:text-gray-400">Aucune note disponible</p>
-              </div>
+          </div>
 
               <div v-else class="space-y-4">
                 <!-- Notes groupées par matière -->
@@ -390,7 +390,7 @@
                       <div class="flex-1">
                         <h5 class="font-medium text-gray-900 dark:text-white text-sm">{{ grade.evaluationInfo?.name || 'Évaluation inconnue' }}</h5>
                         <p class="text-xs text-gray-500 dark:text-gray-500">{{ formatDate(grade.evaluationInfo?.date) }}</p>
-                      </div>
+          </div>
                       <div class="text-right">
                         <div class="text-lg font-bold" :class="getGradeColor(grade.score || grade.grade || 0, grade.maxScore || grade.evaluationInfo?.maxScore || 20)">
                           {{ grade.isAbsent ? 'ABS' : `${grade.score || grade.grade || 0}/${grade.maxScore || grade.evaluationInfo?.maxScore || 20}` }}
@@ -406,9 +406,9 @@
                       <span class="text-sm font-bold text-gray-900 dark:text-white">{{ calculateSubjectAverage(subjectGrades).toFixed(1) }}/20</span>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
+        </div>
+      </div>
+    </div>
 
             <!-- Moyennes -->
             <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-6">
@@ -426,8 +426,8 @@
                   <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ getAppreciation(getStudentAverage(selectedStudent)) }}</div>
                   <div class="text-sm text-gray-600 dark:text-gray-400">Appréciation</div>
                 </div>
-              </div>
-            </div>
+        </div>
+      </div>
 
             <!-- Actions du modal -->
             <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -451,9 +451,9 @@
               </button>
             </div>
           </div>
+          </div>
         </div>
       </div>
-    </div>
 
     <!-- ConfirmModal -->
     <ConfirmModal
@@ -465,7 +465,7 @@
       @confirm="onConfirm"
       @cancel="showConfirmModal = false"
     />
-  </div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -567,7 +567,7 @@ const filteredStudents = computed(() => {
       student.studentNumber.toLowerCase().includes(search)
     )
   }
-
+  
   return filtered
 })
 
@@ -1094,7 +1094,7 @@ const generateAllBulletinsPDF = async () => {
         // Petite pause pour éviter de bloquer l'interface
         await new Promise(resolve => setTimeout(resolve, 200))
 
-      } catch (error) {
+  } catch (error) {
         console.error(`Erreur génération PDF pour ${student.firstName} ${student.lastName}:`, error)
         errorCount++
       }
@@ -1190,4 +1190,4 @@ watch(() => tenantId.value, async (newTenantId) => {
     await calculateStats()
   }
 })
-</script> 
+</script>

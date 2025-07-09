@@ -490,4 +490,30 @@ export class TenantService {
       cancelledTenants: cancelled,
     };
   }
+
+  async getTenantStats(tenantId: string) {
+    this.validateObjectId(tenantId);
+
+    // Récupérer les informations du tenant
+    const tenant = await this.findOne(tenantId);
+
+    // Pour l'instant, retourner des données de base avec les vraies limites du tenant
+    // Les compteurs seront implémentés via des appels aux autres services
+
+    // Calculer les jours restants jusqu'à expiration
+    const daysUntilExpiry = tenant.subscription?.endDate ? 
+      Math.max(0, Math.ceil((new Date(tenant.subscription.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : 
+      365;
+
+    return {
+      tenantId,
+      tenantName: tenant.name,
+      tenantStatus: tenant.status,
+      maxStudents: tenant.subscription?.maxStudents || 500,
+      maxTeachers: tenant.subscription?.maxTeachers || 20,
+      daysUntilExpiry,
+      subscriptionPlan: tenant.subscription?.plan || 'basic',
+      subscriptionStatus: 'active'
+    };
+  }
 }

@@ -151,20 +151,20 @@
                   Classe *
                 </label>
                 <div class="relative">
-                  <select
-                    v-model="form.academicInfo.className"
-                    required
-                    @change="updateClassInfo"
+                <select
+                  v-model="form.academicInfo.className"
+                  required
+                  @change="updateClassInfo"
                     :disabled="loadingClasses"
                     class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white disabled:opacity-50"
-                  >
+                >
                     <option value="">
                       {{ loadingClasses ? 'Chargement des classes...' : 'Sélectionner une classe' }}
                     </option>
-                    <option v-for="classOption in availableClasses" :key="classOption.id" :value="classOption.name">
+                  <option v-for="classOption in availableClasses" :key="classOption.id" :value="classOption.name">
                       {{ classOption.name }} ({{ classOption.level }})
-                    </option>
-                  </select>
+                  </option>
+                </select>
                   <div v-if="loadingClasses" class="absolute right-3 top-1/2 transform -translate-y-1/2">
                     <svg class="w-4 h-4 animate-spin text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -379,7 +379,7 @@ const loadClasses = async () => {
       { id: 'temp-2', name: '5ème A', level: '5ème' },
       { id: 'temp-3', name: '4ème A', level: '4ème' },
       { id: 'temp-4', name: '3ème A', level: '3ème' }
-    ]
+]
   } finally {
     loadingClasses.value = false
   }

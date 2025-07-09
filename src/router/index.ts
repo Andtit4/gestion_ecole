@@ -128,6 +128,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/school/subscriptions',
+      name: 'SchoolSubscriptionManagement',
+      component: () => import('../views/School/SchoolSubscriptionManagement.vue'),
+      meta: {
+        title: 'Gestion des Abonnements - Établissement',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/users',
       name: 'UserManagement',
       component: () => import('../views/Users/UserManagement.vue'),
