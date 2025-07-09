@@ -68,6 +68,14 @@ export class SubscriptionService {
         ],
         description: 'Pour les grandes institutions',
       },
+      [SubscriptionPlan.CUSTOM]: {
+        name: 'Plan Personnalisé',
+        pricePerMonth: 0, // Sera remplacé par les valeurs du plan personnalisé
+        maxStudents: 0, // Sera remplacé par les valeurs du plan personnalisé
+        maxTeachers: 0, // Sera remplacé par les valeurs du plan personnalisé
+        features: [], // Sera remplacé par les valeurs du plan personnalisé
+        description: 'Plan personnalisé selon vos besoins',
+      },
     };
   }
 
@@ -303,6 +311,7 @@ export class SubscriptionService {
     name: string;
     description: string;
     monthlyPrice: number;
+    validity?: string;
     maxStudents: number;
     maxTeachers: number;
     features: string[];
@@ -324,6 +333,7 @@ export class SubscriptionService {
       name: plan.name,
       description: plan.description,
       monthlyPrice: plan.monthlyPrice,
+      validity: plan.validity || 'monthly',
       maxStudents: plan.maxStudents,
       maxTeachers: plan.maxTeachers,
       features: plan.features,
@@ -350,6 +360,7 @@ export class SubscriptionService {
       name?: string;
       description?: string;
       monthlyPrice?: number;
+      validity?: string;
       maxStudents?: number;
       maxTeachers?: number;
       features?: string[];

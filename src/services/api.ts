@@ -418,6 +418,7 @@ export interface CustomPlan {
   name: string
   description: string
   monthlyPrice: number
+  validity: 'monthly' | 'yearly'
   maxStudents: number
   maxTeachers: number
   features: string[]
@@ -437,6 +438,7 @@ export async function createCustomPlan(planData: {
   name: string;
   description: string;
   monthlyPrice: number;
+  validity: 'monthly' | 'yearly';
   maxStudents: number;
   maxTeachers: number;
   features: string[];
@@ -473,6 +475,7 @@ export async function updateCustomPlan(
     name?: string;
     description?: string;
     monthlyPrice?: number;
+    validity?: 'monthly' | 'yearly';
     maxStudents?: number;
     maxTeachers?: number;
     features?: string[];

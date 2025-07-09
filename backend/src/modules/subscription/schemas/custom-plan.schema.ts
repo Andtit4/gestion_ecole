@@ -14,6 +14,9 @@ export class CustomPlan {
   @Prop({ required: true, min: 0 })
   monthlyPrice: number;
 
+  @Prop({ enum: ['monthly', 'yearly'], default: 'monthly' })
+  validity: string;
+
   @Prop({ required: true, min: 1 })
   maxStudents: number;
 

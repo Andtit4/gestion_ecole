@@ -158,10 +158,16 @@
                         @change="updatePlanLimits"
                       >
                         <option value="">Sélectionner un plan</option>
-                        <option value="starter">Starter (50 élèves) - 29€/mois</option>
-                        <option value="standard">Standard (200 élèves) - 59€/mois</option>
-                        <option value="enterprise">Enterprise (1000+ élèves) - 199€/mois</option>
+                        <option 
+                          v-for="plan in availablePlans" 
+                          :key="plan.id" 
+                          :value="plan.id"
+                        >
+                          {{ plan.name }} ({{ plan.maxStudents }} élèves) - {{ formatPrice(plan.monthlyPrice) }}{{ formatValidityPeriod(plan.validity) }}
+                        </option>
                       </select>
+                      <p v-if="loadingPlans" class="text-sm text-gray-500 mt-1">Chargement des plans...</p>
+                      <p v-else-if="availablePlans.length === 0" class="text-sm text-orange-600 mt-1">Aucun plan disponible</p>
                     </div>
 
                     <div>
@@ -186,6 +192,24 @@
                         min="1"
                         class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white/50 dark:bg-gray-800/50 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all"
                       />
+                    </div>
+                  </div>
+
+                  <!-- Indicateur d'expiration automatique -->
+                  <div v-if="form.plan && selectedPlanInfo" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-700">
+                    <div class="flex items-center space-x-2">
+                      <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div class="text-sm">
+                        <p class="font-medium text-blue-900 dark:text-blue-100">
+                          Abonnement {{ selectedPlanInfo.validity === 'yearly' ? 'annuel' : 'mensuel' }}
+                        </p>
+                        <p class="text-blue-700 dark:text-blue-300">
+                          Expiration prévue : <strong>{{ previewExpirationDate }}</strong>
+                          ({{ selectedPlanInfo.validity === 'yearly' ? '12 mois' : '1 mois' }} à partir d'aujourd'hui)
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -227,8 +251,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, onMounted, computed } from 'vue'
 import { useTenantStore } from '@/stores/tenantStore'
+import { getAllPlans, type CustomPlan } from '@/services/api'
 import type { TenantListItem } from '@/services/api'
 
 interface Props {
@@ -247,7 +272,11 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
+const loadingPlans = ref(false)
 const tenantStore = useTenantStore()
+
+// Plans disponibles
+const availablePlans = ref<CustomPlan[]>([])
 
 // Formulaire
 const form = reactive({
@@ -262,7 +291,64 @@ const form = reactive({
   maxTeachers: 10
 })
 
-// Plans prédéfinis
+// Computed pour le plan sélectionné
+const selectedPlanInfo = computed(() => {
+  return availablePlans.value.find(plan => plan.id === form.plan)
+})
+
+// Computed pour la date d'expiration prévue
+const previewExpirationDate = computed(() => {
+  if (!selectedPlanInfo.value) return ''
+  
+  const startDate = new Date()
+  const endDate = new Date(startDate)
+  
+  if (selectedPlanInfo.value.validity === 'yearly') {
+    endDate.setFullYear(endDate.getFullYear() + 1)
+  } else {
+    endDate.setMonth(endDate.getMonth() + 1)
+  }
+  
+  return endDate.toLocaleDateString('fr-FR')
+})
+
+// Fonctions utilitaires pour l'affichage
+function formatPrice(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'XOF',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount)
+}
+
+function formatValidityPeriod(validity: string): string {
+  return validity === 'yearly' ? '/an' : '/mois'
+}
+
+// Charger les plans depuis l'API
+async function loadPlans() {
+  loadingPlans.value = true
+  try {
+    const plansData = await getAllPlans()
+    console.log('Plans chargés:', plansData)
+    
+    if (Array.isArray(plansData)) {
+      availablePlans.value = plansData
+    } else if (plansData && plansData.plans) {
+      availablePlans.value = plansData.plans
+    } else {
+      availablePlans.value = []
+    }
+  } catch (error) {
+    console.error('Erreur lors du chargement des plans:', error)
+    availablePlans.value = []
+  } finally {
+    loadingPlans.value = false
+  }
+}
+
+// Plans prédéfinis (fallback)
 const planLimits = {
   starter: { students: 50, teachers: 5 },
   standard: { students: 200, teachers: 20 },
@@ -274,6 +360,9 @@ watch(() => [props.tenant, props.mode, props.show] as const, ([newTenant, mode, 
   console.log('Modal watcher triggered:', { mode, show, tenant: newTenant?.name })
   
   if (show) {
+    // Charger les plans quand la modal s'ouvre
+    loadPlans()
+    
     if (mode === 'edit' && newTenant) {
       // Mode édition : remplir avec les données du tenant
       console.log('Filling form with tenant data:', newTenant)
@@ -315,17 +404,70 @@ function resetForm() {
 }
 
 function updatePlanLimits() {
-  const plan = form.plan as keyof typeof planLimits
-  if (plan && planLimits[plan]) {
-    form.maxStudents = planLimits[plan].students
-    form.maxTeachers = planLimits[plan].teachers
+  // Chercher le plan sélectionné dans les plans disponibles
+  const selectedPlan = availablePlans.value.find(plan => plan.id === form.plan)
+  
+  if (selectedPlan) {
+    console.log('Plan sélectionné:', {
+      name: selectedPlan.name,
+      maxStudents: selectedPlan.maxStudents,
+      maxTeachers: selectedPlan.maxTeachers,
+      validity: selectedPlan.validity,
+      price: selectedPlan.monthlyPrice
+    })
+    
+    form.maxStudents = selectedPlan.maxStudents
+    form.maxTeachers = selectedPlan.maxTeachers
+  } else {
+    // Fallback vers les plans prédéfinis
+    const plan = form.plan as keyof typeof planLimits
+    if (plan && planLimits[plan]) {
+      form.maxStudents = planLimits[plan].students
+      form.maxTeachers = planLimits[plan].teachers
+    }
   }
 }
+
+// Calculer la date d'expiration selon la validité du plan
+function calculateExpirationDate(validity: string): Date {
+  const startDate = new Date()
+  const endDate = new Date(startDate)
+  
+  if (validity === 'yearly') {
+    // Plan annuel : +12 mois
+    endDate.setFullYear(endDate.getFullYear() + 1)
+  } else {
+    // Plan mensuel : +1 mois
+    endDate.setMonth(endDate.getMonth() + 1)
+  }
+  
+  console.log('Calcul expiration:', {
+    validity,
+    startDate: startDate.toLocaleDateString('fr-FR'),
+    endDate: endDate.toLocaleDateString('fr-FR'),
+    duration: validity === 'yearly' ? '12 mois' : '1 mois'
+  })
+  
+  return endDate
+}
+
+// Charger les plans au montage du composant
+onMounted(() => {
+  loadPlans()
+})
 
 async function handleSubmit() {
   loading.value = true
   
   try {
+    // Récupérer le plan sélectionné pour obtenir son prix et sa validité
+    const selectedPlan = availablePlans.value.find(plan => plan.id === form.plan)
+    const planPrice = selectedPlan ? selectedPlan.monthlyPrice : 29 // Fallback
+    const planValidity = selectedPlan ? selectedPlan.validity : 'monthly' // Fallback
+    
+    // Calculer la date d'expiration selon la validité du plan
+    const expirationDate = calculateExpirationDate(planValidity)
+    
     if (props.mode === 'create') {
       // Création d'un nouvel établissement
       await tenantStore.createTenant({
@@ -349,17 +491,17 @@ async function handleSubmit() {
           maxGrade: 20,
           language: 'fr',
           timezone: 'Europe/Paris',
-          currency: 'EUR'
+          currency: 'XOF'
         },
         subscription: {
-          plan: form.plan as any,
+          plan: selectedPlan ? 'custom' : form.plan, // Utiliser 'custom' pour les plans personnalisés
+          customPlanId: selectedPlan ? selectedPlan.id : undefined,
+          validity: planValidity,
           startDate: new Date().toISOString(),
-          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          endDate: expirationDate.toISOString(),
           maxStudents: form.maxStudents,
           maxTeachers: form.maxTeachers,
-          pricePerMonth: form.plan === 'starter' ? 29 : 
-                        form.plan === 'standard' ? 59 :
-                        form.plan === 'enterprise' ? 199 : 29
+          pricePerMonth: planPrice
         },
         admin: {
           firstName: 'Admin',
@@ -394,12 +536,12 @@ async function handleSubmit() {
       name: form.name,
       domain: form.domain,
       status: props.tenant?.status || 'PENDING',
-      plan: form.plan as any,
+      plan: selectedPlan ? 'custom' : form.plan,
       currentStudents: props.tenant?.currentStudents || 0,
       maxStudents: form.maxStudents,
       currentTeachers: props.tenant?.currentTeachers || 0,
       maxTeachers: form.maxTeachers,
-      endDate: props.tenant?.endDate || new Date().toLocaleDateString('fr-FR'),
+      endDate: expirationDate.toLocaleDateString('fr-FR'),
       createdAt: props.tenant?.createdAt || new Date().toLocaleDateString('fr-FR'),
       adminEmail: form.email,
       city: form.city,

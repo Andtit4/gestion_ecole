@@ -54,6 +54,9 @@ export class Subscription implements ISubscription {
   @Prop({ required: true, enum: Object.values(SubscriptionPlan) })
   plan: SubscriptionPlan;
 
+  @Prop({ enum: ['monthly', 'yearly'], default: 'monthly' })
+  validity: string;
+
   @Prop({ required: true })
   startDate: Date;
 
@@ -74,6 +77,9 @@ export class Subscription implements ISubscription {
 
   @Prop({ default: true })
   isActive: boolean;
+
+  @Prop()
+  customPlanId?: string;
 }
 
 @Schema()

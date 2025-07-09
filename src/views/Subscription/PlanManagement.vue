@@ -149,6 +149,19 @@
             <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {{ plan.name }}
             </h3>
+            
+            <!-- Badge de validité -->
+            <div class="mb-3 flex justify-center">
+              <span 
+                class="px-3 py-1 text-xs font-semibold rounded-full"
+                :class="plan.validity === 'yearly' 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                  : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'"
+              >
+                {{ formatValidityLabel(plan.validity) }}
+              </span>
+            </div>
+            
             <p class="text-gray-600 dark:text-gray-400 text-sm mb-6">
               {{ plan.description }}
             </p>
@@ -157,7 +170,14 @@
               <span class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 {{ formatPrice(plan.monthlyPrice) }}
               </span>
-              <span class="text-gray-500 dark:text-gray-400 block text-sm mt-1">/mois</span>
+              <span class="text-gray-500 dark:text-gray-400 block text-sm mt-1">
+                /{{ plan.validity === 'yearly' ? 'an' : 'mois' }}
+              </span>
+              <div v-if="plan.validity === 'yearly'" class="mt-2">
+                <span class="text-sm text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full">
+                  🎯 Facturation annuelle
+                </span>
+              </div>
             </div>
             
             <!-- Statistiques du plan -->
@@ -269,7 +289,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                Prix mensuel (FCFA) *
+                Prix {{ formData.validity === 'yearly' ? 'annuel' : 'mensuel' }} (FCFA) *
               </label>
               <input
                 v-model.number="formData.monthlyPrice"
@@ -278,8 +298,11 @@
                 min="0"
                 step="1000"
                 class="w-full bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 backdrop-blur"
-                placeholder="50000"
+                :placeholder="formData.validity === 'yearly' ? '500000' : '50000'"
               >
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                {{ formData.validity === 'yearly' ? 'Prix pour une année complète' : 'Prix pour un mois' }}
+              </p>
             </div>
             
             <div>
@@ -309,6 +332,19 @@
               class="w-full bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 backdrop-blur"
               placeholder="10"
             >
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+              Validité *
+            </label>
+            <select
+              v-model="formData.validity"
+              class="w-full bg-white/50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-200 backdrop-blur"
+            >
+              <option value="monthly">Mensuel</option>
+              <option value="yearly">Annuel</option>
+            </select>
           </div>
           
           <div>
@@ -376,6 +412,7 @@ interface Plan {
   name: string
   description: string
   monthlyPrice: number
+  validity: 'monthly' | 'yearly'
   maxStudents: number
   maxTeachers: number
   features: string[]
@@ -397,6 +434,7 @@ const formData = ref<Omit<Plan, 'id'>>({
   name: '',
   description: '',
   monthlyPrice: 0,
+  validity: 'monthly',
   maxStudents: 100,
   maxTeachers: 10,
   features: [],
@@ -415,6 +453,10 @@ function formatPrice(amount: number): string {
   }).format(amount)
 }
 
+function formatValidityLabel(validity: 'monthly' | 'yearly'): string {
+  return validity === 'yearly' ? 'Annuel' : 'Mensuel'
+}
+
 function generateId(): string {
   return Date.now().toString() + Math.random().toString(36).substr(2, 9)
 }
@@ -426,6 +468,7 @@ function openCreateModal() {
     name: '',
     description: '',
     monthlyPrice: 0,
+    validity: 'monthly',
     maxStudents: 100,
     maxTeachers: 10,
     features: [],
@@ -497,6 +540,7 @@ async function savePlan() {
         name: formData.value.name,
         description: formData.value.description,
         monthlyPrice: formData.value.monthlyPrice,
+        validity: formData.value.validity,
         maxStudents: formData.value.maxStudents,
         maxTeachers: formData.value.maxTeachers,
         features: features,
@@ -512,6 +556,7 @@ async function savePlan() {
         name: formData.value.name,
         description: formData.value.description,
         monthlyPrice: formData.value.monthlyPrice,
+        validity: formData.value.validity,
         maxStudents: formData.value.maxStudents,
         maxTeachers: formData.value.maxTeachers,
         features: features

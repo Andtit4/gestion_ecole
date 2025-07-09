@@ -11,6 +11,7 @@ export enum SubscriptionPlan {
   STARTER = 'starter',
   STANDARD = 'standard',
   ENTERPRISE = 'enterprise',
+  CUSTOM = 'custom',
 }
 
 export interface ITenantSettings {
@@ -31,6 +32,7 @@ export interface ITenantSettings {
 
 export interface ISubscription {
   plan: SubscriptionPlan;
+  validity?: string; // 'monthly' | 'yearly'
   startDate: Date;
   endDate: Date;
   maxStudents: number;
@@ -38,6 +40,7 @@ export interface ISubscription {
   features: string[];
   pricePerMonth: number;
   isActive: boolean;
+  customPlanId?: string;
 }
 
 export interface ITenant {

@@ -96,6 +96,15 @@ export class CreateSubscriptionDto {
   @IsEnum(SubscriptionPlan)
   plan: SubscriptionPlan;
 
+  @IsString()
+  @IsOptional()
+  @IsEnum(['monthly', 'yearly'])
+  validity?: string;
+
+  @IsString()
+  @IsOptional()
+  customPlanId?: string;
+
   @IsDateString()
   startDate: string;
 

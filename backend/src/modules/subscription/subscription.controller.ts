@@ -131,6 +131,7 @@ export class SubscriptionController {
       name: string;
       description: string;
       monthlyPrice: number;
+      validity?: string;
       maxStudents: number;
       maxTeachers: number;
       features: string[];
@@ -171,6 +172,7 @@ export class SubscriptionController {
       name?: string;
       description?: string;
       monthlyPrice?: number;
+      validity?: string;
       maxStudents?: number;
       maxTeachers?: number;
       features?: string[];
