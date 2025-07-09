@@ -128,6 +128,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/school/:tenantId/scolarite',
+      name: 'SchoolScolariteManagement',
+      component: () => import('../views/Scolarite/ScolariteManagement.vue'),
+      meta: {
+        title: 'Gestion de la Scolarité - Établissement',
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/school/subscriptions',
       name: 'SchoolSubscriptionManagement',
       component: () => import('../views/School/SchoolSubscriptionManagement.vue'),
@@ -237,6 +246,15 @@ const router = createRouter({
       component: () => import('../views/Evaluations/EvaluationManagement.vue'),
       meta: {
         title: 'Gestion des Évaluations',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/scolarite',
+      name: 'ScolariteManagement',
+      component: () => import('../views/Scolarite/ScolariteManagement.vue'),
+      meta: {
+        title: 'Gestion de la Scolarité',
         requiresAuth: true,
       },
     },
