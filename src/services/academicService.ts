@@ -287,13 +287,21 @@ export async function createTeacher(
   return await handleResponse<Teacher>(response)
 }
 
-export async function getTeachers(tenantId: string): Promise<Teacher[]> {
-  const response = await fetch(`${API_BASE_URL}/academic/teachers`, {
+// Fonction pour récupérer les enseignants depuis l'API teachers (gestion)
+export async function getTeachersFromManagement(tenantId: string): Promise<any[]> {
+  const response = await fetch(`${API_BASE_URL}/teachers`, {
     method: 'GET',
     headers: createHeaders(tenantId),
   })
   
-  return await handleResponse<Teacher[]>(response)
+  const result = await handleResponse<any>(response)
+  // L'API teachers retourne { teachers: [...], total, page, etc. }
+  return result.teachers || []
+}
+
+export async function getTeachers(tenantId: string): Promise<Teacher[]> {
+  // Utiliser l'API teachers au lieu d'academic/teachers pour avoir les enseignants de la gestion
+  return await getTeachersFromManagement(tenantId)
 }
 
 export async function getTeacherById(

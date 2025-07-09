@@ -357,6 +357,120 @@
                 </select>
               </div>
               
+              <!-- Matière -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Matière *
+                </label>
+                <select 
+                  v-model="newEvaluation.subjectId"
+                  required
+                  :disabled="loadingFormData"
+                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">
+                    {{ loadingFormData ? 'Chargement...' : 'Sélectionner une matière' }}
+                  </option>
+                  <option v-for="subject in subjects" :key="subject._id" :value="subject._id">
+                    {{ subject.name }} ({{ subject.code }})
+                  </option>
+                </select>
+                <p v-if="subjects.length === 0 && !loadingFormData" class="mt-1 text-sm text-red-600">
+                  Aucune matière disponible. 
+                  <router-link :to="`/school/${tenantId}/academic-structure`" class="underline">
+                    Créer des matières
+                  </router-link>
+                </p>
+              </div>
+              
+              <!-- Classe -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Classe *
+                </label>
+                <select 
+                  v-model="newEvaluation.classId"
+                  required
+                  :disabled="loadingFormData"
+                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">
+                    {{ loadingFormData ? 'Chargement...' : 'Sélectionner une classe' }}
+                  </option>
+                  <option v-for="classItem in classes" :key="classItem._id" :value="classItem._id">
+                    {{ classItem.name }} ({{ classItem.level }})
+                  </option>
+                </select>
+                <p v-if="classes.length === 0 && !loadingFormData" class="mt-1 text-sm text-red-600">
+                  Aucune classe disponible. 
+                  <router-link :to="`/school/${tenantId}/academic-structure`" class="underline">
+                    Créer des classes
+                  </router-link>
+                </p>
+              </div>
+              
+              <!-- Enseignant (optionnel) -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Enseignant (optionnel)
+                </label>
+                <select 
+                  v-model="newEvaluation.teacherId"
+                  :disabled="loadingFormData"
+                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">
+                    {{ loadingFormData ? 'Chargement...' : 'Aucun enseignant sélectionné' }}
+                  </option>
+                  <option v-for="teacher in teachers" :key="teacher._id" :value="teacher._id">
+                    {{ teacher.firstName }} {{ teacher.lastName }}
+                    <span v-if="teacher.subjects && teacher.subjects.length > 0">
+                      - {{ getTeacherSubjectsDisplay(teacher) }}
+                    </span>
+                  </option>
+                </select>
+                <div v-if="teachers.length === 0 && !loadingFormData" class="mt-2">
+                  <p class="text-sm text-amber-600 dark:text-amber-400 mb-2">
+                    ⚠️ Aucun enseignant disponible dans votre établissement.
+                  </p>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                    <p><strong>Pour ajouter des enseignants :</strong></p>
+                    <p>1. 
+                      <router-link 
+                        :to="`/school/${tenantId}/teachers`" 
+                        class="text-purple-600 hover:text-purple-500 underline"
+                      >
+                        Aller dans la gestion des enseignants
+                      </router-link>
+                    </p>
+                    <p>2. <strong>Ou</strong> exécuter le script de test :</p>
+                    <code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs">
+                      node create-test-teachers.mjs
+                    </code>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Année académique -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Année académique *
+                </label>
+                <select 
+                  v-model="newEvaluation.academicYearId"
+                  required
+                  :disabled="loadingFormData"
+                  class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50"
+                >
+                  <option value="">
+                    {{ loadingFormData ? 'Chargement...' : 'Sélectionner une année académique' }}
+                  </option>
+                  <option v-for="year in academicYears" :key="year._id" :value="year._id">
+                    {{ year.name }} {{ year.isActive ? '(Active)' : '' }}
+                  </option>
+                </select>
+              </div>
+              
               <div class="grid grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
@@ -405,13 +519,59 @@
                 </label>
               </div>
               
+              <!-- Validation visuelle -->
+              <div v-if="!isFormValid" class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md p-3">
+                <div class="flex">
+                  <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      Champs requis manquants
+                    </h3>
+                    <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                      <ul class="list-disc pl-5 space-y-1">
+                                                 <li v-if="!newEvaluation.subjectId">Matière requise</li>
+                         <li v-if="!newEvaluation.classId">Classe requise</li>
+                         <li v-if="!newEvaluation.academicYearId">Année académique requise</li>
+                         <li v-if="!newEvaluation.name">Nom de l'évaluation requis</li>
+                         <li v-if="!newEvaluation.type">Type d'évaluation requis</li>
+                         <li v-if="!newEvaluation.date">Date requise</li>
+                         <li v-if="!newEvaluation.maxScore || newEvaluation.maxScore <= 0">Note maximum requise</li>
+                         <li v-if="!newEvaluation.coefficient || newEvaluation.coefficient <= 0">Coefficient requis</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Résumé de l'évaluation si formulaire valide -->
+              <div v-else-if="isFormValid" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-md p-3">
+                <div class="flex">
+                  <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  <div class="ml-3">
+                    <h3 class="text-sm font-medium text-green-800 dark:text-green-200">
+                      Évaluation prête à créer
+                    </h3>
+                                         <div class="mt-2 text-sm text-green-700 dark:text-green-300">
+                       <p><strong>{{ newEvaluation.name }}</strong> - {{ newEvaluation.type }}</p>
+                       <p>{{ getSelectedSubjectName() }} pour {{ getSelectedClassName() }}</p>
+                       <p v-if="newEvaluation.teacherId">Enseignant : {{ getSelectedTeacherName() }}</p>
+                       <p>Note sur {{ newEvaluation.maxScore }} - Coefficient {{ newEvaluation.coefficient }}</p>
+                     </div>
+                  </div>
+                </div>
+              </div>
+              
               <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                 <button 
                   type="submit"
-                  :disabled="creatingEvaluation"
-                  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:col-start-2 sm:text-sm disabled:opacity-50"
+                  :disabled="creatingEvaluation || !isFormValid || loadingFormData"
+                  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:col-start-2 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {{ creatingEvaluation ? 'Création...' : 'Créer' }}
+                  {{ creatingEvaluation ? 'Création...' : loadingFormData ? 'Chargement...' : 'Créer l\'évaluation' }}
                 </button>
                 <button 
                   type="button"
@@ -541,6 +701,13 @@ const stats = ref({
   averageGrade: 0
 })
 
+// Additional data for form
+const subjects = ref([])
+const classes = ref([])
+const teachers = ref([])
+const academicYears = ref([])
+const loadingFormData = ref(false)
+
 // Modals
 const showCreateModal = ref(false)
 const showGradeModal = ref(false)
@@ -628,15 +795,102 @@ const averageLabel = computed(() => {
   return 'À améliorer'
 })
 
+const isFormValid = computed(() => {
+  return !!(
+    newEvaluation.value.name &&
+    newEvaluation.value.type &&
+    newEvaluation.value.subjectId &&
+    newEvaluation.value.classId &&
+    newEvaluation.value.academicYearId &&
+    newEvaluation.value.date &&
+    newEvaluation.value.maxScore > 0 &&
+    newEvaluation.value.coefficient > 0
+  )
+})
+
 // Methods
 const goBack = () => {
   const tenantId = route.params.tenantId
   router.push(`/tenant/${tenantId}`)
 }
 
-const openCreateEvaluationModal = () => {
+const openCreateEvaluationModal = async () => {
   resetForm()
+  await loadFormData()
   showCreateModal.value = true
+}
+
+const loadFormData = async () => {
+  // Utiliser le même tenant ID que dans TeacherManagement
+  const currentTenantId = currentTenantStore.currentTenantId || tenantId.value
+  if (!currentTenantId) return
+  
+  console.log('🔍 LoadFormData - Tenant IDs:', {
+    currentTenantStore: currentTenantStore.currentTenantId,
+    routeParams: tenantId.value,
+    using: currentTenantId
+  })
+  
+  loadingFormData.value = true
+  try {
+    // Import des services de manière dynamique
+    const { getSubjects, fetchClasses, fetchAcademicYears, getTeachers } = await import('@/services/academicService')
+    
+    // Charger les données en parallèle
+    const [subjectsData, classesData, academicYearsData, teachersData] = await Promise.allSettled([
+      getSubjects(currentTenantId),
+      fetchClasses(currentTenantId),
+      fetchAcademicYears(currentTenantId),
+      getTeachers(currentTenantId)
+    ])
+    
+    // Traiter les résultats avec diagnostic détaillé
+    subjects.value = subjectsData.status === 'fulfilled' ? subjectsData.value : []
+    classes.value = classesData.status === 'fulfilled' ? classesData.value : []
+    academicYears.value = academicYearsData.status === 'fulfilled' ? academicYearsData.value : []
+    teachers.value = teachersData.status === 'fulfilled' ? teachersData.value : []
+    
+    // Diagnostic détaillé
+    console.log('✅ Données formulaire chargées:', {
+      subjects: subjects.value.length,
+      classes: classes.value.length,
+      academicYears: academicYears.value.length,
+      teachers: teachers.value.length
+    })
+    
+    // Diagnostic des erreurs
+    if (subjectsData.status === 'rejected') {
+      console.error('❌ Erreur chargement matières:', subjectsData.reason)
+    }
+    if (classesData.status === 'rejected') {
+      console.error('❌ Erreur chargement classes:', classesData.reason)
+    }
+    if (academicYearsData.status === 'rejected') {
+      console.error('❌ Erreur chargement années:', academicYearsData.reason)
+    }
+    if (teachersData.status === 'rejected') {
+      console.error('❌ Erreur chargement enseignants:', teachersData.reason)
+    }
+    
+    // Afficher les enseignants trouvés
+    if (teachers.value.length > 0) {
+      console.log('👨‍🏫 Enseignants trouvés:', teachers.value.map(t => `${t.firstName} ${t.lastName} (${t._id})`))
+    } else {
+      console.warn('⚠️ Aucun enseignant trouvé avec tenant ID:', currentTenantId)
+    }
+    
+    // Auto-sélectionner l'année académique active si disponible
+    const activeYear = academicYears.value.find(year => year.isActive)
+    if (activeYear) {
+      newEvaluation.value.academicYearId = activeYear._id
+    }
+    
+  } catch (error) {
+    console.error('Erreur lors du chargement des données du formulaire:', error)
+    showError('Erreur lors du chargement des données du formulaire')
+  } finally {
+    loadingFormData.value = false
+  }
 }
 
 const resetForm = () => {
@@ -756,21 +1010,45 @@ const createEvaluation = async () => {
     return
   }
 
+  // Validation côté frontend
+  if (!newEvaluation.value.subjectId) {
+    showErrorMessage('Erreur de validation', 'Veuillez sélectionner une matière')
+    return
+  }
+  
+  if (!newEvaluation.value.classId) {
+    showErrorMessage('Erreur de validation', 'Veuillez sélectionner une classe')
+    return
+  }
+  
+  if (!newEvaluation.value.academicYearId) {
+    showErrorMessage('Erreur de validation', 'Veuillez sélectionner une année académique')
+    return
+  }
+
   console.log('🚀 Début création évaluation')
   console.log('🔑 TenantId utilisé:', tenantId.value)
-  console.log('💾 Current tenant dans localStorage:', localStorage.getItem('currentTenant'))
 
   try {
     creatingEvaluation.value = true
     
-    // Préparer les données d'évaluation avec valeurs par défaut
+    // Préparer les données d'évaluation - omettre les champs vides
     const evaluationData = {
       ...newEvaluation.value,
-      subjectId: newEvaluation.value.subjectId || 'default-subject-id',
-      classId: newEvaluation.value.classId || 'default-class-id', 
-      teacherId: newEvaluation.value.teacherId || 'default-teacher-id',
-      academicYearId: newEvaluation.value.academicYearId || 'default-academic-year-id',
       scale: 'twenty' as const
+    }
+    
+    // Supprimer les champs optionnels vides pour éviter les erreurs de validation backend
+    if (!evaluationData.teacherId || evaluationData.teacherId.trim() === '') {
+      delete evaluationData.teacherId
+    }
+    
+    if (!evaluationData.periodId || evaluationData.periodId.trim() === '') {
+      delete evaluationData.periodId
+    }
+    
+    if (!evaluationData.description || evaluationData.description.trim() === '') {
+      delete evaluationData.description
     }
     
     console.log('📝 Données évaluation:', evaluationData)
@@ -885,6 +1163,40 @@ const showConfirmMessage = (title: string, message: string, action: () => void) 
   showModal('warning', title, message, 'Confirmer', action)
 }
 
+const getSelectedSubjectName = () => {
+  const subject = subjects.value.find(s => s._id === newEvaluation.value.subjectId)
+  return subject ? subject.name : 'Matière non sélectionnée'
+}
+
+const getSelectedClassName = () => {
+  const classItem = classes.value.find(c => c._id === newEvaluation.value.classId)
+  return classItem ? classItem.name : 'Classe non sélectionnée'
+}
+
+const getSelectedTeacherName = () => {
+  if (!newEvaluation.value.teacherId) return 'Aucun enseignant'
+  const teacher = teachers.value.find(t => t._id === newEvaluation.value.teacherId)
+  return teacher ? `${teacher.firstName} ${teacher.lastName}` : 'Enseignant non trouvé'
+}
+
+const getTeacherSubjectsDisplay = (teacher) => {
+  if (!teacher.subjects || teacher.subjects.length === 0) {
+    return 'Aucune matière'
+  }
+  
+  // Si les subjects sont des objets avec une propriété 'name'
+  if (typeof teacher.subjects[0] === 'object' && teacher.subjects[0].name) {
+    return teacher.subjects.map(subject => subject.name).join(', ')
+  }
+  
+  // Si les subjects sont des strings
+  if (typeof teacher.subjects[0] === 'string') {
+    return teacher.subjects.join(', ')
+  }
+  
+  return 'Matières non définies'
+}
+
 const onConfirm = () => {
   if (confirmAction.value) {
     confirmAction.value()
@@ -931,10 +1243,38 @@ const getTypeColor = (type: string) => {
 
 // Lifecycle
 onMounted(async () => {
+  console.log('🚀 Composant EvaluationManagement monté')
+  console.log('🔍 Tenant IDs au montage:', {
+    routeParams: tenantId.value,
+    currentTenant: currentTenantStore.currentTenantId
+  })
+  
+  // S'assurer que le tenant store a le bon ID
+  if (!currentTenantStore.currentTenantId && tenantId.value) {
+    console.log('📍 Initialisation du tenant store avec:', tenantId.value)
+    // Créer un objet tenant minimal à partir de l'ID
+    try {
+      const tenantResponse = await fetch(`http://localhost:3000/api/v1/tenants/${tenantId.value}`)
+      if (tenantResponse.ok) {
+        const tenantData = await tenantResponse.json()
+        const tenant = {
+          id: tenantData._id,
+          name: tenantData.name || tenantData.schoolName || 'Établissement',
+          domain: tenantData.domain,
+          email: tenantData.email || ''
+        }
+        currentTenantStore.setSelectedTenant(tenant)
+        console.log('✅ Tenant store initialisé:', tenant)
+      }
+    } catch (error) {
+      console.error('❌ Erreur initialisation tenant store:', error)
+    }
+  }
+  
   const domain = await initializeTenant()
   if (domain) {
     // Le tenant est initialisé, charger les évaluations
-    loadEvaluations()
+    await loadEvaluations()
   }
 })
 </script> 

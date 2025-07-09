@@ -215,6 +215,27 @@
           </div>
         </div>
 
+        <!-- Actions groupées -->
+        <div v-if="!loading && filteredStudents.length > 0" class="flex justify-between items-center mb-6">
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            {{ filteredStudents.length }} élève{{ filteredStudents.length > 1 ? 's' : '' }} trouvé{{ filteredStudents.length > 1 ? 's' : '' }}
+          </div>
+          
+          <button
+            @click="generateAllBulletinsPDF"
+            :disabled="generatingAllPDFs"
+            class="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <svg v-if="generatingAllPDFs" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            {{ generatingAllPDFs ? 'Génération...' : 'Télécharger tous les bulletins' }}
+          </button>
+        </div>
+
         <!-- Liste des étudiants -->
         <div v-if="loading" class="flex justify-center items-center py-12">
           <div class="flex items-center gap-3 text-emerald-600">
@@ -463,6 +484,7 @@ const currentTenantStore = useCurrentTenantStore()
 const loading = ref(true)
 const loadingClasses = ref(false)
 const loadingGrades = ref(false)
+const generatingAllPDFs = ref(false)
 const error = ref<string | null>(null)
 
 // Données
@@ -967,8 +989,136 @@ const closeBulletinModal = () => {
   studentGrades.value = []
 }
 
-const generatePDF = (student: Student) => {
-  showModal('info', 'Génération PDF', `Le bulletin de ${student.firstName} ${student.lastName} sera bientôt disponible en PDF.`, 'OK')
+const generatePDF = async (student: Student) => {
+  if (!student) {
+    showModal('error', 'Erreur', 'Aucun étudiant sélectionné pour la génération du PDF.', 'OK')
+    return
+  }
+
+  try {
+    // Afficher un message de chargement
+    showModal('info', 'Génération en cours', `Génération du bulletin PDF pour ${student.firstName} ${student.lastName}...`, 'Patientez')
+    
+    // Charger les notes de l'étudiant si pas déjà chargées
+    let grades = studentGrades.value
+    if (!grades.length || selectedStudent.value?._id !== student._id) {
+      grades = await loadStudentGrades(student)
+    }
+
+    // Calculer la moyenne si pas déjà calculée
+    let average = studentAverages.value.get(student._id) || 0
+    if (average === 0) {
+      average = await calculateStudentAverage(student)
+    }
+
+    // Obtenir le rang
+    const rank = studentRanks.value.get(student._id) || 'N/A'
+
+    // Préparer les données pour le PDF
+    const bulletinData = {
+      student,
+      grades,
+      subjects: subjects.value,
+      studentAverage: average,
+      rank,
+      tenantName: tenantName.value || 'Établissement',
+      period: selectedPeriod.value || 'Année complète',
+      className: student.academicInfo?.className || 'Non définie'
+    }
+
+    // Générer le PDF
+    const { generateStudentBulletinPDF } = await import('@/services/bulletinPdfService')
+    await generateStudentBulletinPDF(bulletinData)
+
+    // Fermer le modal de chargement et afficher succès
+    showConfirmModal.value = false
+    setTimeout(() => {
+      showModal('success', 'PDF généré', `Le bulletin de ${student.firstName} ${student.lastName} a été téléchargé avec succès.`, 'OK')
+    }, 100)
+
+  } catch (error) {
+    console.error('Erreur lors de la génération du PDF:', error)
+    showConfirmModal.value = false
+    setTimeout(() => {
+      showModal('danger', 'Erreur de génération', 'Une erreur s\'est produite lors de la génération du PDF. Veuillez réessayer.', 'OK')
+    }, 100)
+  }
+}
+
+const generateAllBulletinsPDF = async () => {
+  if (filteredStudents.value.length === 0) {
+    showModal('warning', 'Aucun élève', 'Aucun élève trouvé pour la génération des bulletins.', 'OK')
+    return
+  }
+
+  generatingAllPDFs.value = true
+  let successCount = 0
+  let errorCount = 0
+
+  try {
+    showModal('info', 'Génération en cours', `Génération de ${filteredStudents.value.length} bulletins en cours...`, 'Patientez')
+
+    // Générer les PDFs un par un pour éviter de surcharger le navigateur
+    for (const student of filteredStudents.value) {
+      try {
+        // Charger les notes de l'étudiant
+        const grades = await loadStudentGrades(student)
+
+        // Calculer la moyenne si pas déjà calculée
+        let average = studentAverages.value.get(student._id) || 0
+        if (average === 0) {
+          average = await calculateStudentAverage(student)
+        }
+
+        // Obtenir le rang
+        const rank = studentRanks.value.get(student._id) || 'N/A'
+
+        // Préparer les données pour le PDF
+        const bulletinData = {
+          student,
+          grades,
+          subjects: subjects.value,
+          studentAverage: average,
+          rank,
+          tenantName: tenantName.value || 'Établissement',
+          period: selectedPeriod.value || 'Année complète',
+          className: student.academicInfo?.className || 'Non définie'
+        }
+
+        // Générer le PDF
+        const { generateStudentBulletinPDF } = await import('@/services/bulletinPdfService')
+        await generateStudentBulletinPDF(bulletinData)
+        
+        successCount++
+        
+        // Petite pause pour éviter de bloquer l'interface
+        await new Promise(resolve => setTimeout(resolve, 200))
+
+      } catch (error) {
+        console.error(`Erreur génération PDF pour ${student.firstName} ${student.lastName}:`, error)
+        errorCount++
+      }
+    }
+
+    // Afficher le résultat
+    showConfirmModal.value = false
+    setTimeout(() => {
+      if (errorCount === 0) {
+        showModal('success', 'Génération terminée', `${successCount} bulletins ont été générés avec succès!`, 'OK')
+      } else {
+        showModal('warning', 'Génération terminée avec erreurs', `${successCount} bulletins générés avec succès, ${errorCount} erreurs.`, 'OK')
+      }
+    }, 100)
+
+  } catch (error) {
+    console.error('Erreur lors de la génération en masse:', error)
+    showConfirmModal.value = false
+    setTimeout(() => {
+      showModal('danger', 'Erreur de génération', 'Une erreur globale s\'est produite lors de la génération des bulletins.', 'OK')
+    }, 100)
+  } finally {
+    generatingAllPDFs.value = false
+  }
 }
 
 const sendByEmail = (student: Student) => {

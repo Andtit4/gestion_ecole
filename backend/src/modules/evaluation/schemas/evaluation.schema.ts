@@ -38,8 +38,8 @@ export class Evaluation extends Document {
   @Prop({ required: true })
   classId: string;
 
-  @Prop({ required: true })
-  teacherId: string;
+  @Prop()
+  teacherId?: string;
 
   @Prop({ required: true })
   academicYearId: string;
