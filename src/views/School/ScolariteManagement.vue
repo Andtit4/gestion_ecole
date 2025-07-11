@@ -394,6 +394,14 @@
                   >
                     Paiement
                   </button>
+                  <button
+                    v-if="dossier.paiements && dossier.paiements.length > 0"
+                    @click="downloadLastReceipt(dossier)"
+                    class="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300 transition-colors duration-200"
+                    title="Télécharger le reçu du dernier paiement"
+                  >
+                    📄 Reçu
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -523,7 +531,6 @@
               <div class="relative">
                 <select
                   v-model="selectedStudent"
-                  @change="updateStudentInfo"
                   required
                   class="w-full px-4 py-3 rounded-2xl border-0 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 >
@@ -638,38 +645,565 @@
     <!-- Modals additionnels (placeholders pour les autres fonctionnalités) -->
     <!-- Modal de paiement -->
     <div v-if="showPaymentModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 rounded-t-3xl">
           <div class="flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white">Enregistrer un Paiement</h3>
-            <button @click="showPaymentModal = false" class="text-white hover:text-green-200">
+            <h3 class="text-xl font-bold text-white">💰 Enregistrer un Paiement</h3>
+            <button @click="closePaymentModal" class="text-white hover:text-green-200 transition-colors duration-200">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
         </div>
-        <div class="p-6">
-          <p class="text-gray-600 dark:text-gray-400">Fonctionnalité en développement...</p>
+        
+        <div class="p-6 max-h-[calc(90vh-80px)] overflow-y-auto">
+          <form @submit.prevent="submitPayment" class="space-y-6">
+            
+            <!-- Sélection du dossier scolaire -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                📋 Dossier Scolaire <span class="text-red-500">*</span>
+              </label>
+              <select
+                v-model="newPayment.dossierId"
+                required
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200"
+                :disabled="isSubmittingPayment"
+              >
+                <option value="">Sélectionner un dossier...</option>
+                <option 
+                  v-for="dossier in dossiers" 
+                  :key="dossier._id || dossier.id" 
+                  :value="dossier._id || dossier.id"
+                  :disabled="dossier.statutPaiement === 'paye'"
+                >
+                  {{ dossier.nomEleve }} - {{ dossier.numeroMatricule }} ({{ dossier.classe }})
+                  <span v-if="dossier.fraisRestants > 0"> - Reste: {{ formatCurrency(dossier.fraisRestants) }}</span>
+                  <span v-else-if="dossier.statutPaiement === 'paye'"> - ✅ Payé</span>
+                </option>
+              </select>
+              <p v-if="selectedDossierDetails" class="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <strong>{{ selectedDossierDetails.nomEleve }}</strong><br>
+                Frais totaux: {{ formatCurrency(selectedDossierDetails.fraisTotaux) }}<br>
+                Déjà payé: {{ formatCurrency(selectedDossierDetails.fraisPayes) }}<br>
+                <span class="text-green-600 dark:text-green-400 font-semibold">
+                  Reste à payer: {{ formatCurrency(selectedDossierDetails.fraisRestants) }}
+                </span>
+              </p>
+            </div>
+
+            <!-- Montant du paiement -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                💵 Montant du Paiement <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  v-model.number="newPayment.montant"
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  :max="selectedDossierDetails?.fraisRestants || undefined"
+                  placeholder="Montant en FCFA"
+                  class="w-full px-4 py-3 pr-16 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200"
+                  :disabled="isSubmittingPayment || !newPayment.dossierId"
+                />
+                <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm font-medium">
+                  FCFA
+                </span>
+              </div>
+              <div v-if="selectedDossierDetails" class="flex gap-2">
+                <button
+                  type="button"
+                  @click="newPayment.montant = Math.min(50000, selectedDossierDetails.fraisRestants)"
+                  class="px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors duration-200"
+                  :disabled="selectedDossierDetails.fraisRestants < 50000"
+                >
+                  50,000 FCFA
+                </button>
+                <button
+                  type="button"
+                  @click="newPayment.montant = selectedDossierDetails.fraisRestants"
+                  class="px-3 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors duration-200"
+                >
+                  Solde complet
+                </button>
+              </div>
+            </div>
+
+            <!-- Date du paiement -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                📅 Date du Paiement <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="newPayment.datePaiement"
+                type="date"
+                required
+                :max="new Date().toISOString().split('T')[0]"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200"
+                :disabled="isSubmittingPayment"
+              />
+            </div>
+
+            <!-- Méthode de paiement -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                💳 Méthode de Paiement <span class="text-red-500">*</span>
+              </label>
+              <select
+                v-model="newPayment.methodePaiement"
+                required
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200"
+                :disabled="isSubmittingPayment"
+              >
+                <option value="">Sélectionner une méthode...</option>
+                <option v-for="method in paymentMethods" :key="method" :value="method">
+                  {{ method }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Numéro de transaction (optionnel) -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                🔢 Numéro de Transaction <span class="text-gray-400">(optionnel)</span>
+              </label>
+              <input
+                v-model="newPayment.numeroTransaction"
+                type="text"
+                placeholder="Référence ou numéro de transaction"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200"
+                :disabled="isSubmittingPayment"
+              />
+            </div>
+
+            <!-- Remarques (optionnel) -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                💬 Remarques <span class="text-gray-400">(optionnel)</span>
+              </label>
+              <textarea
+                v-model="newPayment.remarques"
+                rows="3"
+                placeholder="Commentaires ou notes sur ce paiement..."
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors duration-200 resize-none"
+                :disabled="isSubmittingPayment"
+              ></textarea>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                type="button"
+                @click="closePaymentModal"
+                class="flex-1 px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 font-medium"
+                :disabled="isSubmittingPayment"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                class="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                :disabled="isSubmittingPayment || !isPaymentFormValid"
+              >
+                <svg v-if="isSubmittingPayment" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                </svg>
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                {{ isSubmittingPayment ? 'Enregistrement...' : 'Enregistrer le Paiement' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
 
     <!-- Modal de gestion des frais -->
     <div v-if="showFeesModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-lg w-full">
+      <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <div class="bg-gradient-to-r from-purple-600 to-violet-600 px-6 py-4 rounded-t-3xl">
           <div class="flex items-center justify-between">
-            <h3 class="text-xl font-bold text-white">Gérer les Frais</h3>
-            <button @click="showFeesModal = false" class="text-white hover:text-purple-200">
+            <h3 class="text-xl font-bold text-white">🧾 Gérer les Frais Scolaires</h3>
+            <button @click="closeFeesModal" class="text-white hover:text-purple-200 transition-colors duration-200">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
         </div>
-        <div class="p-6">
-          <p class="text-gray-600 dark:text-gray-400">Fonctionnalité en développement...</p>
+        
+        <div class="p-6 max-h-[calc(90vh-80px)] overflow-y-auto">
+          
+          <!-- Onglets de navigation -->
+          <div class="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl mb-6">
+            <button
+              @click="feesActiveTab = 'view'"
+              :class="[
+                'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200',
+                feesActiveTab === 'view'
+                  ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              ]"
+            >
+              📋 Voir les Frais
+            </button>
+            <button
+              @click="feesActiveTab = 'add'"
+              :class="[
+                'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200',
+                feesActiveTab === 'add'
+                  ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              ]"
+            >
+              ➕ Ajouter des Frais
+            </button>
+          </div>
+
+          <!-- Onglet: Voir les Frais -->
+          <div v-show="feesActiveTab === 'view'" class="space-y-6">
+            
+            <!-- Sélection du dossier pour voir les frais -->
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                📋 Sélectionner un Dossier
+              </label>
+              <select
+                v-model="selectedFeeDossier"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
+              >
+                <option value="">Choisir un dossier...</option>
+                <option 
+                  v-for="dossier in dossiers" 
+                  :key="dossier._id || dossier.id" 
+                  :value="dossier._id || dossier.id"
+                >
+                  {{ dossier.nomEleve }} - {{ dossier.numeroMatricule }} ({{ dossier.classe }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Affichage des frais du dossier sélectionné -->
+            <div v-if="selectedDossierForFees" class="space-y-4">
+              <div class="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 p-4 rounded-xl border border-purple-200 dark:border-purple-800/30">
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ selectedDossierForFees.nomEleve }}</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span class="text-gray-500 dark:text-gray-400">Frais totaux:</span>
+                    <div class="font-semibold text-purple-600 dark:text-purple-400">{{ formatCurrency(selectedDossierForFees.fraisTotaux) }}</div>
+                  </div>
+                  <div>
+                    <span class="text-gray-500 dark:text-gray-400">Déjà payé:</span>
+                    <div class="font-semibold text-green-600 dark:text-green-400">{{ formatCurrency(selectedDossierForFees.fraisPayes) }}</div>
+                  </div>
+                  <div>
+                    <span class="text-gray-500 dark:text-gray-400">Reste à payer:</span>
+                    <div class="font-semibold text-orange-600 dark:text-orange-400">{{ formatCurrency(selectedDossierForFees.fraisRestants) }}</div>
+                  </div>
+                  <div>
+                    <span class="text-gray-500 dark:text-gray-400">Statut:</span>
+                    <div class="font-semibold" :class="getStatusColor(selectedDossierForFees.statutPaiement)">
+                      {{ getStatutLabel(selectedDossierForFees.statutPaiement) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Liste des frais -->
+              <div class="space-y-3">
+                <h5 class="text-lg font-semibold text-gray-900 dark:text-white">Liste des Frais ({{ selectedDossierForFees.frais.length }})</h5>
+                
+                <div v-if="selectedDossierForFees.frais.length === 0" class="text-center py-8">
+                  <div class="text-gray-400 dark:text-gray-500 text-lg mb-2">💸</div>
+                  <p class="text-gray-500 dark:text-gray-400">Aucun frais configuré pour ce dossier</p>
+                  <button
+                    @click="feesActiveTab = 'add'; newFee.dossierId = selectedDossierForFees._id || selectedDossierForFees.id"
+                    class="mt-3 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+                  >
+                    Ajouter des frais →
+                  </button>
+                </div>
+
+                <div v-else class="space-y-3">
+                  <div
+                    v-for="(frais, index) in selectedDossierForFees.frais"
+                    :key="index"
+                    class="bg-white dark:bg-gray-700 p-4 rounded-xl border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-shadow duration-200"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                                :class="frais.obligatoire ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'">
+                            {{ frais.obligatoire ? '🔴 Obligatoire' : '🔵 Optionnel' }}
+                          </span>
+                          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
+                            {{ frais.type }}
+                          </span>
+                        </div>
+                        <h6 class="font-semibold text-gray-900 dark:text-white">{{ frais.description || frais.type }}</h6>
+                        <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ formatCurrency(frais.montant) }}</p>
+                        <p v-if="frais.dateEcheance" class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          📅 Échéance: {{ formatDate(frais.dateEcheance) }}
+                        </p>
+                      </div>
+                      <div class="flex gap-2">
+                        <button
+                          @click="editFee(frais, index)"
+                          class="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors duration-200"
+                          title="Modifier"
+                        >
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
+                        </button>
+                        <button
+                          @click="deleteFee(frais, index)"
+                          class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200"
+                          title="Supprimer"
+                        >
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Onglet: Ajouter des Frais -->
+          <div v-show="feesActiveTab === 'add'" class="space-y-6">
+            <form @submit.prevent="submitFee" class="space-y-6">
+              
+              <!-- Sélection du dossier -->
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  📋 Dossier Scolaire <span class="text-red-500">*</span>
+                </label>
+                <select
+                  v-model="newFee.dossierId"
+                  required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
+                  :disabled="isSubmittingFee"
+                >
+                  <option value="">Sélectionner un dossier...</option>
+                  <option 
+                    v-for="dossier in dossiers" 
+                    :key="dossier._id || dossier.id" 
+                    :value="dossier._id || dossier.id"
+                  >
+                    {{ dossier.nomEleve }} - {{ dossier.numeroMatricule }} ({{ dossier.classe }})
+                  </option>
+                </select>
+              </div>
+
+              <!-- Type de frais -->
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  🏷️ Type de Frais <span class="text-red-500">*</span>
+                </label>
+                <select
+                  v-model="newFee.type"
+                  required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
+                  :disabled="isSubmittingFee"
+                >
+                  <option value="">Choisir un type...</option>
+                  <option v-for="type in fraisTypes" :key="type" :value="type">
+                    {{ type }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Description -->
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  📝 Description <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="newFee.description"
+                  type="text"
+                  required
+                  placeholder="Description détaillée des frais"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
+                  :disabled="isSubmittingFee"
+                />
+              </div>
+
+              <!-- Montant -->
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  💰 Montant <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                  <input
+                    v-model.number="newFee.montant"
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    placeholder="Montant en FCFA"
+                    class="w-full px-4 py-3 pr-16 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
+                    :disabled="isSubmittingFee"
+                  />
+                  <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm font-medium">
+                    FCFA
+                  </span>
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    @click="newFee.montant = 50000"
+                    class="px-3 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200"
+                  >
+                    50,000
+                  </button>
+                  <button
+                    type="button"
+                    @click="newFee.montant = 100000"
+                    class="px-3 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200"
+                  >
+                    100,000
+                  </button>
+                  <button
+                    type="button"
+                    @click="newFee.montant = 150000"
+                    class="px-3 py-1 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors duration-200"
+                  >
+                    150,000
+                  </button>
+                </div>
+              </div>
+
+              <!-- Caractère obligatoire -->
+              <div class="space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input
+                    v-model="newFee.obligatoire"
+                    type="checkbox"
+                    class="w-5 h-5 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                    :disabled="isSubmittingFee"
+                  />
+                  <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    🔴 Frais obligatoire
+                  </span>
+                </label>
+                <p class="text-xs text-gray-500 dark:text-gray-400 ml-8">
+                  Les frais obligatoires doivent être payés en priorité
+                </p>
+              </div>
+
+              <!-- Date d'échéance -->
+              <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  📅 Date d'Échéance <span class="text-gray-400">(optionnel)</span>
+                </label>
+                <input
+                  v-model="newFee.dateEcheance"
+                  type="date"
+                  :min="new Date().toISOString().split('T')[0]"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors duration-200"
+                  :disabled="isSubmittingFee"
+                />
+              </div>
+
+              <!-- 🐛 Panneau de debug pour la validation -->
+              <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
+                <h6 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🐛 Debug - État de la validation</h6>
+                
+                <!-- État des champs -->
+                <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+                  <div class="flex items-center gap-2">
+                    <span :class="feeFormDebug.dossierId ? 'text-green-600' : 'text-red-600'">
+                      {{ feeFormDebug.dossierId ? '✅' : '❌' }}
+                    </span>
+                    <span class="text-gray-600 dark:text-gray-400">Dossier: {{ newFee.dossierId || 'vide' }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span :class="feeFormDebug.type ? 'text-green-600' : 'text-red-600'">
+                      {{ feeFormDebug.type ? '✅' : '❌' }}
+                    </span>
+                    <span class="text-gray-600 dark:text-gray-400">Type: {{ newFee.type || 'vide' }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span :class="feeFormDebug.description ? 'text-green-600' : 'text-red-600'">
+                      {{ feeFormDebug.description ? '✅' : '❌' }}
+                    </span>
+                    <span class="text-gray-600 dark:text-gray-400">Description: {{ newFee.description || 'vide' }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span :class="feeFormDebug.montant ? 'text-green-600' : 'text-red-600'">
+                      {{ feeFormDebug.montant ? '✅' : '❌' }}
+                    </span>
+                    <span class="text-gray-600 dark:text-gray-400">Montant: {{ newFee.montant }}</span>
+                  </div>
+                </div>
+
+                <!-- Informations sur les dossiers disponibles -->
+                <div class="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs">
+                  <strong>📋 Dossiers disponibles:</strong> {{ dossiers.length }}
+                  <div v-if="dossiers.length > 0" class="mt-1">
+                    <div v-for="(dossier, index) in dossiers.slice(0, 3)" :key="dossier._id || dossier.id" class="truncate">
+                      {{ index + 1 }}. {{ dossier.nomEleve }} (ID: {{ dossier._id || dossier.id }})
+                    </div>
+                    <div v-if="dossiers.length > 3" class="text-gray-500">... et {{ dossiers.length - 3 }} autres</div>
+                  </div>
+                  <div v-else class="text-red-600">❌ Aucun dossier chargé !</div>
+                </div>
+
+                <!-- Données brutes pour debug -->
+                <div class="mb-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded text-xs font-mono">
+                  <strong>🔍 Données brutes:</strong><br>
+                  dossierId: "{{ newFee.dossierId }}" (type: {{ typeof newFee.dossierId }})<br>
+                  type: "{{ newFee.type }}" (type: {{ typeof newFee.type }})<br>
+                  description: "{{ newFee.description }}" (type: {{ typeof newFee.description }})<br>
+                  montant: {{ newFee.montant }} (type: {{ typeof newFee.montant }})
+                </div>
+
+                <!-- Résultat final -->
+                <div class="pt-2 border-t border-gray-200 dark:border-gray-600">
+                  <div class="flex items-center gap-2">
+                    <span :class="feeFormDebug.overall ? 'text-green-600' : 'text-red-600'" class="font-semibold">
+                      {{ feeFormDebug.overall ? '✅ FORMULAIRE VALIDE' : '❌ FORMULAIRE INVALIDE' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Boutons d'action -->
+              <div class="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  @click="closeFeesModal"
+                  class="flex-1 px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 font-medium"
+                  :disabled="isSubmittingFee"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  class="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 text-white hover:from-purple-700 hover:to-violet-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  :disabled="isSubmittingFee || !isFeeFormValid"
+                >
+                  <svg v-if="isSubmittingFee" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                  </svg>
+                  <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  {{ isSubmittingFee ? 'Ajout en cours...' : 'Ajouter les Frais' }}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -677,15 +1211,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useCurrentTenantStore } from '@/stores/currentTenantStore'
+import { fetchTenant } from '@/services/api'
 import scolariteService, { 
   type DossierScolaire, 
   type CreateDossierScolaire, 
   type ScolariteStatistics,
-  type FiltersOptions 
+  type FiltersOptions,
+  type Paiement,
+  type FraisScolaire
 } from '@/services/scolariteService'
-import { getStudents, type Student } from '@/services/studentService'
+import pdfReceiptService from '@/services/pdfReceiptService'
 
 // Simple debounce function
 const debounce = (func: Function, wait: number) => {
@@ -702,12 +1240,49 @@ const debounce = (func: Function, wait: number) => {
 
 // Route and reactive data
 const route = useRoute()
-const tenantId = ref(route.params.tenantId as string)
+const currentTenantStore = useCurrentTenantStore()
+const tenantId = computed(() => currentTenantStore.currentTenantId || route.params.tenantId as string || '')
+
+// Informations de l'établissement (valeurs par défaut, puis récupérées via API)
+const etablissementInfo = ref({
+  nom: 'COMPLEXE SCOLAIRE EXCELLENCE',
+  telephone: '+228 22 XX XX XX',
+  adresse: 'BP 1234, Lomé - TOGO',
+  email: 'contact@excellence-togo.org'
+})
+
+// Fonction pour récupérer les informations de l'établissement
+const loadEtablissementInfo = async () => {
+  try {
+    if (!tenantId.value || tenantId.value === 'undefined' || tenantId.value === 'null') {
+      console.warn('⚠️ ID du tenant manquant, utilisation des valeurs par défaut')
+      return
+    }
+
+    console.log('📍 Récupération des informations de l\'établissement pour tenant:', tenantId.value)
+    
+    const tenantData = await fetchTenant(tenantId.value)
+    
+    // Mettre à jour les informations de l'établissement
+    etablissementInfo.value = {
+      nom: tenantData.name || 'COMPLEXE SCOLAIRE EXCELLENCE',
+      telephone: tenantData.phone || '+228 22 XX XX XX',
+      adresse: tenantData.city ? `${tenantData.city} - TOGO` : 'BP 1234, Lomé - TOGO',
+      email: tenantData.adminEmail || 'contact@excellence-togo.org'
+    }
+
+    console.log('✅ Informations de l\'établissement récupérées:', etablissementInfo.value)
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération des informations de l\'établissement:', error)
+    console.log('📝 Utilisation des valeurs par défaut')
+  }
+}
 
 // Data
 const dossiers = ref<DossierScolaire[]>([])
-const availableStudents = ref<Student[]>([])
-const selectedStudent = ref<Student | null>(null)
+const availableStudents = ref<any[]>([]) // Changed type to any[] as Student type is removed
+const selectedStudent = ref<any | null>(null) // Changed type to any | null
 const statistics = ref<ScolariteStatistics>({
   activeDossiers: 0,
   fraisCollectes: 0,
@@ -758,6 +1333,81 @@ const newDossier = ref<CreateDossierScolaire>({
   remarques: ''
 })
 
+// 💰 Payment form data
+const newPayment = ref({
+  dossierId: '',
+  montant: 0,
+  datePaiement: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
+  methodePaiement: '',
+  numeroTransaction: '',
+  remarques: ''
+})
+
+const isSubmittingPayment = ref(false)
+
+// 🧾 Fees management data
+const feesActiveTab = ref('view') // 'view' or 'add'
+const selectedFeeDossier = ref('')
+const isSubmittingFee = ref(false)
+
+const newFee = ref({
+  dossierId: '',
+  type: '',
+  description: '',
+  montant: 0,
+  obligatoire: false,
+  dateEcheance: ''
+})
+
+// 💰 Payment computed properties
+const selectedDossierDetails = computed(() => {
+  if (!newPayment.value.dossierId) return null
+  return dossiers.value.find(d => (d._id || d.id) === newPayment.value.dossierId) || null
+})
+
+const isPaymentFormValid = computed(() => {
+  return newPayment.value.dossierId && 
+         newPayment.value.montant > 0 && 
+         newPayment.value.datePaiement && 
+         newPayment.value.methodePaiement &&
+         (!selectedDossierDetails.value || newPayment.value.montant <= selectedDossierDetails.value.fraisRestants)
+})
+
+// 🧾 Fees computed properties
+const selectedDossierForFees = computed(() => {
+  if (!selectedFeeDossier.value) return null
+  return dossiers.value.find(d => (d._id || d.id) === selectedFeeDossier.value) || null
+})
+
+const isFeeFormValid = computed(() => {
+  const isValid = newFee.value.dossierId && 
+         newFee.value.type && 
+         newFee.value.description && 
+         newFee.value.montant > 0
+  
+  // Debug - afficher les valeurs dans la console pour comprendre le problème
+  console.log('🧾 Validation des frais:', {
+    dossierId: newFee.value.dossierId,
+    type: newFee.value.type,
+    description: newFee.value.description,
+    montant: newFee.value.montant,
+    isValid
+  })
+  
+  return isValid
+})
+
+// Computed property pour debug affiché dans l'interface
+const feeFormDebug = computed(() => {
+  return {
+    dossierId: !!newFee.value.dossierId,
+    type: !!newFee.value.type,
+    description: !!newFee.value.description,
+    montant: newFee.value.montant > 0,
+    overall: isFeeFormValid.value
+  }
+})
+
 // Computed properties
 const visiblePages = computed(() => {
   const pages = []
@@ -769,6 +1419,23 @@ const visiblePages = computed(() => {
   }
   
   return pages
+})
+
+// ✨ Watcher pour sélection automatique de classe
+watch(selectedStudent, (newStudent) => {
+  if (newStudent) {
+    updateStudentInfo()
+  }
+}, { immediate: true })
+
+// 🐛 Watcher pour debug des frais
+watch(newFee, (newValue) => {
+  console.log('🧾 newFee a changé:', JSON.stringify(newValue, null, 2))
+}, { deep: true })
+
+// 🐛 Watcher spécifique pour dossierId
+watch(() => newFee.value.dossierId, (newId, oldId) => {
+  console.log('🧾 dossierId changé:', { ancien: oldId, nouveau: newId, type: typeof newId })
 })
 
 // Methods
@@ -792,9 +1459,8 @@ const getStatutLabel = (statut: string): string => {
 const loadStudents = async () => {
   try {
     loadingStudents.value = true
-    const students = await getStudents(tenantId.value)
-    // Filtrer uniquement les élèves actifs
-    availableStudents.value = students.filter(student => student.status === 'active')
+    // Utiliser la nouvelle méthode du service scolarité qui récupère les élèves actifs
+    availableStudents.value = await scolariteService.getAvailableStudents(tenantId.value)
   } catch (error) {
     console.error('Erreur lors du chargement des élèves:', error)
     availableStudents.value = []
@@ -848,10 +1514,45 @@ const loadUtilityData = async () => {
 
 const updateStudentInfo = () => {
   if (selectedStudent.value) {
-    newDossier.value.etudiantId = selectedStudent.value.id
+    // Informations de base de l'élève
+    newDossier.value.etudiantId = selectedStudent.value._id || selectedStudent.value.id
     newDossier.value.nomEleve = `${selectedStudent.value.firstName} ${selectedStudent.value.lastName}`
     newDossier.value.numeroMatricule = selectedStudent.value.studentNumber
-    newDossier.value.classe = selectedStudent.value.currentClass || ''
+
+    // ✨ Sélection automatique de la classe de l'élève
+    // Chercher la classe dans différents emplacements possibles
+    let studentClass = ''
+    
+    // Méthode 1: currentClass (structure ancienne)
+    if (selectedStudent.value.currentClass) {
+      studentClass = selectedStudent.value.currentClass
+    }
+    // Méthode 2: academicInfo.className (structure moderne)
+    else if (selectedStudent.value.academicInfo && selectedStudent.value.academicInfo.className) {
+      studentClass = selectedStudent.value.academicInfo.className
+    }
+    // Méthode 3: academicInfo.class (autre variante possible)
+    else if (selectedStudent.value.academicInfo && selectedStudent.value.academicInfo.class) {
+      studentClass = selectedStudent.value.academicInfo.class
+    }
+    // Méthode 4: classe directe
+    else if (selectedStudent.value.classe || selectedStudent.value.class) {
+      studentClass = selectedStudent.value.classe || selectedStudent.value.class
+    }
+
+    // Vérifier que la classe trouvée existe dans les classes disponibles
+    if (studentClass && availableClasses.value.includes(studentClass)) {
+      newDossier.value.classe = studentClass
+      console.log('✅ Classe sélectionnée automatiquement:', studentClass)
+    } else {
+      newDossier.value.classe = ''
+      if (studentClass) {
+        console.warn('⚠️ Classe de l\'élève non trouvée dans les classes disponibles:', studentClass)
+        console.log('Classes disponibles:', availableClasses.value)
+      } else {
+        console.log('ℹ️ Aucune classe définie pour cet élève')
+      }
+    }
   }
 }
 
@@ -864,9 +1565,23 @@ const createDossier = async () => {
   try {
     isCreatingDossier.value = true
     
+    // Validation du tenantId
+    const currentTenantId = tenantId.value
+    if (!currentTenantId || currentTenantId === 'undefined' || currentTenantId === 'null') {
+      console.error('TenantId manquant ou invalide:', currentTenantId)
+      throw new Error('Impossible de créer le dossier : tenant non identifié')
+    }
+    
+    // Validation des données requises
+    const studentId = selectedStudent.value._id || selectedStudent.value.id
+    if (!studentId) {
+      console.error('ID étudiant manquant')
+      throw new Error('ID étudiant manquant')
+    }
+    
     // Préparer les données du dossier
     const dossierData: CreateDossierScolaire = {
-      etudiantId: selectedStudent.value.id,
+      etudiantId: studentId,
       nomEleve: `${selectedStudent.value.firstName} ${selectedStudent.value.lastName}`,
       numeroMatricule: selectedStudent.value.studentNumber,
       classe: newDossier.value.classe,
@@ -874,7 +1589,13 @@ const createDossier = async () => {
       remarques: newDossier.value.remarques
     }
     
-    await scolariteService.createDossier(dossierData, tenantId.value)
+    console.log('Création du dossier avec:', {
+      tenantId: currentTenantId,
+      studentId,
+      dossierData
+    })
+    
+    await scolariteService.createDossier(dossierData, currentTenantId)
     
     // Reset form
     selectedStudent.value = null
@@ -898,6 +1619,8 @@ const createDossier = async () => {
     console.log('Dossier créé avec succès')
   } catch (error) {
     console.error('Erreur lors de la création du dossier:', error)
+    // Afficher un message d'erreur plus explicite à l'utilisateur
+    alert(`Erreur lors de la création du dossier: ${error.message || error}`)
   } finally {
     isCreatingDossier.value = false
   }
@@ -951,9 +1674,262 @@ const refreshData = async () => {
   ])
 }
 
+const closePaymentModal = () => {
+  showPaymentModal.value = false
+  newPayment.value = {
+    dossierId: '',
+    montant: 0,
+    datePaiement: new Date().toISOString().split('T')[0],
+    methodePaiement: '',
+    numeroTransaction: '',
+    remarques: ''
+  }
+}
+
+const submitPayment = async () => {
+  if (!isPaymentFormValid.value) {
+    alert('Veuillez remplir tous les champs requis et vérifier que le montant ne dépasse pas le solde restant.')
+    return
+  }
+
+  try {
+    isSubmittingPayment.value = true
+    const currentTenantId = tenantId.value
+    if (!currentTenantId || currentTenantId === 'undefined' || currentTenantId === 'null') {
+      throw new Error('TenantId manquant ou invalide.')
+    }
+
+    // Récupérer les informations du dossier avant paiement pour le reçu
+    const dossierAvantPaiement = selectedDossierDetails.value
+    if (!dossierAvantPaiement) {
+      throw new Error('Impossible de récupérer les informations du dossier.')
+    }
+
+    const paymentData: Paiement = {
+      montant: newPayment.value.montant,
+      datePaiement: newPayment.value.datePaiement,
+      methodePaiement: newPayment.value.methodePaiement,
+      numeroTransaction: newPayment.value.numeroTransaction || undefined,
+      remarques: newPayment.value.remarques || undefined
+    }
+
+    console.log('Enregistrement du paiement:', {
+      dossierId: newPayment.value.dossierId,
+      paymentData,
+      tenantId: currentTenantId
+    })
+
+    // Enregistrer le paiement et récupérer le dossier mis à jour
+    const dossierMisAJour = await scolariteService.addPaiement(newPayment.value.dossierId, paymentData, currentTenantId)
+
+    console.log('✅ Paiement enregistré avec succès !')
+
+    // 🧾 GÉNÉRATION DU REÇU PDF
+    try {
+      console.log('📄 Génération du reçu PDF...')
+      
+      const numeroRecu = pdfReceiptService.generateReceiptNumber()
+      
+      // Préparer les données pour le reçu
+      const receiptData = {
+        dossier: dossierMisAJour,
+        paiement: {
+          ...paymentData,
+          dateEnregistrement: new Date().toISOString()
+        },
+        numeroRecu,
+        etablissement: {
+          nom: etablissementInfo.value.nom,
+          adresse: etablissementInfo.value.adresse,
+          telephone: etablissementInfo.value.telephone,
+          email: etablissementInfo.value.email
+        }
+      }
+      
+      // Générer et télécharger le reçu PDF
+      await pdfReceiptService.generateReceipt(receiptData)
+      
+      console.log('✅ Reçu PDF généré et téléchargé !')
+      
+      // Fermer le modal et reset le formulaire
+      closePaymentModal()
+      
+      // Recharger les données
+      await Promise.all([
+        loadDossiers(),
+        loadStatistics()
+      ])
+      
+      // Message de succès avec mention du reçu PDF
+      alert(`💰 Paiement enregistré avec succès !\n📄 Reçu N° ${numeroRecu} téléchargé automatiquement.`)
+      
+    } catch (pdfError) {
+      console.error('❌ Erreur lors de la génération du reçu PDF:', pdfError)
+      
+      // Même si le PDF échoue, le paiement est enregistré
+      closePaymentModal()
+      
+      await Promise.all([
+        loadDossiers(),
+        loadStatistics()
+      ])
+      
+      alert(`💰 Paiement enregistré avec succès !\n⚠️ Erreur lors de la génération du reçu PDF. Vous pouvez le télécharger depuis la liste des paiements.`)
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'enregistrement du paiement:', error)
+    alert(`Erreur lors de l'enregistrement du paiement: ${error.message || error}`)
+  } finally {
+    isSubmittingPayment.value = false
+  }
+}
+
+// 🧾 === GESTION DES FRAIS ===
+
+// Méthodes pour la gestion des frais
+const closeFeesModal = () => {
+  showFeesModal.value = false
+  feesActiveTab.value = 'view'
+  selectedFeeDossier.value = ''
+  newFee.value = {
+    dossierId: '',
+    type: '',
+    description: '',
+    montant: 0,
+    obligatoire: false,
+    dateEcheance: ''
+  }
+}
+
+const submitFee = async () => {
+  if (!isFeeFormValid.value) {
+    alert('Veuillez remplir tous les champs requis.')
+    return
+  }
+
+  try {
+    isSubmittingFee.value = true
+    const currentTenantId = tenantId.value
+    if (!currentTenantId || currentTenantId === 'undefined' || currentTenantId === 'null') {
+      throw new Error('TenantId manquant ou invalide.')
+    }
+
+    const feeData: FraisScolaire = {
+      type: newFee.value.type,
+      description: newFee.value.description,
+      montant: newFee.value.montant,
+      obligatoire: newFee.value.obligatoire,
+      dateEcheance: newFee.value.dateEcheance || undefined
+    }
+
+    console.log('Ajout de frais:', {
+      dossierId: newFee.value.dossierId,
+      feeData,
+      tenantId: currentTenantId
+    })
+
+    await scolariteService.addFrais(newFee.value.dossierId, feeData, currentTenantId)
+
+    // Reset form et recharger
+    closeFeesModal()
+    
+    await Promise.all([
+      loadDossiers(),
+      loadStatistics()
+    ])
+    
+    console.log('✅ Frais ajoutés avec succès !')
+    alert('🧾 Frais ajoutés avec succès !')
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'ajout des frais:', error)
+    alert(`Erreur lors de l'ajout des frais: ${error.message || error}`)
+  } finally {
+    isSubmittingFee.value = false
+  }
+}
+
+const editFee = (frais: FraisScolaire, index: number) => {
+  // TODO: Implémenter la modification des frais
+  console.log('Modification des frais:', frais, index)
+  alert('Fonctionnalité de modification en développement...')
+}
+
+const deleteFee = async (frais: FraisScolaire, index: number) => {
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer ces frais : ${frais.description}?`)) {
+    return
+  }
+  
+  // TODO: Implémenter la suppression des frais
+  console.log('Suppression des frais:', frais, index)
+  alert('Fonctionnalité de suppression en développement...')
+}
+
+// Méthodes utilitaires
+const formatDate = (dateString: string): string => {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
+const getStatusColor = (statut: string): string => {
+  const colors = {
+    'paye': 'text-green-600 dark:text-green-400',
+    'partiellement_paye': 'text-orange-600 dark:text-orange-400',
+    'impaye': 'text-red-600 dark:text-red-400'
+  }
+  return colors[statut] || 'text-gray-600 dark:text-gray-400'
+}
+
+// 📄 Fonction pour télécharger un reçu PDF
+const downloadLastReceipt = async (dossier: DossierScolaire) => {
+  try {
+    if (!dossier.paiements || dossier.paiements.length === 0) {
+      alert('Aucun paiement trouvé pour ce dossier.')
+      return
+    }
+
+    // Récupérer le dernier paiement (le plus récent)
+    const dernierPaiement = dossier.paiements[dossier.paiements.length - 1]
+    
+    console.log('📄 Génération du reçu pour le dernier paiement...', dernierPaiement)
+    
+    const numeroRecu = pdfReceiptService.generateReceiptNumber()
+    
+    // Préparer les données pour le reçu
+    const receiptData = {
+      dossier,
+      paiement: {
+        ...dernierPaiement,
+        dateEnregistrement: dernierPaiement.dateEnregistrement || new Date().toISOString()
+      },
+      numeroRecu,
+      etablissement: {
+        nom: etablissementInfo.value.nom,
+        adresse: etablissementInfo.value.adresse,
+        telephone: etablissementInfo.value.telephone,
+        email: etablissementInfo.value.email
+      }
+    }
+    
+    // Générer et télécharger le reçu PDF
+    await pdfReceiptService.generateReceipt(receiptData)
+    
+    console.log('✅ Reçu PDF téléchargé avec succès !')
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de la génération du reçu:', error)
+    alert(`Erreur lors de la génération du reçu: ${error.message || error}`)
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   await Promise.all([
+    loadEtablissementInfo(),
     loadStudents(),
     loadUtilityData(),
     loadDossiers(),

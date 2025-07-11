@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
+  Headers,
   BadRequestException,
 } from '@nestjs/common';
 import { ScolariteService } from './scolarite.service';
@@ -19,26 +19,39 @@ import {
 } from './dto/create-dossier-scolaire.dto';
 import { UpdateDossierScolaireDto } from './dto/update-dossier-scolaire.dto';
 import { StatutPaiement } from './schemas/dossier-scolaire.schema';
-import { TenantGuard } from '../../common/guards/tenant.guard';
-import { CurrentTenant } from '../../common/decorators/tenant.decorator';
+import { Types } from 'mongoose';
 
 @Controller('scolarite')
-@UseGuards(TenantGuard)
 export class ScolariteController {
   constructor(private readonly scolariteService: ScolariteService) {}
+
+  private validateObjectId(id: string): void {
+    if (!id || id === 'undefined' || !Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('ID invalide fourni');
+    }
+  }
+
+  private extractTenantId(headers: any): string {
+    const tenantId = headers['x-tenant-id'];
+    if (!tenantId || typeof tenantId !== 'string') {
+      throw new BadRequestException('Tenant ID requis dans les headers');
+    }
+    return tenantId;
+  }
 
   @Post('dossiers')
   async createDossier(
     @Body() createDossierDto: CreateDossierScolaireDto,
-    @CurrentTenant() tenantId: string
+    @Headers() headers: any
   ) {
+    const tenantId = this.extractTenantId(headers);
     createDossierDto.tenantId = tenantId;
     return await this.scolariteService.createDossier(createDossierDto);
   }
 
   @Get('dossiers')
   async findAllDossiers(
-    @CurrentTenant() tenantId: string,
+    @Headers() headers: any,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '20',
     @Query('classe') classe?: string,
@@ -46,6 +59,7 @@ export class ScolariteController {
     @Query('statutPaiement') statutPaiement?: StatutPaiement,
     @Query('search') search?: string,
   ) {
+    const tenantId = this.extractTenantId(headers);
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
@@ -76,8 +90,9 @@ export class ScolariteController {
   @Get('dossiers/matricule/:matricule')
   async findDossierByMatricule(
     @Param('matricule') matricule: string,
-    @CurrentTenant() tenantId: string
+    @Headers() headers: any
   ) {
+    const tenantId = this.extractTenantId(headers);
     return await this.scolariteService.findByMatricule(tenantId, matricule);
   }
 
@@ -120,19 +135,21 @@ export class ScolariteController {
 
   @Get('statistics')
   async getStatistics(
-    @CurrentTenant() tenantId: string,
+    @Headers() headers: any,
     @Query('anneeScolaire') anneeScolaire?: string
   ) {
+    const tenantId = this.extractTenantId(headers);
     return await this.scolariteService.getStatistics(tenantId, anneeScolaire);
   }
 
   @Get('reports/financial')
   async getFinancialReport(
-    @CurrentTenant() tenantId: string,
+    @Headers() headers: any,
     @Query('anneeScolaire') anneeScolaire: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
+    const tenantId = this.extractTenantId(headers);
     if (!anneeScolaire) {
       throw new BadRequestException('L\'année scolaire est requise');
     }
@@ -150,7 +167,8 @@ export class ScolariteController {
 
   // Endpoints pour obtenir des données utiles pour les formulaires
   @Get('classes')
-  async getAvailableClasses(@CurrentTenant() tenantId: string) {
+  async getAvailableClasses(@Headers() headers: any) {
+    const tenantId = this.extractTenantId(headers);
     // Cette méthode pourrait être étendue pour récupérer les classes depuis le module academic
     return {
       classes: [
@@ -195,7 +213,8 @@ export class ScolariteController {
   }
 
   @Get('annees-scolaires')
-  async getAnneesScolaires(@CurrentTenant() tenantId: string) {
+  async getAnneesScolaires(@Headers() headers: any) {
+    const tenantId = this.extractTenantId(headers);
     // Générer les 3 dernières années et les 2 prochaines
     const currentYear = new Date().getFullYear();
     const annees: string[] = [];

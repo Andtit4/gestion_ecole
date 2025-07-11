@@ -1,4 +1,6 @@
 import api from './api'
+import { fetchClasses, fetchAcademicYears } from './academicService'
+import { fetchStudents } from './studentService'
 
 export interface FraisScolaire {
   type: string
@@ -82,53 +84,20 @@ export interface FiltersOptions {
   search?: string
 }
 
-// Cache pour stocker les domaines des tenants
-const tenantDomainCache = new Map<string, string>()
+// Les fonctions de cache et de résolution de domaine ne sont plus nécessaires
+// car nous utilisons la même approche que teacherService (tenant ID direct)
 
-// Helper pour récupérer le domaine du tenant à partir de l'ID
-const getTenantDomain = async (tenantId: string): Promise<string> => {
-  // Vérifier le cache d'abord
-  if (tenantDomainCache.has(tenantId)) {
-    return tenantDomainCache.get(tenantId)!
-  }
-
-  try {
-    // Récupérer les informations du tenant
-    const response = await fetch(`http://localhost:3000/api/v1/tenants/${tenantId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
-
-    if (!response.ok) {
-      throw new Error(`Erreur lors de la récupération du tenant: ${response.status}`)
-    }
-
-    const tenant = await response.json()
-    const domain = tenant.domain
-
-    // Mettre en cache pour les futures utilisations
-    tenantDomainCache.set(tenantId, domain)
-    
-    return domain
-  } catch (error) {
-    console.error('Erreur lors de la récupération du domaine du tenant:', error)
-    throw new Error('Impossible de récupérer le domaine du tenant')
-  }
-}
-
-// Helper pour créer les headers avec tenant domain
-const createTenantHeaders = async (tenantId: string) => {
-  const tenantDomain = await getTenantDomain(tenantId)
+// Helper pour créer les headers avec tenant ID (même approche que teacherService)
+const createTenantHeaders = (tenantId: string) => {
   return {
     'Content-Type': 'application/json',
-    'X-Tenant-Domain': tenantDomain, // Utiliser le domaine au lieu de l'ID
+    'x-tenant-id': tenantId, // Même approche que teacherService
   }
 }
 
 // Helper pour les requêtes avec tenant
 const makeRequest = async (method: string, url: string, tenantId: string, data?: any) => {
-  const headers = await createTenantHeaders(tenantId)
+  const headers = createTenantHeaders(tenantId) // Plus besoin d'async
   
   const config: RequestInit = {
     method,
@@ -299,20 +268,30 @@ class ScolariteService {
     }
   }
 
-  // Données utilitaires
+  // Données utilitaires - maintenant utilise les vraies données académiques
   async getAvailableClasses(tenantId: string): Promise<{ classes: string[] }> {
     try {
-      const response = await makeRequest('GET', `${this.baseUrl}/utils/classes`, tenantId)
-      return response
+      // Utiliser les vraies classes académiques
+      const academicClasses = await fetchClasses(tenantId)
+      const classNames = academicClasses.map(cls => cls.name)
+      
+      return { classes: classNames }
     } catch (error) {
       console.error('Erreur lors de la récupération des classes:', error)
-      throw error
+      // Fallback vers l'ancien endpoint si nécessaire
+      try {
+        const response = await makeRequest('GET', `${this.baseUrl}/classes`, tenantId)
+        return response
+      } catch (fallbackError) {
+        console.error('Erreur fallback:', fallbackError)
+        throw error
+      }
     }
   }
 
   async getFraisTypes(tenantId: string): Promise<{ types: string[] }> {
     try {
-      const response = await makeRequest('GET', `${this.baseUrl}/utils/frais-types`, tenantId)
+      const response = await makeRequest('GET', `${this.baseUrl}/frais-types`, tenantId)
       return response
     } catch (error) {
       console.error('Erreur lors de la récupération des types de frais:', error)
@@ -322,7 +301,7 @@ class ScolariteService {
 
   async getMethodesPaiement(tenantId: string): Promise<{ methodes: string[] }> {
     try {
-      const response = await makeRequest('GET', `${this.baseUrl}/utils/methodes-paiement`, tenantId)
+      const response = await makeRequest('GET', `${this.baseUrl}/methodes-paiement`, tenantId)
       return response
     } catch (error) {
       console.error('Erreur lors de la récupération des méthodes de paiement:', error)
@@ -332,10 +311,43 @@ class ScolariteService {
 
   async getAnneesScolaires(tenantId: string): Promise<{ annees: string[] }> {
     try {
-      const response = await makeRequest('GET', `${this.baseUrl}/utils/annees-scolaires`, tenantId)
-      return response
+      // Utiliser les vraies années scolaires académiques
+      const academicYears = await fetchAcademicYears(tenantId)
+      const yearNames = academicYears.map(year => year.name)
+      
+      return { annees: yearNames }
     } catch (error) {
       console.error('Erreur lors de la récupération des années scolaires:', error)
+      // Fallback vers l'ancien endpoint si nécessaire  
+      try {
+        const response = await makeRequest('GET', `${this.baseUrl}/annees-scolaires`, tenantId)
+        return response
+      } catch (fallbackError) {
+        console.error('Erreur fallback:', fallbackError)
+        throw error
+      }
+    }
+  }
+
+  // Nouvelle méthode pour récupérer les élèves actifs
+  async getAvailableStudents(tenantId: string) {
+    try {
+      // Utiliser fetchStudents au lieu de getStudents pour avoir la même réponse que SchoolStudentManagement
+      const { fetchStudents } = await import('./studentService')
+      const response = await fetchStudents(tenantId, 1, 1000) // Récupérer jusqu'à 1000 élèves
+      
+      // Filtrer uniquement les élèves actifs
+      const allStudents = response.students || []
+      console.log('Debug: Tous les étudiants récupérés:', allStudents.length)
+      
+      return allStudents.filter(student => {
+        // Gérer différents emplacements du statut
+        const status = student.academicInfo?.status || student.status
+        console.log('Debug: Étudiant', student.firstName, student.lastName, 'status:', status)
+        return status === 'active'
+      })
+    } catch (error) {
+      console.error('Erreur lors de la récupération des élèves:', error)
       throw error
     }
   }

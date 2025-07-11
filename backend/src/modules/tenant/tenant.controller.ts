@@ -172,6 +172,12 @@ export class TenantController {
     return await this.tenantService.getSubscriptionLimits(id);
   }
 
+  @Get(':id/stats')
+  async getTenantStats(@Param('id') id: string) {
+    this.validateObjectId(id);
+    return await this.tenantService.getTenantStats(id);
+  }
+
   @Patch(':id')
   async update(
     @Param('id') id: string,

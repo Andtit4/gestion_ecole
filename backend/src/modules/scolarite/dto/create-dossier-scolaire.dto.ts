@@ -75,7 +75,8 @@ export class CreateDocumentScolaireDto {
 
 export class CreateDossierScolaireDto {
   @IsString()
-  tenantId: string;
+  @IsOptional()
+  tenantId?: string;
 
   @IsMongoId()
   etudiantId: string;

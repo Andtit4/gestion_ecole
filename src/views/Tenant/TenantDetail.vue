@@ -639,24 +639,52 @@ async function loadRealStats(tenantId: string) {
     console.log('🔍 Chargement des statistiques réelles pour tenant:', tenantId)
     
     // Importer le service tenant pour les vraies données
-    const { fetchCompleteTenantStats } = await import('@/services/tenantService')
-    const stats = await fetchCompleteTenantStats(tenantId)
+    const { tenantAdminService } = await import('@/services/tenantService')
     
-    console.log('✅ Statistiques réelles chargées:', stats)
-    realStats.value = stats
+    // Charger les statistiques et les limites en parallèle
+    const [stats, limits] = await Promise.all([
+      tenantAdminService.getTenantStats(tenantId),
+      tenantAdminService.getTenantLimits(tenantId)
+    ])
+    
+    console.log('✅ Statistiques réelles chargées:', { stats, limits })
+    
+    // Combiner les données pour former les statistiques complètes
+    realStats.value = {
+      studentsCount: stats.studentsCount,
+      teachersCount: stats.teachersCount,
+      classesCount: stats.classesCount,
+      subjectsCount: stats.subjectsCount,
+      evaluationsCount: stats.evaluationsCount,
+      lastActivity: stats.lastActivity,
+      maxStudents: limits.maxStudents,
+      maxTeachers: limits.maxTeachers,
+      currentStudents: limits.currentStudents,
+      currentTeachers: limits.currentTeachers,
+      usagePercentage: limits.usagePercentage,
+      daysUntilExpiry: tenant.value?.subscription?.endDate 
+        ? Math.max(0, Math.ceil((new Date(tenant.value.subscription.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+        : 365
+    }
   } catch (error) {
     console.error('❌ Erreur lors du chargement des statistiques réelles:', error)
     
-    // En cas d'erreur, essayer de charger les données partielles
+    // En cas d'erreur, essayer de charger au moins les statistiques de base
     try {
-      const { fetchRealTenantStats } = await import('@/services/tenantService')
-      const partialStats = await fetchRealTenantStats(tenantId)
+      const { tenantAdminService } = await import('@/services/tenantService')
+      const partialStats = await tenantAdminService.getTenantStats(tenantId)
       
       console.log('⚡ Statistiques partielles chargées:', partialStats)
       realStats.value = {
         ...partialStats,
         maxStudents: 500, // valeurs par défaut
         maxTeachers: 20,
+        currentStudents: partialStats.studentsCount || 0,
+        currentTeachers: partialStats.teachersCount || 0,
+        usagePercentage: {
+          students: Math.round((partialStats.studentsCount || 0) / 500 * 100),
+          teachers: Math.round((partialStats.teachersCount || 0) / 20 * 100)
+        },
         daysUntilExpiry: 365
       }
     } catch (partialError) {
