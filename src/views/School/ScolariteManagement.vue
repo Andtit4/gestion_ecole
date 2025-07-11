@@ -794,30 +794,102 @@
               ></textarea>
             </div>
 
-            <!-- Boutons d'action -->
-            <div class="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <!-- Actions du modal -->
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
-                type="button"
                 @click="closePaymentModal"
-                class="flex-1 px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 font-medium"
-                :disabled="isSubmittingPayment"
+                type="button"
+                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
               >
                 Annuler
               </button>
               <button
-                type="submit"
-                class="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                :disabled="isSubmittingPayment || !isPaymentFormValid"
+                @click="submitPayment"
+                :disabled="!isPaymentFormValid || isSubmittingPayment || isInitializingOnlinePayment"
+                type="button"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
-                <svg v-if="isSubmittingPayment" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                <svg v-if="isSubmittingPayment || isInitializingOnlinePayment" class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                {{ isSubmittingPayment ? 'Enregistrement...' : 'Enregistrer le Paiement' }}
+                <span v-if="isInitializingOnlinePayment">
+                  🔄 Initialisation {{ newPayment.methodePaiement }}...
+                </span>
+                <span v-else-if="isSubmittingPayment">
+                  💰 Enregistrement...
+                </span>
+                <span v-else>
+                  {{ requiresCinetPay(newPayment.methodePaiement) ? '🔄 Procéder au paiement' : '💰 Enregistrer le paiement' }}
+                </span>
               </button>
             </div>
+
+            <!-- Information sur les paiements en ligne -->
+            <div v-if="requiresCinetPay(newPayment.methodePaiement)" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div class="flex items-start gap-2">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-sm text-blue-800 dark:text-blue-200">
+                  <p class="font-medium mb-1">💳 Paiement sécurisé avec {{ newPayment.methodePaiement }}</p>
+                  <p class="text-xs">
+                    Vous serez redirigé vers la plateforme CinetPay pour effectuer votre paiement de manière sécurisée. 
+                    Le paiement sera automatiquement confirmé une fois la transaction validée.
+                  </p>
+                  <p class="text-xs mt-1 text-blue-600 dark:text-blue-300">
+                    ⚡ Paiement en temps réel • 🔒 100% sécurisé • 📱 Compatible mobile
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Champs spécifiques pour les paiements mobiles (Flooz, Tmoney) -->
+            <div v-if="requiresCinetPay(newPayment.methodePaiement)" class="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div class="flex items-center gap-2 mb-3">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Informations de paiement {{ newPayment.methodePaiement }}
+                </h4>
+              </div>
+
+              <!-- Numéro de téléphone à créditer -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  📱 Numéro de téléphone à créditer <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="newPayment.telephonePaiement"
+                  type="tel"
+                  placeholder="+228 XX XX XX XX"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
+                  required
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Numéro {{ newPayment.methodePaiement }} qui sera débité pour ce paiement
+                </p>
+              </div>
+
+              <!-- Email de confirmation -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  📧 Email de confirmation <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="newPayment.emailPaiement"
+                  type="email"
+                  placeholder="exemple@email.com"
+                  class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors"
+                  required
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Adresse email pour recevoir la confirmation de paiement
+                </p>
+              </div>
+            </div>
+
+            <!-- Numéro de transaction -->
           </form>
         </div>
       </div>
@@ -939,7 +1011,10 @@
                       <div class="flex-1">
                         <div class="flex items-center gap-2 mb-2">
                           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                                :class="frais.obligatoire ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'">
+                                :class="{
+                                  'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': frais.obligatoire,
+                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': !frais.obligatoire
+                                }">
                             {{ frais.obligatoire ? '🔴 Obligatoire' : '🔵 Optionnel' }}
                           </span>
                           <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200">
@@ -1215,6 +1290,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCurrentTenantStore } from '@/stores/currentTenantStore'
 import { fetchTenant } from '@/services/api'
+import cinetpayService from '@/services/cinetpayService'
 import scolariteService, { 
   type DossierScolaire, 
   type CreateDossierScolaire, 
@@ -1340,10 +1416,17 @@ const newPayment = ref({
   datePaiement: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
   methodePaiement: '',
   numeroTransaction: '',
-  remarques: ''
+  remarques: '',
+  // Nouveaux champs pour les paiements mobiles
+  telephonePaiement: '',
+  emailPaiement: ''
 })
 
 const isSubmittingPayment = ref(false)
+
+// 🔄 Variables pour les paiements en ligne (CinetPay)
+const isInitializingOnlinePayment = ref(false)
+const onlinePaymentUrl = ref('')
 
 // 🧾 Fees management data
 const feesActiveTab = ref('view') // 'view' or 'add'
@@ -1366,11 +1449,20 @@ const selectedDossierDetails = computed(() => {
 })
 
 const isPaymentFormValid = computed(() => {
-  return newPayment.value.dossierId && 
+  const basicValidation = newPayment.value.dossierId && 
          newPayment.value.montant > 0 && 
          newPayment.value.datePaiement && 
          newPayment.value.methodePaiement &&
          (!selectedDossierDetails.value || newPayment.value.montant <= selectedDossierDetails.value.fraisRestants)
+
+  // Validation supplémentaire pour les paiements mobiles
+  if (requiresCinetPay(newPayment.value.methodePaiement)) {
+    return basicValidation && 
+           newPayment.value.telephonePaiement.trim() !== '' &&
+           newPayment.value.emailPaiement.trim() !== ''
+  }
+
+  return basicValidation
 })
 
 // 🧾 Fees computed properties
@@ -1496,19 +1588,26 @@ const loadStatistics = async () => {
 
 const loadUtilityData = async () => {
   try {
-    const [classes, annees, types, methods] = await Promise.all([
+    // Définir les méthodes de paiement spécifiques demandées
+    const specificPaymentMethods = ['Espèces', 'Flooz', 'Tmoney', 'Paypal', 'Carte bancaire']
+    
+    const [classes, annees, types] = await Promise.all([
       scolariteService.getAvailableClasses(tenantId.value),
       scolariteService.getAnneesScolaires(tenantId.value),
-      scolariteService.getFraisTypes(tenantId.value),
-      scolariteService.getMethodesPaiement(tenantId.value)
+      scolariteService.getFraisTypes(tenantId.value)
     ])
 
     availableClasses.value = classes.classes
     availableAnnees.value = annees.annees
     fraisTypes.value = types.types
-    paymentMethods.value = methods.methodes
+    // Utiliser les méthodes de paiement spécifiques au lieu de l'API
+    paymentMethods.value = specificPaymentMethods
+    
+    console.log('✅ Méthodes de paiement configurées:', paymentMethods.value)
   } catch (error) {
     console.error('Erreur lors du chargement des données utilitaires:', error)
+    // En cas d'erreur, utiliser au moins les méthodes de paiement par défaut
+    paymentMethods.value = ['Espèces', 'Flooz', 'Tmoney', 'Paypal', 'Carte bancaire']
   }
 }
 
@@ -1682,7 +1781,9 @@ const closePaymentModal = () => {
     datePaiement: new Date().toISOString().split('T')[0],
     methodePaiement: '',
     numeroTransaction: '',
-    remarques: ''
+    remarques: '',
+    telephonePaiement: '',
+    emailPaiement: ''
   }
 }
 
@@ -1699,11 +1800,81 @@ const submitPayment = async () => {
       throw new Error('TenantId manquant ou invalide.')
     }
 
-    // Récupérer les informations du dossier avant paiement pour le reçu
-    const dossierAvantPaiement = selectedDossierDetails.value
-    if (!dossierAvantPaiement) {
-      throw new Error('Impossible de récupérer les informations du dossier.')
+    // 🔄 Vérifier si la méthode de paiement nécessite CinetPay
+    if (requiresCinetPay(newPayment.value.methodePaiement)) {
+      console.log('💳 Méthode de paiement en ligne détectée:', newPayment.value.methodePaiement)
+      
+      // Vérifier la configuration CinetPay
+      if (!cinetpayService.isConfigured()) {
+        alert('⚠️ CinetPay n\'est pas configuré. Veuillez contacter l\'administrateur pour configurer les clés API.')
+        return
+      }
+
+      // Récupérer les détails du dossier sélectionné
+      const dossierDetails = selectedDossierDetails.value
+      if (!dossierDetails) {
+        throw new Error('Dossier non trouvé')
+      }
+
+      // Extraire nom et prénom de l'élève
+      const { nom, prenom } = extractStudentNames(dossierDetails.nomEleve)
+
+      try {
+        isInitializingOnlinePayment.value = true
+        
+        // Préparer les informations de l'élève
+        const studentInfo = {
+          nom,
+          prenom,
+          matricule: dossierDetails.numeroMatricule,
+          classe: dossierDetails.classe,
+          anneeScolaire: dossierDetails.anneeScolaire,
+          // Utiliser les champs saisis par l'utilisateur pour les paiements mobiles
+          email: newPayment.value.emailPaiement || `${dossierDetails.numeroMatricule}@${etablissementInfo.value.nom.toLowerCase().replace(/\s+/g, '')}.tg`,
+          telephone: newPayment.value.telephonePaiement || '+22800000000'
+        }
+
+        // Initialiser le paiement CinetPay
+        const paymentResponse = await cinetpayService.initiatePayment(
+          newPayment.value.montant,
+          `Paiement frais scolaires - ${studentInfo.prenom} ${studentInfo.nom} - ${studentInfo.classe}`,
+          newPayment.value.methodePaiement,
+          studentInfo,
+          {
+            nom: etablissementInfo.value.nom,
+            adresse: etablissementInfo.value.adresse
+          }
+        )
+
+        if (paymentResponse.data?.payment_url) {
+          console.log('✅ URL de paiement CinetPay générée:', paymentResponse.data.payment_url)
+          
+          // Rediriger vers le portail de paiement CinetPay
+          window.location.href = paymentResponse.data.payment_url
+          
+          // Note: Le paiement sera confirmé par webhook/callback
+          // Pour l'instant, fermer le modal car l'utilisateur sera redirigé
+          closePaymentModal()
+          
+          alert(`🔄 Redirection vers ${newPayment.value.methodePaiement} en cours...\n\nVous allez être redirigé vers la plateforme de paiement sécurisée.`)
+          
+          return // Sortir de la fonction car on redirige
+          
+        } else {
+          throw new Error('URL de paiement non reçue de CinetPay')
+        }
+        
+      } catch (cinetpayError) {
+        console.error('❌ Erreur CinetPay:', cinetpayError)
+        alert(`Erreur lors de l'initialisation du paiement ${newPayment.value.methodePaiement}:\n${cinetpayError.message || cinetpayError}`)
+        return
+      } finally {
+        isInitializingOnlinePayment.value = false
+      }
     }
+
+    // 💰 PAIEMENT TRADITIONNEL (Espèces, Paypal)
+    console.log('💰 Traitement du paiement traditionnel...')
 
     const paymentData: Paiement = {
       montant: newPayment.value.montant,
@@ -1719,8 +1890,11 @@ const submitPayment = async () => {
       tenantId: currentTenantId
     })
 
-    // Enregistrer le paiement et récupérer le dossier mis à jour
-    const dossierMisAJour = await scolariteService.addPaiement(newPayment.value.dossierId, paymentData, currentTenantId)
+    const dossierMisAJour = await scolariteService.addPaiement(
+      newPayment.value.dossierId,
+      paymentData,
+      currentTenantId
+    )
 
     console.log('✅ Paiement enregistré avec succès !')
 
@@ -1936,4 +2110,39 @@ onMounted(async () => {
     loadStatistics()
   ])
 })
+
+// 💳 Fonction pour vérifier si la méthode de paiement nécessite CinetPay
+const requiresCinetPay = (methodePaiement: string): boolean => {
+  const onlineMethods = ['flooz', 'tmoney', 'carte bancaire']
+  return onlineMethods.includes(methodePaiement.toLowerCase())
+}
+
+// 💳 Fonction pour extraire nom et prénom de l'élève
+const extractStudentNames = (nomComplet: string): { nom: string; prenom: string } => {
+  if (!nomComplet || nomComplet.trim() === '') {
+    return {
+      prenom: 'Prenom',
+      nom: 'Nom'
+    }
+  }
+  
+  const parts = nomComplet.trim().split(' ').filter(part => part.length > 0)
+  
+  if (parts.length === 0) {
+    return {
+      prenom: 'Prenom',
+      nom: 'Nom'
+    }
+  } else if (parts.length === 1) {
+    return {
+      prenom: parts[0],
+      nom: 'Nom'
+    }
+  } else {
+    return {
+      prenom: parts[0],
+      nom: parts.slice(1).join(' ')
+    }
+  }
+}
 </script> 
