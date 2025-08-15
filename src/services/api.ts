@@ -101,7 +101,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 // GET request
-export async function get<T>(endpoint: string): Promise<ApiResponse<T>> {
+export async function get<T>(endpoint: string, p0: { headers: { Authorization: string } }): Promise<ApiResponse<T>> {
   console.log(`GET ${API_BASE_URL}${endpoint}`)
   
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {

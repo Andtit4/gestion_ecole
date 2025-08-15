@@ -779,7 +779,25 @@ const handleSubmit = async () => {
 
     console.log('Données à envoyer:', JSON.stringify(submitData, null, 2))
     console.log('Pour l\'établissement:', effectiveTenantName.value)
-    emit('submit', submitData)
+
+    try {
+      const tenantId = localStorage.getItem('tenantId');  // Or however tenantId is obtained
+      const createUserDto = {
+        ...submitData,
+        role: 'STUDENT',  // Ensure role is set to STUDENT
+        tenantId: tenantId,
+      };
+      const response = await api.post('/users', createUserDto, {
+        headers: { 'x-tenant-id': tenantId },
+      });
+      console.log('Student account created:', response.data);
+      // Handle success, e.g., close modal or show message
+      emit('submit', submitData)
+    } catch (error) {
+      console.error('Error creating student account:', error);
+      // Handle error, e.g., show error message
+      alert('Erreur lors de la création du compte élève.')
+    }
   } finally {
     loading.value = false
   }

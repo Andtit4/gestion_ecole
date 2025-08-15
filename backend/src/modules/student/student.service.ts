@@ -9,23 +9,29 @@ import { Model, Types } from 'mongoose';
 import { Student, StudentDocument } from './schemas/student.schema';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/schemas/user.schema';
 
 @Injectable()
 export class StudentService {
   constructor(
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
+    private usersService: UsersService,
   ) {}
 
   private validateObjectId(id: string): void {
-    if (!id || id === 'undefined' || !Types.ObjectId.isValid(id)) {
-      throw new BadRequestException('ID invalide fourni');
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('ID invalide');
     }
   }
 
   async create(
     createStudentDto: CreateStudentDto,
     tenantId: string,
-  ): Promise<StudentDocument> {
+  ): Promise<{
+    student: StudentDocument;
+    userCredentials?: { email: string; password: string };
+  }> {
     this.validateObjectId(tenantId);
 
     try {
@@ -61,7 +67,36 @@ export class StudentService {
       };
 
       const student = new this.studentModel(studentData);
-      return await student.save();
+      const savedStudent = await student.save();
+
+      // Créer automatiquement un compte utilisateur pour l'étudiant
+      let userCredentials: { email: string; password: string } | undefined = undefined;
+      try {
+        const userResult = await this.usersService.quickCreateUser({
+          email: createStudentDto.email,
+          firstName: createStudentDto.firstName,
+          lastName: createStudentDto.lastName,
+          role: UserRole.STUDENT,
+          tenantId,
+          phone: createStudentDto.phone,
+          department: createStudentDto.academicInfo.className, // Utiliser la classe comme département
+        });
+
+        if (userResult.success && userResult.credentials) {
+          userCredentials = userResult.credentials;
+        }
+      } catch (userError) {
+        console.error(
+          'Erreur lors de la création du compte utilisateur:',
+          userError,
+        );
+        // On continue même si la création du compte utilisateur échoue
+      }
+
+      return {
+        student: savedStudent,
+        userCredentials,
+      };
     } catch (error) {
       if (error instanceof ConflictException) {
         throw error;
@@ -325,7 +360,7 @@ export class StudentService {
     for (let i = 0; i < studentsData.length; i++) {
       try {
         const student = await this.create(studentsData[i], tenantId);
-        success.push(student);
+        success.push(student.student);
       } catch (error) {
         errors.push({
           index: i,

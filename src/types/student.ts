@@ -86,7 +86,18 @@ export interface CreateStudentDto {
   };
 }
 
-export interface UpdateStudentDto extends Partial<CreateStudentDto> {}
+export interface StudentLoginDto {
+  email: string;
+  password: string;
+}
+
+export interface StudentLoginResponse {
+  success: boolean;
+  user?: string;
+  message?: string;
+}
+
+// export interface UpdateStudentDto extends Partial<CreateStudentDto> {}
 
 export interface StudentListResponse {
   students: Student[];

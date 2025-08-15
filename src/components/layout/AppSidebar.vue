@@ -233,6 +233,7 @@ import {
   PlugInIcon,
   UserGroupIcon,
   SettingsIcon,
+  VideoIcon,
 } from "../../icons";
 import SidebarWidget from "./SidebarWidget.vue";
 import BoxCubeIcon from "@/icons/BoxCubeIcon.vue";
@@ -348,6 +349,12 @@ const menuGroups = [
         icon: DocsIcon,
         name: "Bulletins Scolaires",
         path: "/bulletins",
+      },
+      {
+        icon: VideoIcon,
+        name: "Cours en Ligne",
+        path: "/school/685dac5e89d735cac82bcae7/online-courses",
+        new: true
       },
     ],
   },

@@ -7,10 +7,13 @@ import type {
   SuperAdmin
 } from '../types/tenant'
 
+import type  {Student, StudentLoginResponse } from '../types/student'
+
 export interface AuthState {
   isAuthenticated: boolean
   currentSchool: Tenant | null
   superAdmin: SuperAdmin | null
+  student: Student | null
   isSuperAdmin: boolean
   token?: string
 }
@@ -27,6 +30,7 @@ class AuthService {
     isAuthenticated: false,
     currentSchool: null,
     superAdmin: null,
+    student: null,
     isSuperAdmin: false
   }
 
@@ -61,6 +65,16 @@ class AuthService {
 
       return response.data
     } catch (error) {
+
+      const testIfStudent = await post<StudentLoginResponse>('/students/auth/login', {
+        email: credentials.username.trim(),
+        password: credentials.password
+      })
+
+      if (testIfStudent.data.success ) {
+        console.log("student",testIfStudent.data)
+        // await this.setStudentAuthenticated(testIfStudent.data.student)
+      }
       console.error('Erreur lors de la connexion:', error)
       throw error
     }

@@ -323,6 +323,14 @@
        @close="showCreateModal = false"
        @submit="onStudentCreated"
      />
+
+     <!-- Modal des identifiants générés -->
+     <CredentialsModal
+       v-if="generatedCredentials"
+       :show="showCredentialsModal"
+       :credentials="generatedCredentials"
+       @close="showCredentialsModal = false"
+     />
   </div>
 </template>
 
@@ -333,6 +341,15 @@ import { fetchStudents, deleteStudent as deleteStudentApi, createStudent } from 
 import type { Student, CreateStudentDto } from '@/types/student'
 import TenantSelector from '@/components/tenant/TenantSelector.vue'
 import AddStudentModal from '@/components/forms/AddStudentModal.vue'
+import CredentialsModal from '@/components/common/CredentialsModal.vue'
+
+// Interface pour la réponse de création d'étudiant
+interface CreateStudentResponse {
+  success: boolean
+  student: Student
+  userCredentials?: { email: string; password: string }
+  message: string
+}
 
 const tenantStore = useCurrentTenantStore()
 
@@ -340,6 +357,8 @@ const tenantStore = useCurrentTenantStore()
 const students = ref<Student[]>([])
 const loading = ref(false)
 const showCreateModal = ref(false)
+const showCredentialsModal = ref(false)
+const generatedCredentials = ref<{ email: string; password: string } | null>(null)
 
 // Filtres
 const searchQuery = ref('')
@@ -494,16 +513,22 @@ async function onStudentCreated(studentData: CreateStudentDto) {
     loading.value = true
     
     // Appeler l'API pour créer l'élève
-    const newStudent = await createStudent(studentData, tenantStore.currentTenantId)
-    console.log('Élève créé avec succès:', newStudent)
+    const response: CreateStudentResponse = await createStudent(studentData, tenantStore.currentTenantId)
+    console.log('Élève créé avec succès:', response)
     
-    // Fermer le modal
+    // Fermer le modal de création
     showCreateModal.value = false
     
     // Recharger la liste des élèves
     await refreshData()
     
-    alert('Élève créé avec succès !')
+    // Afficher les identifiants si disponibles
+    if (response.userCredentials) {
+      generatedCredentials.value = response.userCredentials
+      showCredentialsModal.value = true
+    } else {
+      alert('Élève créé avec succès ! (Erreur lors de la génération des identifiants)')
+    }
   } catch (error) {
     console.error('Erreur lors de la création de l\'élève:', error)
     alert(`Erreur lors de la création de l'élève: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)

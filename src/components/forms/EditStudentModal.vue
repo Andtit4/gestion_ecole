@@ -215,6 +215,140 @@
             </div>
           </div>
 
+          <!-- Gestion du mot de passe -->
+          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800/30">
+            <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Gestion du mot de passe
+            </h4>
+            
+            <div class="space-y-4">
+              <!-- Statut du compte utilisateur -->
+              <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-3">
+                  <div class="p-2 rounded-lg" :class="{
+                    'bg-green-100 dark:bg-green-900/30': userAccountStatus.exists,
+                    'bg-red-100 dark:bg-red-900/30': !userAccountStatus.exists
+                  }">
+                    <svg v-if="userAccountStatus.exists" class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <svg v-else class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-white">
+                      {{ userAccountStatus.exists ? 'Compte utilisateur actif' : 'Aucun compte utilisateur' }}
+                    </p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                      {{ userAccountStatus.exists ? `Rôle: ${userAccountStatus.role}` : 'L\'étudiant ne peut pas se connecter' }}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  v-if="userAccountStatus.exists"
+                  @click="checkUserAccount"
+                  :disabled="checkingUserAccount"
+                  class="px-3 py-1.5 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <span v-if="checkingUserAccount" class="flex items-center gap-1">
+                    <svg class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Vérification...
+                  </span>
+                  <span v-else>Actualiser</span>
+                </button>
+              </div>
+
+              <!-- Actions de mot de passe -->
+              <div v-if="userAccountStatus.exists" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- Générer un nouveau mot de passe -->
+                <button
+                  @click="generateNewPassword"
+                  :disabled="passwordActionLoading"
+                  class="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span v-if="passwordActionLoading && currentAction === 'generate'">
+                    Génération...
+                  </span>
+                  <span v-else>Générer un nouveau mot de passe</span>
+                </button>
+
+                <!-- Réinitialiser le mot de passe -->
+                <button
+                  @click="resetPassword"
+                  :disabled="passwordActionLoading"
+                  class="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  <span v-if="passwordActionLoading && currentAction === 'reset'">
+                    Réinitialisation...
+                  </span>
+                  <span v-else>Réinitialiser le mot de passe</span>
+                </button>
+              </div>
+
+              <!-- Créer un compte utilisateur -->
+              <div v-else class="text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  Cet étudiant n'a pas de compte utilisateur pour se connecter au système.
+                </p>
+                <button
+                  @click="createUserAccount"
+                  :disabled="passwordActionLoading"
+                  class="inline-flex items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  <span v-if="passwordActionLoading && currentAction === 'create'">
+                    Création...
+                  </span>
+                  <span v-else>Créer un compte utilisateur</span>
+                </button>
+              </div>
+
+              <!-- Nouveau mot de passe affiché -->
+              <div v-if="newPassword" class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/30 rounded-lg">
+                <div class="flex items-center gap-2 mb-2">
+                  <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z"/>
+                  </svg>
+                  <span class="font-medium text-yellow-800 dark:text-yellow-200">Nouveau mot de passe généré</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input
+                    :value="newPassword"
+                    type="password"
+                    readonly
+                    class="flex-1 rounded-lg border border-yellow-300 px-3 py-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-100 font-mono text-sm"
+                  />
+                  <button
+                    @click="copyPassword"
+                    class="p-2 text-yellow-600 hover:bg-yellow-100 dark:text-yellow-400 dark:hover:bg-yellow-900/30 rounded-lg transition-colors"
+                    title="Copier le mot de passe"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                </div>
+                <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
+                  ⚠️ Notez ce mot de passe, il ne sera plus affiché après fermeture de cette fenêtre.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Actions -->
           <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
             <button
@@ -244,11 +378,22 @@
       </div>
     </div>
   </div>
+
+<!-- Notifications -->
+<NotificationToast
+  v-if="notification.show"
+  :title="notification.title"
+  :message="notification.message"
+  :type="notification.type"
+  @close="closeNotification"
+/>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, computed, watch } from 'vue'
 import type { Student, UpdateStudentDto } from '@/types/student'
+import userPasswordService from '@/services/userPasswordService'
+import NotificationToast from '@/components/common/NotificationToast.vue'
 
 interface Props {
   isOpen: boolean
@@ -266,10 +411,191 @@ const emit = defineEmits<{
 
 const loading = ref(false)
 
+// État pour la gestion des mots de passe
+const userAccountStatus = ref<{
+  exists: boolean
+  userId?: string
+  role?: string
+}>({
+  exists: false
+})
+
+const checkingUserAccount = ref(false)
+const passwordActionLoading = ref(false)
+const currentAction = ref<'generate' | 'reset' | 'create' | null>(null)
+const newPassword = ref<string>('')
+
+// État pour la gestion des notifications
+const notification = reactive({
+  show: false,
+  title: '',
+  message: '',
+  type: 'info' as 'success' | 'danger' | 'warning' | 'info'
+})
+
 // Computed pour le tenant effectif
 const effectiveTenantName = computed(() => {
   return props.tenantName || 'Établissement'
 })
+
+// Vérifier le statut du compte utilisateur
+const checkUserAccount = async () => {
+  if (!props.student?.email || !props.tenantId) return
+  
+  checkingUserAccount.value = true
+  try {
+    const result = await userPasswordService.checkUserExists(props.student.email, props.tenantId)
+    userAccountStatus.value = result
+  } catch (error) {
+    console.error('❌ Erreur lors de la vérification du compte utilisateur:', error)
+    userAccountStatus.value = { exists: false }
+  } finally {
+    checkingUserAccount.value = false
+  }
+}
+
+// Générer un nouveau mot de passe
+const generateNewPassword = async () => {
+  if (!userAccountStatus.value.userId || !props.tenantId) return
+  
+  passwordActionLoading.value = true
+  currentAction.value = 'generate'
+  
+  try {
+    const result = await userPasswordService.generateNewPassword(userAccountStatus.value.userId, props.tenantId)
+    newPassword.value = result.newPassword
+    showNotification('Succès', 'Nouveau mot de passe généré avec succès', 'success')
+  } catch (error) {
+    console.error('❌ Erreur lors de la génération du mot de passe:', error)
+    showNotification('Erreur', `Erreur lors de la génération: ${error instanceof Error ? error.message : String(error)}`, 'danger')
+  } finally {
+    passwordActionLoading.value = false
+    currentAction.value = null
+  }
+}
+
+// Réinitialiser le mot de passe
+const resetPassword = async () => {
+  if (!props.student?.email || !props.tenantId) return
+  
+  passwordActionLoading.value = true
+  currentAction.value = 'reset'
+  
+  try {
+    const result = await userPasswordService.resetStudentPasswordByEmail(props.student.email, props.tenantId)
+    if (result.newPassword) {
+      newPassword.value = result.newPassword
+    }
+    showNotification('Succès', 'Mot de passe réinitialisé avec succès', 'success')
+  } catch (error) {
+    console.error('❌ Erreur lors de la réinitialisation du mot de passe:', error)
+    showNotification('Erreur', `Erreur lors de la réinitialisation: ${error instanceof Error ? error.message : String(error)}`, 'danger')
+  } finally {
+    passwordActionLoading.value = false
+    currentAction.value = null
+  }
+}
+
+// Créer un compte utilisateur
+const createUserAccount = async () => {
+  if (!props.student?.email || !props.tenantId) return
+  
+  passwordActionLoading.value = true
+  currentAction.value = 'create'
+  
+  try {
+    // Utiliser le service de création d'utilisateur existant
+    const { createUser } = await import('@/services/userService')
+    
+    /* email: string;
+          firstName: string;
+          lastName: string;
+          role: UserRole;
+          tenantId: string;
+          password?: string;
+          phone?: string;
+          department?: string; */
+    const userData = {
+      email: props.student.email,
+      tenantId: props.tenantId,
+      // role: 'student' as const,
+      password: generateSecurePassword(), // Générer un mot de passe sécurisé
+      firstName: props.student.firstName,
+      lastName: props.student.lastName,
+      role: 'student' as const,
+      studentId: props.student._id
+    }
+    console.log("User data", userData)
+    const result = await createUser(userData, props.tenantId)
+    console.log("Result", result)
+    if (result.user) {
+      userAccountStatus.value = {
+        exists: true,
+        userId: result.user._id,
+        role: 'student'
+      }
+      newPassword.value = userData.password
+      showNotification('Succès', 'Compte utilisateur créé avec succès', 'success')
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors de la création du compte utilisateur:', error)
+    showNotification('Erreur', `Erreur lors de la création: ${error instanceof Error ? error.message : String(error)}`, 'danger')
+  } finally {
+    passwordActionLoading.value = false
+    currentAction.value = null
+  }
+}
+
+// Copier le mot de passe dans le presse-papiers
+const copyPassword = async () => {
+  if (!newPassword.value) return
+  
+  try {
+    await navigator.clipboard.writeText(newPassword.value)
+    showNotification('Copié', 'Mot de passe copié dans le presse-papiers', 'success')
+  } catch (error) {
+    console.error('❌ Erreur lors de la copie:', error)
+    showNotification('Erreur', 'Impossible de copier le mot de passe', 'danger')
+  }
+}
+
+// Générer un mot de passe sécurisé
+const generateSecurePassword = (length: number = 12): string => {
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz'
+  const numbers = '0123456789'
+  const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?'
+  
+  const allChars = uppercase + lowercase + numbers + symbols
+  let password = ''
+  
+  // Assurer au moins un caractère de chaque type
+  password += uppercase[Math.floor(Math.random() * uppercase.length)]
+  password += lowercase[Math.floor(Math.random() * lowercase.length)]
+  password += numbers[Math.floor(Math.random() * numbers.length)]
+  password += symbols[Math.floor(Math.random() * symbols.length)]
+  
+  // Remplir le reste
+  for (let i = 4; i < length; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)]
+  }
+  
+  // Mélanger le mot de passe
+  return password.split('').sort(() => Math.random() - 0.5).join('')
+}
+
+// Afficher une notification
+const showNotification = (title: string, message: string, type: 'success' | 'danger' | 'warning' | 'info') => {
+  notification.title = title
+  notification.message = message
+  notification.type = type
+  notification.show = true
+}
+
+// Fermer la notification
+const closeNotification = () => {
+  notification.show = false
+}
 
 // Initialiser le formulaire avec les données de l'élève
 const initForm = (): UpdateStudentDto => {
@@ -379,7 +705,7 @@ const loadClasses = async () => {
       { id: 'temp-2', name: '5ème A', level: '5ème' },
       { id: 'temp-3', name: '4ème A', level: '4ème' },
       { id: 'temp-4', name: '3ème A', level: '3ème' }
-]
+    ]
   } finally {
     loadingClasses.value = false
   }
@@ -388,7 +714,7 @@ const loadClasses = async () => {
 // Mettre à jour les informations de classe
 const updateClassInfo = () => {
   if (form.academicInfo.className) {
-    const selectedClass = availableClasses.find(c => c.name === form.academicInfo.className)
+    const selectedClass = availableClasses.value.find(c => c.name === form.academicInfo.className)
     if (selectedClass) {
       form.academicInfo.level = selectedClass.level
       form.academicInfo.classId = selectedClass.id
@@ -459,6 +785,9 @@ const handleSubmit = async () => {
 
 // Fermer le modal
 const closeModal = () => {
+  // Réinitialiser les états de mot de passe
+  newPassword.value = ''
+  currentAction.value = null
   emit('close')
 }
 
@@ -470,6 +799,8 @@ watch(() => [props.isOpen, props.student], ([isOpen, student]) => {
     form.studentNumber = student.studentNumber
     // Charger les classes
     loadClasses()
+    // Vérifier le statut du compte utilisateur
+    checkUserAccount()
   }
 }, { immediate: true })
 

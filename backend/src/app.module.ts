@@ -12,6 +12,7 @@ import { SuperAdminModule } from './modules/super-admin/super-admin.module';
 import { TeachersModule } from './modules/teachers/teachers.module';
 import { EvaluationModule } from './modules/evaluation/evaluation.module';
 import { ScolariteModule } from './modules/scolarite/scolarite.module';
+import { OnlineCoursesModule } from './modules/online-courses/online-courses.module';
 import databaseConfig from './config/database.config';
 import appConfig from './config/app.config';
 
@@ -43,6 +44,7 @@ import appConfig from './config/app.config';
     TeachersModule,
     EvaluationModule,
     ScolariteModule,
+    OnlineCoursesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

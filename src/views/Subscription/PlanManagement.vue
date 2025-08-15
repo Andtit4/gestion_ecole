@@ -64,7 +64,7 @@
         <div class="absolute inset-0 bg-black/20"></div>
         <div class="relative z-10">
           <div class="flex items-center justify-between">
-            <div>
+        <div>
               <h2 class="text-3xl font-bold text-white mb-2">
                 🎯 Plans d'Abonnement
               </h2>
@@ -76,7 +76,7 @@
                   <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   <span class="text-sm text-white">{{ plans?.length || 0 }} plans actifs</span>
                 </div>
-                <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2">
                   <div class="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
                   <span class="text-sm text-white">Tarification en FCFA</span>
                 </div>
@@ -120,35 +120,35 @@
           >
             Créer un Plan
           </button>
-        </div>
+    </div>
 
         <!-- Liste des plans -->
         <template v-else>
-          <div
-            v-for="plan in plans"
-            :key="plan.id"
+      <div
+        v-for="plan in plans"
+        :key="plan.id"
             class="group relative bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/30 p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
             :class="plan.popular ? 'ring-2 ring-indigo-500/50 ring-offset-2 ring-offset-transparent' : ''"
-          >
-          <!-- Badge populaire -->
-          <div
-            v-if="plan.popular"
+      >
+        <!-- Badge populaire -->
+        <div
+          v-if="plan.popular"
             class="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10"
-          >
+        >
             <span class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
-              ⭐ Populaire
-            </span>
-          </div>
+            ⭐ Populaire
+          </span>
+        </div>
 
-          <div class="text-center">
-            <!-- Icône du plan -->
+        <div class="text-center">
+          <!-- Icône du plan -->
             <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-3xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
-              <span class="text-2xl font-bold text-white">{{ plan.name.charAt(0) }}</span>
-            </div>
-            
-            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              {{ plan.name }}
-            </h3>
+            <span class="text-2xl font-bold text-white">{{ plan.name.charAt(0) }}</span>
+          </div>
+          
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            {{ plan.name }}
+          </h3>
             
             <!-- Badge de validité -->
             <div class="mb-3 flex justify-center">
@@ -162,14 +162,14 @@
               </span>
             </div>
             
-            <p class="text-gray-600 dark:text-gray-400 text-sm mb-6">
-              {{ plan.description }}
-            </p>
-            
-            <div class="mb-8">
+          <p class="text-gray-600 dark:text-gray-400 text-sm mb-6">
+            {{ plan.description }}
+          </p>
+          
+          <div class="mb-8">
               <span class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                {{ formatPrice(plan.monthlyPrice) }}
-              </span>
+              {{ formatPrice(plan.monthlyPrice) }}
+            </span>
               <span class="text-gray-500 dark:text-gray-400 block text-sm mt-1">
                 /{{ plan.validity === 'yearly' ? 'an' : 'mois' }}
               </span>
@@ -178,44 +178,44 @@
                   🎯 Facturation annuelle
                 </span>
               </div>
-            </div>
-            
-            <!-- Statistiques du plan -->
+          </div>
+          
+          <!-- Statistiques du plan -->
             <div class="bg-gray-50/80 dark:bg-gray-700/50 backdrop-blur rounded-2xl p-4 mb-6 border border-gray-200/50 dark:border-gray-600/50">
-              <div class="grid grid-cols-2 gap-4 text-sm">
-                <div class="text-center">
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div class="text-center">
                   <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                    {{ plan.maxStudents === 999999 ? '∞' : plan.maxStudents }}
-                  </div>
-                  <div class="text-gray-600 dark:text-gray-400">Élèves</div>
+                  {{ plan.maxStudents === 999999 ? '∞' : plan.maxStudents }}
                 </div>
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {{ plan.maxTeachers === 999999 ? '∞' : plan.maxTeachers }}
-                  </div>
-                  <div class="text-gray-600 dark:text-gray-400">Professeurs</div>
+                <div class="text-gray-600 dark:text-gray-400">Élèves</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {{ plan.maxTeachers === 999999 ? '∞' : plan.maxTeachers }}
                 </div>
+                <div class="text-gray-600 dark:text-gray-400">Professeurs</div>
               </div>
             </div>
-            
-            <div class="text-left mb-8">
-              <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                Fonctionnalités incluses
-              </h4>
-              <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                <li v-for="feature in plan.features" :key="feature" class="flex items-start">
-                  <svg class="w-4 h-4 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                  </svg>
-                  <span>{{ feature }}</span>
-                </li>
-              </ul>
-            </div>
-            
-            <div class="space-y-3">
-              <button
-                @click="editPlan(plan)"
+          </div>
+          
+          <div class="text-left mb-8">
+            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+              <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              Fonctionnalités incluses
+            </h4>
+            <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+              <li v-for="feature in plan.features" :key="feature" class="flex items-start">
+                <svg class="w-4 h-4 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="space-y-3">
+            <button
+              @click="editPlan(plan)"
                 class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 px-4 rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 text-sm font-semibold shadow-lg transform hover:scale-105 hover:shadow-xl"
               >
                 <span class="flex items-center justify-center gap-2">
@@ -224,9 +224,9 @@
                   </svg>
                   Modifier le Plan
                 </span>
-              </button>
-              <button
-                @click="deletePlan(plan.id)"
+            </button>
+            <button
+              @click="deletePlan(plan.id)"
                 class="w-full bg-red-50/80 dark:bg-red-900/20 text-red-600 dark:text-red-400 py-3 px-4 rounded-2xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 text-sm font-semibold border border-red-200/50 dark:border-red-600/30 backdrop-blur"
               >
                 <span class="flex items-center justify-center gap-2">
@@ -235,7 +235,7 @@
                   </svg>
                   Supprimer
                 </span>
-              </button>
+            </button>
             </div>
           </div>
         </div>
@@ -248,8 +248,8 @@
       <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20 dark:border-gray-700/30">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            {{ editingPlan ? 'Modifier le Plan' : 'Créer un Nouveau Plan' }}
-          </h3>
+          {{ editingPlan ? 'Modifier le Plan' : 'Créer un Nouveau Plan' }}
+        </h3>
           <button
             @click="closeModal"
             class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-2xl transition-colors"

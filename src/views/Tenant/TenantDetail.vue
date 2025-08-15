@@ -504,6 +504,20 @@ const quickActions = ref([
         router.push('/scolarite')
       }
     }
+  },
+  {
+    name: 'Cours en Ligne',
+    icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z',
+    bgColor: 'bg-gradient-to-r from-red-500 to-pink-600',
+    textColor: 'text-white',
+    action: () => {
+      const tenantId = route.params.id as string
+      if (tenantId) {
+        router.push(`/school/${tenantId}/online-courses`)
+      } else {
+        router.push('/online-courses')
+      }
+    }
   }
 ])
 
@@ -698,6 +712,11 @@ async function loadRealStats(tenantId: string) {
 
 function editTenant() {
   router.push(`/admin/accounts?edit=${tenant.value?.id}`)
+}
+
+const navigateToOnlineCourses = () => {
+  const tenantId = route.params.id as string
+  router.push(`/school/${tenantId}/online-courses`)
 }
 
 // Gestion du modal de confirmation

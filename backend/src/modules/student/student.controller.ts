@@ -43,7 +43,17 @@ export class StudentController {
     @Headers() headers: any,
   ) {
     const tenantId = this.extractTenantId(headers);
-    return await this.studentService.create(createStudentDto, tenantId);
+    const result = await this.studentService.create(createStudentDto, tenantId);
+    
+    // Retourner les informations de l'étudiant avec les identifiants si disponibles
+    return {
+      success: true,
+      student: result.student,
+      userCredentials: result.userCredentials,
+      message: result.userCredentials 
+        ? 'Élève créé avec succès. Identifiants de connexion générés.' 
+        : 'Élève créé avec succès. Erreur lors de la génération des identifiants.',
+    };
   }
 
   @Get()

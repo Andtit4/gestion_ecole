@@ -102,11 +102,13 @@ export async function createUser(
   userData: CreateUserDto,
   tenantId: string
 ): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/users`, {
+  // console.log(userData, tenantId)
+  const response = await fetch(`${API_BASE_URL}/users/quick-create`, {
     method: 'POST',
     headers: createHeaders(tenantId),
     body: JSON.stringify(userData),
   })
+  console.log(response)
   
   return await handleResponse<User>(response)
 }

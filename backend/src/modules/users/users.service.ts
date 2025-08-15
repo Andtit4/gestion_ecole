@@ -6,13 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  User,
-  UserDocument,
-  UserRole,
-  UserStatus,
-  Permission,
-} from './schemas/user.schema';
+import { User, UserDocument, UserRole, UserStatus, Permission } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcryptjs';
@@ -64,11 +58,7 @@ export class UsersService {
           Permission.VIEW_SCHEDULE,
         ];
       case UserRole.STUDENT:
-        return [
-          Permission.VIEW_GRADES,
-          Permission.VIEW_MESSAGES,
-          Permission.VIEW_SCHEDULE,
-        ];
+        return [Permission.VIEW_GRADES, Permission.VIEW_MESSAGES, Permission.VIEW_SCHEDULE];
       case UserRole.PARENT:
         return [
           Permission.VIEW_STUDENTS, // Uniquement ses enfants
@@ -90,16 +80,12 @@ export class UsersService {
     });
 
     if (existingUser) {
-      throw new BadRequestException(
-        'Un utilisateur avec cet email existe déjà pour ce tenant',
-      );
+      throw new BadRequestException('Un utilisateur avec cet email existe déjà pour ce tenant');
     }
 
     // Assigner les permissions par défaut si non spécifiées
     if (!createUserDto.permissions || createUserDto.permissions.length === 0) {
-      createUserDto.permissions = this.getDefaultPermissions(
-        createUserDto.role,
-      );
+      createUserDto.permissions = this.getDefaultPermissions(createUserDto.role);
     }
 
     const userData = {
@@ -134,11 +120,7 @@ export class UsersService {
     }
     if (filters.search) {
       const searchRegex = new RegExp(filters.search, 'i');
-      query.$or = [
-        { firstName: searchRegex },
-        { lastName: searchRegex },
-        { email: searchRegex },
-      ];
+      query.$or = [{ firstName: searchRegex }, { lastName: searchRegex }, { email: searchRegex }];
     }
 
     const total = await this.userModel.countDocuments(query);
@@ -168,14 +150,8 @@ export class UsersService {
     return user;
   }
 
-  async update(
-    id: string,
-    updateUserDto: UpdateUserDto,
-    tenantId: string,
-  ): Promise<User> {
-    const existingUser = await this.userModel
-      .findOne({ _id: id, tenantId })
-      .exec();
+  async update(id: string, updateUserDto: UpdateUserDto, tenantId: string): Promise<User> {
+    const existingUser = await this.userModel.findOne({ _id: id, tenantId }).exec();
     if (!existingUser) {
       throw new NotFoundException('Utilisateur non trouvé');
     }
@@ -189,17 +165,13 @@ export class UsersService {
       });
 
       if (emailExists) {
-        throw new BadRequestException(
-          'Un utilisateur avec cet email existe déjà pour ce tenant',
-        );
+        throw new BadRequestException('Un utilisateur avec cet email existe déjà pour ce tenant');
       }
     }
 
     // Si le rôle change, mettre à jour les permissions par défaut
     if (updateUserDto.role && updateUserDto.role !== existingUser.role) {
-      updateUserDto.permissions = this.getDefaultPermissions(
-        updateUserDto.role,
-      );
+      updateUserDto.permissions = this.getDefaultPermissions(updateUserDto.role);
     }
 
     const updatedUser = await this.userModel
@@ -207,9 +179,7 @@ export class UsersService {
       .exec();
 
     if (!updatedUser) {
-      throw new NotFoundException(
-        'Utilisateur non trouvé lors de la mise à jour',
-      );
+      throw new NotFoundException('Utilisateur non trouvé lors de la mise à jour');
     }
 
     return updatedUser;
@@ -223,15 +193,30 @@ export class UsersService {
   }
 
   async findByRole(role: UserRole, tenantId: string): Promise<User[]> {
-    return await this.userModel
-      .find({ role, tenantId, status: UserStatus.ACTIVE })
-      .exec();
+    return await this.userModel.find({ role, tenantId, status: UserStatus.ACTIVE }).exec();
+  }
+
+  async findOneByEmail(email: string, tenantId: string): Promise<User> {
+    const user = await this.userModel.findOne({ email: email.toLowerCase(), tenantId }).exec();
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+    return user;
+  }
+
+  async resetPasswordByEmail(email: string, tenantId: string, newPassword?: string): Promise<User> {
+    const user = await this.findOneByEmail(email, tenantId);
+    if (!user) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+    if (newPassword) {
+      await this.setPassword(user.email, newPassword.toString(), tenantId);
+    }
+    return user;
   }
 
   async updateLastLogin(id: string, tenantId: string): Promise<void> {
-    await this.userModel
-      .updateOne({ _id: id, tenantId }, { lastLogin: new Date() })
-      .exec();
+    await this.userModel.updateOne({ _id: id, tenantId }, { lastLogin: new Date() }).exec();
   }
 
   async getUserStats(tenantId: string): Promise<any> {
@@ -289,6 +274,7 @@ export class UsersService {
    * Création rapide d'utilisateur avec paramètres par défaut
    */
   async quickCreateUser(createDto: {
+    // _id: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -321,6 +307,7 @@ export class UsersService {
       const password = createDto.password || this.generatePassword();
 
       const userData = {
+        // _id: createDto._id,
         email: createDto.email,
         firstName: createDto.firstName,
         lastName: createDto.lastName,
@@ -421,8 +408,7 @@ export class UsersService {
    * Générer un mot de passe par défaut
    */
   private generatePassword(): string {
-    const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
     for (let i = 0; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -455,7 +441,7 @@ export class UsersService {
       const { password: _, ...userWithoutPassword } = user.toObject();
       return userWithoutPassword as User;
     } catch (error) {
-      console.error('Erreur lors de l\'authentification:', error);
+      console.error("Erreur lors de l'authentification:", error);
       return null;
     }
   }
@@ -463,15 +449,12 @@ export class UsersService {
   /**
    * Définir ou changer le mot de passe d'un utilisateur
    */
-  async setPassword(userId: string, password: string, tenantId: string): Promise<void> {
+  async setPassword(email: string, password: string, tenantId: string): Promise<void> {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const result = await this.userModel
-      .updateOne(
-        { _id: userId, tenantId },
-        { password: hashedPassword }
-      )
+      .updateOne({ email: email.toLowerCase(), tenantId }, { password: hashedPassword })
       .exec();
 
     if (result.matchedCount === 0) {
@@ -482,12 +465,12 @@ export class UsersService {
   /**
    * Vérifier si un utilisateur a un mot de passe défini
    */
-  async hasPassword(userId: string, tenantId: string): Promise<boolean> {
+  async hasPassword(email: string, tenantId: string): Promise<boolean> {
     const user = await this.userModel
-      .findOne({ _id: userId, tenantId })
+      .findOne({ email: email.toLowerCase(), tenantId })
       .select('+password')
       .exec();
-    
+
     return !!(user && user.password);
   }
 
@@ -495,15 +478,12 @@ export class UsersService {
    * Changer le mot de passe avec vérification de l'ancien
    */
   async changePassword(
-    userId: string, 
-    currentPassword: string, 
-    newPassword: string, 
-    tenantId: string
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    tenantId: string,
   ): Promise<void> {
-    const user = await this.userModel
-      .findOne({ _id: userId, tenantId })
-      .select('+password')
-      .exec();
+    const user = await this.userModel.findOne({ _id: userId, tenantId }).select('+password').exec();
 
     if (!user) {
       throw new NotFoundException('Utilisateur non trouvé');

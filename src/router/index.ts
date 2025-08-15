@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import authService from '@/services/authService'
+import { studentGuard } from './guards/studentGuard'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,6 +8,20 @@ const router = createRouter({
     return savedPosition || { left: 0, top: 0 }
   },
   routes: [
+
+    {
+      path: '/student/login',
+      name: 'student-login',
+      component: () => import('../views/Auth/StudentLogin.vue'),
+      meta: { requiresGuest: true }
+    },
+    {
+      path: '/student/dashboard',
+      name: 'student-dashboard',
+      component: () => import('@/views/Students/StudentManagement.vue'),
+      meta: { requiresAuth: true, requiresStudent: true },
+      beforeEnter: studentGuard
+    },
     // Route par défaut - redirection vers login
     {
       path: '/',
@@ -133,6 +148,15 @@ const router = createRouter({
       component: () => import('../views/School/ScolariteManagement.vue'),
       meta: {
         title: 'Gestion de la Scolarité - Établissement',
+        requiresAuth: true,
+      },
+    },
+    {
+      path: '/school/:tenantId/online-courses',
+      name: 'SchoolOnlineCourses',
+      component: () => import('../views/Teachers/OnlineCourses.vue'),
+      meta: {
+        title: 'Cours en Ligne - Établissement',
         requiresAuth: true,
       },
     },
@@ -581,5 +605,6 @@ router.onError((error) => {
   console.error('Erreur de navigation:', error)
   // Rediriger vers une page d'erreur si nécessaire
 })
+
 
 export default router
